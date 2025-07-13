@@ -233,7 +233,7 @@ export default function PasswordCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/manage/${entry.id}`);
+                  router.push(`/manage?id=${entry.id}`);
                 }}
                 className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 cursor-pointer"
                 title="编辑"
@@ -502,7 +502,7 @@ export default function PasswordCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/manage/${entry.id}`);
+              router.push(`/manage?id=${entry.id}`);
             }}
             className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 cursor-pointer"
             title="编辑"

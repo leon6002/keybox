@@ -203,7 +203,7 @@ export default function PasswordViewModal({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  router.push(`/manage/${entry.id}`);
+                  router.push(`/manage?id=${entry.id}`);
                   onClose();
                 }}
               >

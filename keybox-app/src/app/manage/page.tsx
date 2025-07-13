@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Removed unused Card imports
@@ -13,8 +13,11 @@ import { SearchEngine } from "@/utils/search";
 import PasswordEditForm from "@/components/PasswordEditForm";
 import { useConfirm } from "@/hooks/useConfirm";
 
-export default function ManagePasswordsPage() {
+function ManagePasswordsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const entryId = searchParams.get("id");
+
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,6 +39,14 @@ export default function ManagePasswordsPage() {
     }
   };
 
+  // 选择条目并更新 URL
+  const handleSelectEntry = (entry: PasswordEntry) => {
+    setSelectedEntry(entry);
+    // 更新 URL 但不刷新页面
+    const newUrl = `/manage?id=${entry.id}`;
+    window.history.replaceState(null, "", newUrl);
+  };
+
   // 加载数据
   useEffect(() => {
     const loadedData = StorageManager.loadFromLocalStorage();
@@ -52,11 +63,21 @@ export default function ManagePasswordsPage() {
     setCategories(loadedData.categories);
     setFilteredEntries(loadedData.entries);
 
-    // 默认选择第一个条目
-    if (loadedData.entries.length > 0) {
+    // 根据 URL 参数选择条目
+    if (entryId && loadedData.entries.length > 0) {
+      const entryToEdit = loadedData.entries.find(
+        (entry) => entry.id === entryId
+      );
+      if (entryToEdit) {
+        setSelectedEntry(entryToEdit);
+      } else {
+        // 如果找不到指定的条目，跳转到密码列表页面
+        router.push("/passwords");
+      }
+    } else if (loadedData.entries.length > 0) {
       setSelectedEntry(loadedData.entries[0]);
     }
-  }, []);
+  }, [entryId, router]);
 
   // 搜索过滤
   useEffect(() => {
@@ -542,7 +563,7 @@ export default function ManagePasswordsPage() {
                   <div
                     key={entry.id || `entry-${index}`}
                     onClick={() => {
-                      router.push(`/manage/${entry.id}`);
+                      handleSelectEntry(entry);
                     }}
                     className={`p-3 rounded-lg cursor-pointer transition-colors ${
                       selectedEntry?.id === entry.id && !isCreatingNew
@@ -623,5 +644,22 @@ export default function ManagePasswordsPage() {
       </div>
       <ConfirmDialog />
     </div>
+  );
+}
+
+export default function ManagePasswordsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">加载中...</p>
+          </div>
+        </div>
+      }
+    >
+      <ManagePasswordsContent />
+    </Suspense>
   );
 }
