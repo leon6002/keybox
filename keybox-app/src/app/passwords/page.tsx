@@ -28,6 +28,25 @@ export default function PasswordsPage() {
   const [showQuickImportExport, setShowQuickImportExport] = useState<
     "import" | "export" | null
   >(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // 点击外部关闭移动菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobileMenuOpen) {
+        const target = event.target as Element;
+        if (
+          !target.closest(".mobile-menu") &&
+          !target.closest(".mobile-menu-button")
+        ) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isMobileMenuOpen]);
 
   // 加载数据
   useEffect(() => {
@@ -126,6 +145,7 @@ export default function PasswordsPage() {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
+
             <div className="flex items-center space-x-6">
               {/* Logo */}
               <div className="flex items-center space-x-3">
@@ -148,8 +168,7 @@ export default function PasswordsPage() {
                   PandaKeyBox
                 </span>
               </div>
-
-              {/* Navigation Links */}
+              {/* Desktop Navigation Links */}
               <div className="hidden md:flex items-center space-x-1">
                 <button
                   onClick={() => (window.location.href = "/")}
@@ -169,9 +188,9 @@ export default function PasswordsPage() {
               </div>
             </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center space-x-2">
-              <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">
+            {/* Desktop Right Actions */}
+            <div className="hidden md:flex items-center space-x-2">
+              <span className="hidden lg:inline text-sm text-gray-500 dark:text-gray-400">
                 共{entries.length} 个密码
               </span>
               <button
@@ -187,8 +206,80 @@ export default function PasswordsPage() {
                 导入/导出
               </button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="mobile-menu-button p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown - Overlay Style */}
+        {isMobileMenuOpen && (
+          <div className="mobile-menu absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="px-4 py-3 space-y-1">
+              <button
+                onClick={() => {
+                  window.location.href = "/";
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                首页
+              </button>
+              <div className="w-full text-left px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
+                密码列表
+              </div>
+              <button
+                onClick={() => {
+                  window.location.href = "/manage";
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                密码管理
+              </button>
+
+              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+              <button
+                onClick={() => {
+                  setShowCategoryManager(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                分类管理
+              </button>
+              <button
+                onClick={() => {
+                  setShowImportExport(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors cursor-pointer"
+              >
+                导入/导出
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="container mx-auto px-4 py-6">

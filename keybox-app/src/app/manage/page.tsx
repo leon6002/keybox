@@ -27,7 +27,39 @@ function ManagePasswordsContent() {
     null
   );
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
+
+  // 点击外部关闭移动菜单和侧边栏
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+
+      // 关闭移动菜单
+      if (isMobileMenuOpen) {
+        if (
+          !target.closest(".mobile-menu") &&
+          !target.closest(".mobile-menu-button")
+        ) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+
+      // 关闭侧边栏
+      if (isSidebarOpen) {
+        if (
+          !target.closest(".mobile-sidebar") &&
+          !target.closest(".sidebar-toggle-button")
+        ) {
+          setIsSidebarOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isMobileMenuOpen, isSidebarOpen]);
 
   // 选择条目并更新 URL
   const handleSelectEntry = (entry: PasswordEntry) => {
@@ -492,7 +524,7 @@ function ManagePasswordsContent() {
                 </span>
               </div>
 
-              {/* Navigation Links */}
+              {/* Navigation Links - Desktop */}
               <div className="hidden md:flex items-center space-x-1">
                 <button
                   onClick={() => (window.location.href = "/")}
@@ -511,55 +543,138 @@ function ManagePasswordsContent() {
                 </button>
               </div>
             </div>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="mobile-menu-button p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
 
             {/* Right Actions */}
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="hidden sm:inline-flex">
-                {entries.length} 个条目
-              </Badge>
+            <div className="hidden md:flex items-center space-x-2">
               {/* <Button variant="ghost" size="sm" onClick={handleGoBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回
               </Button> */}
-              <div className="flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-2">
                 {entries.length === 0 && (
                   <Button variant="outline" onClick={createSampleData}>
                     创建示例数据
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    const confirmed = await confirm({
-                      title: "清除所有数据",
-                      description:
-                        "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
-                      confirmText: "清除",
-                      cancelText: "取消",
-                      variant: "destructive",
-                    });
-                    if (confirmed) {
-                      localStorage.clear();
-                      window.location.reload();
-                    }
-                  }}
-                >
-                  清除数据
-                </Button>
-                {/* <Button onClick={() => router.push("/add")}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  添加新密码
-                </Button> */}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown - Overlay Style */}
+        {isMobileMenuOpen && (
+          <div className="mobile-menu absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="px-4 py-3 space-y-1">
+              <button
+                onClick={() => {
+                  window.location.href = "/";
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                首页
+              </button>
+              <button
+                onClick={() => {
+                  window.location.href = "/passwords";
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                密码列表
+              </button>
+              <div className="w-full text-left px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
+                密码管理
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+              {entries.length === 0 && (
+                <button
+                  onClick={() => {
+                    createSampleData();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+                >
+                  创建示例数据
+                </button>
+              )}
+
+              <button
+                onClick={async () => {
+                  setIsMobileMenuOpen(false);
+                  const confirmed = await confirm({
+                    title: "清除所有数据",
+                    description:
+                      "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
+                    confirmText: "清除",
+                    cancelText: "取消",
+                    variant: "destructive",
+                  });
+                  if (confirmed) {
+                    localStorage.clear();
+                    window.location.reload();
+                  }
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
+              >
+                清除数据
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
+      {/* Mobile Sidebar Toggle Button - Push Content */}
+      <div className="lg:hidden px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={`sidebar-toggle-button p-3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
+            isSidebarOpen ? "translate-x-64" : "translate-x-0"
+          }`}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h8M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-73px)]">
-        {/* Left Sidebar - Password List */}
-        <div className="w-80 border-r bg-muted/30 flex flex-col">
+      <div className="relative flex h-[calc(100vh-140px)] lg:h-[calc(100vh-73px)]">
+        {/* Desktop Sidebar - Password List */}
+        <div className="hidden lg:flex w-80 border-r bg-muted/30 flex-col">
           {/* Search */}
           <div className="p-4 border-b space-y-3">
             <div className="relative">
@@ -588,8 +703,8 @@ function ManagePasswordsContent() {
                 {searchQuery ? "没有找到匹配的密码" : "还没有密码条目"}
               </div>
             ) : (
-              <div className="space-y-1 p-2">
-                {/* 显示新创建的条目 */}
+              <div className="p-3 space-y-2">
+                {/* 显示正在创建的新条目 */}
                 {isCreatingNew && selectedEntry && (
                   <div
                     key="new-entry"
@@ -680,7 +795,205 @@ function ManagePasswordsContent() {
               </div>
             )}
           </div>
+
+          {/* Desktop Sidebar Footer - Stats and Clear Data */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            {/* Entry Count */}
+            <div className="flex items-center justify-center">
+              <Badge variant="secondary" className="text-xs">
+                共 {entries.length} 个条目
+              </Badge>
+            </div>
+
+            {/* Clear Data Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
+              onClick={async () => {
+                const confirmed = await confirm({
+                  title: "清除所有数据",
+                  description:
+                    "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
+                  confirmText: "清除",
+                  cancelText: "取消",
+                  variant: "destructive",
+                });
+                if (confirmed) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+            >
+              清除数据
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Sidebar - Password List */}
+        <div
+          className={`mobile-sidebar lg:hidden fixed inset-y-0 left-0 z-50 w-3/4 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              密码列表
+            </h2>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="p-3 border-b space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="搜索密码..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button
+              onClick={() => {
+                handleCreateNew();
+                setIsSidebarOpen(false);
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer"
+              variant="outline"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              添加新密码
+            </Button>
+          </div>
+
+          {/* Password List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredEntries.length === 0 && !isCreatingNew ? (
+              <div className="p-4 text-center text-muted-foreground">
+                {searchQuery ? "没有找到匹配的密码" : "还没有密码条目"}
+              </div>
+            ) : (
+              <div className="space-y-1 p-2">
+                {/* 显示新创建的条目 */}
+                {isCreatingNew && selectedEntry && (
+                  <div
+                    key="new-entry"
+                    className="p-2 lg:p-3 rounded-lg cursor-pointer transition-colors bg-blue-50 border-2 border-dashed border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate text-blue-900 dark:text-blue-100">
+                          {selectedEntry.title}
+                        </h3>
+                        <p className="text-sm opacity-70 truncate text-blue-700 dark:text-blue-300">
+                          新建密码
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                          >
+                            {getCategoryName(selectedEntry.categoryId)}
+                          </Badge>
+                          <span className="text-xs opacity-60 text-blue-600 dark:text-blue-400">
+                            刚刚创建
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 显示现有条目 */}
+                {filteredEntries.map((entry, index) => (
+                  <div
+                    key={entry.id || `entry-${index}`}
+                    onClick={() => {
+                      handleSelectEntry(entry);
+                      setIsSidebarOpen(false);
+                    }}
+                    className={`p-2 lg:p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedEntry?.id === entry.id && !isCreatingNew
+                        ? "bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                        : "hover:bg-muted border border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-medium truncate ${
+                            selectedEntry?.id === entry.id && !isCreatingNew
+                              ? "text-blue-900 dark:text-blue-100"
+                              : ""
+                          }`}
+                        >
+                          {entry.title}
+                        </h3>
+                        <p
+                          className={`text-sm opacity-70 truncate ${
+                            selectedEntry?.id === entry.id && !isCreatingNew
+                              ? "text-blue-700 dark:text-blue-300"
+                              : ""
+                          }`}
+                        >
+                          {getUsernameDisplay(entry)}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs ${
+                              selectedEntry?.id === entry.id && !isCreatingNew
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                                : ""
+                            }`}
+                          >
+                            {getCategoryName(entry.categoryId)}
+                          </Badge>
+                          <span
+                            className={`text-xs opacity-60 ${
+                              selectedEntry?.id === entry.id && !isCreatingNew
+                                ? "text-blue-600 dark:text-blue-400"
+                                : ""
+                            }`}
+                          >
+                            {formatDate(entry.updatedAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-white opacity-50 z-40"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
         {/* Right Content - Edit Form */}
         <div className="flex-1 flex flex-col">
