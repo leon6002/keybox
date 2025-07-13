@@ -32,9 +32,17 @@ export default function PasswordsPage() {
   // 加载数据
   useEffect(() => {
     const loadedData = StorageManager.loadFromLocalStorage();
-    setEntries(loadedData.entries);
+
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedEntries = [...loadedData.entries].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    setEntries(sortedEntries);
     setCategories(loadedData.categories);
-    setFilteredEntries(loadedData.entries);
+    setFilteredEntries(sortedEntries);
   }, []);
 
   // 搜索和类目过滤
@@ -54,7 +62,14 @@ export default function PasswordsPage() {
       filtered = results.map((result) => result.entry);
     }
 
-    setFilteredEntries(filtered);
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedFiltered = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    setFilteredEntries(sortedFiltered);
   }, [entries, searchQuery, selectedCategoryId]);
 
   // 删除条目
@@ -68,17 +83,40 @@ export default function PasswordsPage() {
   const handleImportData = (importedEntries: PasswordEntry[]) => {
     // 合并导入的条目和现有条目
     const mergedEntries = [...entries, ...importedEntries];
-    setEntries(mergedEntries);
+
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedEntries = [...mergedEntries].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    setEntries(sortedEntries);
 
     // 保存到 localStorage
     StorageManager.saveToLocalStorage(mergedEntries, categories);
 
     // 更新过滤后的条目
-    if (searchQuery.trim() === "") {
-      setFilteredEntries(mergedEntries);
+    if (searchQuery.trim() === "" && selectedCategoryId === "all") {
+      setFilteredEntries(sortedEntries);
     } else {
-      const results = SearchEngine.search(mergedEntries, searchQuery);
-      setFilteredEntries(results.map((result) => result.entry));
+      // 重新应用搜索和筛选
+      let filtered = sortedEntries;
+
+      // 先按类目筛选
+      if (selectedCategoryId !== "all") {
+        filtered = filtered.filter(
+          (entry) => entry.categoryId === selectedCategoryId
+        );
+      }
+
+      // 再按搜索查询筛选
+      if (searchQuery.trim() !== "") {
+        const results = SearchEngine.search(filtered, searchQuery);
+        filtered = results.map((result) => result.entry);
+      }
+
+      setFilteredEntries(filtered);
     }
   };
 
@@ -223,7 +261,7 @@ export default function PasswordsPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => (window.location.href = "/manage")}
+                onClick={() => (window.location.href = "/manage?action=new")}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 cursor-pointer"
               >
                 开始管理密码

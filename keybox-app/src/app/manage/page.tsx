@@ -17,6 +17,7 @@ function ManagePasswordsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const entryId = searchParams.get("id");
+  const action = searchParams.get("action");
 
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -48,12 +49,25 @@ function ManagePasswordsContent() {
       console.log("第一个条目的所有属性:", Object.keys(loadedData.entries[0]));
     }
 
-    setEntries(loadedData.entries);
-    setCategories(loadedData.categories);
-    setFilteredEntries(loadedData.entries);
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedEntries = [...loadedData.entries].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
 
-    // 根据 URL 参数选择条目
-    if (entryId && loadedData.entries.length > 0) {
+    setEntries(sortedEntries);
+    setCategories(loadedData.categories);
+    setFilteredEntries(sortedEntries);
+
+    // 根据 URL 参数选择条目或创建新条目
+    if (action === "new") {
+      // 如果是创建新密码的操作，直接进入创建模式
+      setIsCreatingNew(true);
+      setSelectedEntry(null);
+      // 清除 URL 参数，避免刷新时重复触发
+      window.history.replaceState(null, "", "/manage");
+    } else if (entryId && loadedData.entries.length > 0) {
       const entryToEdit = loadedData.entries.find(
         (entry) => entry.id === entryId
       );
@@ -66,25 +80,33 @@ function ManagePasswordsContent() {
     } else if (loadedData.entries.length > 0) {
       setSelectedEntry(loadedData.entries[0]);
     }
-  }, [entryId, router]);
+  }, [entryId, action, router]);
 
   // 搜索过滤
   useEffect(() => {
+    let filtered = entries;
+
     if (searchQuery.trim()) {
       const results = SearchEngine.search(entries, searchQuery);
-      const filteredResults = results.map((result) => result.entry);
-      setFilteredEntries(filteredResults);
+      filtered = results.map((result) => result.entry);
+    }
 
-      // 如果当前选中的条目不在搜索结果中，选择第一个结果
-      if (
-        filteredResults.length > 0 &&
-        selectedEntry &&
-        !filteredResults.find((e) => e.id === selectedEntry.id)
-      ) {
-        setSelectedEntry(filteredResults[0]);
-      }
-    } else {
-      setFilteredEntries(entries);
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedEntries = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    setFilteredEntries(sortedEntries);
+
+    // 如果当前选中的条目不在搜索结果中，选择第一个结果
+    if (
+      sortedEntries.length > 0 &&
+      selectedEntry &&
+      !sortedEntries.find((e) => e.id === selectedEntry.id)
+    ) {
+      setSelectedEntry(sortedEntries[0]);
     }
   }, [entries, searchQuery, selectedEntry]);
 
@@ -291,34 +313,83 @@ function ManagePasswordsContent() {
   // 创建新密码
   const handleCreateNew = () => {
     const now = new Date().toISOString();
+    const selectedCategory = categories.length > 0 ? categories[0] : null;
+
+    // 生成默认标题（基于类目和时间）
+    const defaultTitle = selectedCategory
+      ? `新的${selectedCategory.name} - ${new Date().toLocaleDateString()}`
+      : `新密码 - ${new Date().toLocaleDateString()}`;
+
     const newEntry: PasswordEntry = {
       id: StorageManager.generateId(),
-      title: "新密码",
-      categoryId: categories.length > 0 ? categories[0].id : "",
-      customFields:
-        categories.length > 0
-          ? categories[0].fields.map((field) => ({
+      title: defaultTitle,
+      categoryId: selectedCategory?.id || "",
+      customFields: selectedCategory
+        ? selectedCategory.fields.map((field) => {
+            // 为不同字段类型提供默认值
+            let defaultValue = "";
+            if (
+              field.name.toLowerCase().includes("用户名") ||
+              field.name.toLowerCase().includes("username")
+            ) {
+              defaultValue = "请输入用户名";
+            } else if (
+              field.name.toLowerCase().includes("密码") ||
+              field.name.toLowerCase().includes("password")
+            ) {
+              defaultValue = "请设置密码";
+            } else if (
+              field.name.toLowerCase().includes("网站") ||
+              field.name.toLowerCase().includes("website")
+            ) {
+              defaultValue = "https://";
+            } else if (
+              field.name.toLowerCase().includes("邮箱") ||
+              field.name.toLowerCase().includes("email")
+            ) {
+              defaultValue = "user@example.com";
+            }
+
+            return {
               id: field.id,
               name: field.name,
-              value: "",
+              value: defaultValue,
               type: field.type,
               isRequired: field.isRequired,
               placeholder: field.placeholder,
-            }))
-          : [],
-      tags: [],
+            };
+          })
+        : [],
+      tags: ["新建"],
       isFavorite: false,
       username: "",
       password: "",
       website: "",
-      description: "",
+      description: "点击编辑以完善信息",
       notes: "",
       createdAt: now,
       updatedAt: now,
     };
 
+    // 立即保存到存储
+    const updatedEntries = [...entries, newEntry];
+
+    // 按创建时间倒序排序（最新的在前面）
+    const sortedEntries = [...updatedEntries].sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.updatedAt || 0);
+      const dateB = new Date(b.createdAt || b.updatedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    setEntries(sortedEntries);
+    setFilteredEntries(sortedEntries);
+    StorageManager.saveToLocalStorage(updatedEntries, categories);
+
+    // 跳转到新创建的密码编辑页面
+    const newUrl = `/manage?id=${newEntry.id}`;
+    window.history.pushState(null, "", newUrl);
     setSelectedEntry(newEntry);
-    setIsCreatingNew(true);
+    setIsCreatingNew(false);
     setSearchQuery(""); // 清空搜索以显示所有条目
   };
 
@@ -461,7 +532,8 @@ function ManagePasswordsContent() {
                   onClick={async () => {
                     const confirmed = await confirm({
                       title: "清除所有数据",
-                      description: "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
+                      description:
+                        "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
                       confirmText: "清除",
                       cancelText: "取消",
                       variant: "destructive",

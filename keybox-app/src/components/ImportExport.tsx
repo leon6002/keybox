@@ -20,7 +20,7 @@ export default function ImportExport({
   onImport,
   onClose,
 }: ImportExportProps) {
-  const [activeTab, setActiveTab] = useState<"import" | "export">("import");
+  const [activeTab, setActiveTab] = useState<"import" | "export">("export");
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -559,6 +559,55 @@ export default function ImportExport({
                 {pendingFile ? "输入解密密码" : "设置加密密码"}
               </h3>
 
+              {/* 安全提示 - 仅在设置加密密码时显示 */}
+              {!pendingFile && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                        🔐 数据加密保护说明
+                      </h4>
+                      <div className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
+                        <p>
+                          • <strong>此密码专门用于加密您的导出数据</strong>
+                          ，确保数据在传输和存储过程中的安全性
+                        </p>
+                        <p>
+                          • <strong>导入时需要使用相同密码</strong>
+                          才能解密和恢复您的数据
+                        </p>
+                        <p>
+                          • <strong>请务必牢记此密码</strong>
+                          ，我们不会存储或上传您的任何密码信息
+                        </p>
+                        <p>
+                          • <strong>建议使用强密码</strong>
+                          ，可点击右侧按钮生成安全密码
+                        </p>
+                      </div>
+                      <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
+                        <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                          ⚠️ 重要提醒：忘记此密码将无法导入数据，请妥善保管！
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -613,8 +662,6 @@ export default function ImportExport({
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     <p>• 密码长度建议至少8位</p>
                     <p>• 包含大小写字母、数字和特殊字符</p>
-                    <p>• 导入时需要输入该密码进行解密</p>
-                    <p>• 请妥善保管密码，丢失后无法恢复数据</p>
                   </div>
                 )}
               </div>
