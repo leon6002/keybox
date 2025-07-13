@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Removed unused Card imports
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Search, Plus, Edit3 } from "lucide-react";
+import { Search, Plus, Edit3 } from "lucide-react";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import { SearchEngine } from "@/utils/search";
@@ -27,17 +27,6 @@ function ManagePasswordsContent() {
   );
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
-
-  // 智能返回函数
-  const handleGoBack = () => {
-    // 检查是否有历史记录
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      // 如果没有历史记录，跳转到首页
-      router.push("/");
-    }
-  };
 
   // 选择条目并更新 URL
   const handleSelectEntry = (entry: PasswordEntry) => {
@@ -457,10 +446,10 @@ function ManagePasswordsContent() {
               <Badge variant="secondary" className="hidden sm:inline-flex">
                 {entries.length} 个条目
               </Badge>
-              <Button variant="ghost" size="sm" onClick={handleGoBack}>
+              {/* <Button variant="ghost" size="sm" onClick={handleGoBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回
-              </Button>
+              </Button> */}
               <div className="flex items-center space-x-2">
                 {entries.length === 0 && (
                   <Button variant="outline" onClick={createSampleData}>
@@ -485,10 +474,10 @@ function ManagePasswordsContent() {
                 >
                   清除数据
                 </Button>
-                <Button onClick={() => router.push("/add")}>
+                {/* <Button onClick={() => router.push("/add")}>
                   <Plus className="w-4 h-4 mr-2" />
                   添加新密码
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -512,7 +501,7 @@ function ManagePasswordsContent() {
             </div>
             <Button
               onClick={handleCreateNew}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer"
               variant="outline"
             >
               <Plus className="w-4 h-4 mr-2" />

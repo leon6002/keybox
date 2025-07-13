@@ -94,12 +94,6 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push("/passwords")}
-              className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
-            >
-              密码管理
-            </button>
-            <button
-              onClick={() => router.push("/manage")}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer"
             >
               开始使用

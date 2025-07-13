@@ -385,7 +385,7 @@ export default function ImportExport({
                 </div>
 
                 <div className="space-y-3">
-                  <button
+                  {/* <button
                     onClick={() => handleExport(true)}
                     className="cursor-pointer w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                   >
@@ -425,7 +425,7 @@ export default function ImportExport({
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </button>
+                  </button> */}
 
                   {/* <button
                     onClick={() => handleExport(false)}
@@ -647,7 +647,7 @@ export default function ImportExport({
                     }
                   }}
                   disabled={pendingFile ? !decryptPassword : !encryptPassword}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                  className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
                 >
                   {pendingFile ? "解密导入" : "加密导出"}
                 </button>

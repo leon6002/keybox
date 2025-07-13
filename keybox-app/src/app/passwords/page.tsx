@@ -52,11 +52,22 @@ export default function PasswordsPage() {
     StorageManager.saveToLocalStorage(updatedEntries, categories);
   };
 
-  // 处理数据更新
-  const handleDataUpdate = () => {
-    const loadedData = StorageManager.loadFromLocalStorage();
-    setEntries(loadedData.entries);
-    setCategories(loadedData.categories);
+  // 处理导入数据
+  const handleImportData = (importedEntries: PasswordEntry[]) => {
+    // 合并导入的条目和现有条目
+    const mergedEntries = [...entries, ...importedEntries];
+    setEntries(mergedEntries);
+
+    // 保存到 localStorage
+    StorageManager.saveToLocalStorage(mergedEntries, categories);
+
+    // 更新过滤后的条目
+    if (searchQuery.trim() === "") {
+      setFilteredEntries(mergedEntries);
+    } else {
+      const results = SearchEngine.search(mergedEntries, searchQuery);
+      setFilteredEntries(results.map((result) => result.entry));
+    }
   };
 
   return (
@@ -212,7 +223,7 @@ export default function PasswordsPage() {
           entries={entries}
           categories={categories}
           onClose={() => setShowImportExport(false)}
-          onImport={handleDataUpdate}
+          onImport={handleImportData}
         />
       )}
 
@@ -233,7 +244,7 @@ export default function PasswordsPage() {
           entries={entries}
           categories={categories}
           onClose={() => setShowQuickImportExport(null)}
-          onImport={handleDataUpdate}
+          onImport={handleImportData}
         />
       )}
     </div>
