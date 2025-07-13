@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Removed unused Card imports
@@ -15,6 +16,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 
 function ManagePasswordsContent() {
   const router = useRouter();
+  const { t, ready } = useTranslation();
   const searchParams = useSearchParams();
   const entryId = searchParams.get("id");
   const action = searchParams.get("action");
@@ -530,16 +532,16 @@ function ManagePasswordsContent() {
                   onClick={() => (window.location.href = "/")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  首页
+                  {ready ? t("nav.home") : "首页"}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/passwords")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  密码列表
+                  {ready ? t("nav.passwordList") : "密码列表"}
                 </button>
                 <button className="cursor-pointer px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
-                  密码管理
+                  {ready ? t("nav.passwordManage") : "密码管理"}
                 </button>
               </div>
             </div>
