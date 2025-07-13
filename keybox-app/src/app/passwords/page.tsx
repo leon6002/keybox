@@ -11,11 +11,13 @@ import PasswordViewModal from "@/components/PasswordViewModal";
 import ImportExport from "@/components/ImportExport";
 import CategoryManager from "@/components/CategoryManager";
 import QuickImportExport from "@/components/QuickImportExport";
+import CategoryFilter from "@/components/CategoryFilter";
 
 export default function PasswordsPage() {
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [filteredEntries, setFilteredEntries] = useState<PasswordEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<PasswordEntry | null>(
     null
@@ -35,15 +37,25 @@ export default function PasswordsPage() {
     setFilteredEntries(loadedData.entries);
   }, []);
 
-  // 搜索过滤
+  // 搜索和类目过滤
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredEntries(entries);
-    } else {
-      const results = SearchEngine.search(entries, searchQuery);
-      setFilteredEntries(results.map((result) => result.entry));
+    let filtered = entries;
+
+    // 先按类目筛选
+    if (selectedCategoryId !== "all") {
+      filtered = filtered.filter(
+        (entry) => entry.categoryId === selectedCategoryId
+      );
     }
-  }, [entries, searchQuery]);
+
+    // 再按搜索查询筛选
+    if (searchQuery.trim() !== "") {
+      const results = SearchEngine.search(filtered, searchQuery);
+      filtered = results.map((result) => result.entry);
+    }
+
+    setFilteredEntries(filtered);
+  }, [entries, searchQuery, selectedCategoryId]);
 
   // 删除条目
   const handleDeleteEntry = (entryId: string) => {
@@ -144,12 +156,34 @@ export default function PasswordsPage() {
       <main className="container mx-auto px-4 py-6">
         {entries.length > 0 ? (
           <>
-            <div className="mb-6">
+            {/* 搜索和筛选区域 */}
+            <div className="mb-6 space-y-4">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="搜索密码条目..."
               />
+
+              {/* 类目筛选器和统计信息 */}
+              <div className="flex items-center justify-between">
+                <CategoryFilter
+                  categories={categories}
+                  entries={entries}
+                  selectedCategoryId={selectedCategoryId}
+                  onCategoryChange={setSelectedCategoryId}
+                />
+
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {selectedCategoryId === "all" ? (
+                    <span>显示全部 {filteredEntries.length} 个密码</span>
+                  ) : (
+                    <span>
+                      筛选结果：{filteredEntries.length} 个密码
+                      {searchQuery && ` (搜索: "${searchQuery}")`}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <PasswordList

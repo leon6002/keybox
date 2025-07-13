@@ -49,28 +49,41 @@ export class StorageManager {
 
       const database: PasswordDatabase = JSON.parse(data);
 
+      // 获取类目数据，如果没有则使用默认类目
+      const categories =
+        database.categories && database.categories.length > 0
+          ? database.categories
+          : CategoryManager.getDefaultCategories();
+
       // 确保所有条目都有必要的属性
-      const entries = (database.entries || []).map((entry, index) => ({
-        ...entry,
-        id: entry.id || `entry-${Date.now()}-${index}`, // 确保有唯一 ID
-        title: entry.title || "",
-        categoryId: entry.categoryId || "",
-        customFields: entry.customFields || [],
-        tags: entry.tags || [],
-        isFavorite: entry.isFavorite || false,
-        username: entry.username || "",
-        password: entry.password || "",
-        website: entry.website || "",
-        description: entry.description || "",
-        notes: entry.notes || "",
-        createdAt: entry.createdAt || new Date().toISOString(),
-        updatedAt: entry.updatedAt || new Date().toISOString(),
-      }));
+      const entries = (database.entries || []).map((entry, index) => {
+        // 如果 categoryId 为空或不存在于类目中，使用第一个类目的 ID
+        let categoryId = entry.categoryId || "";
+        if (!categoryId || !categories.find((cat) => cat.id === categoryId)) {
+          categoryId = categories.length > 0 ? categories[0].id : "";
+        }
+
+        return {
+          ...entry,
+          id: entry.id || `entry-${Date.now()}-${index}`, // 确保有唯一 ID
+          title: entry.title || "",
+          categoryId,
+          customFields: entry.customFields || [],
+          tags: entry.tags || [],
+          isFavorite: entry.isFavorite || false,
+          username: entry.username || "",
+          password: entry.password || "",
+          website: entry.website || "",
+          description: entry.description || "",
+          notes: entry.notes || "",
+          createdAt: entry.createdAt || new Date().toISOString(),
+          updatedAt: entry.updatedAt || new Date().toISOString(),
+        };
+      });
 
       return {
         entries,
-        categories:
-          database.categories || CategoryManager.getDefaultCategories(),
+        categories,
       };
     } catch (error) {
       console.error("Failed to load from localStorage:", error);
