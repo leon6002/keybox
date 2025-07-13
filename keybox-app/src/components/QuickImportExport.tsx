@@ -308,7 +308,7 @@ export default function QuickImportExport({
                       setPendingFile(null);
                       setDecryptPassword("");
                     }}
-                    className="px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    className="cursor-pointer px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                   >
                     取消
                   </button>
@@ -317,7 +317,7 @@ export default function QuickImportExport({
                       handleFileSelect(pendingFile, decryptPassword)
                     }
                     disabled={!decryptPassword}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                    className="cursor-pointer px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
                   >
                     解密导入
                   </button>
@@ -372,7 +372,7 @@ export default function QuickImportExport({
 
           <button
             onClick={() => handleQuickExport(false)}
-            className="w-full flex items-center justify-center p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            className="cursor-pointer w-full flex items-center justify-center p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
           >
             <svg
               className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3"
@@ -396,7 +396,7 @@ export default function QuickImportExport({
             onClick={() => {
               setShowPasswordDialog(true);
             }}
-            className="w-full flex items-center justify-center p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+            className="cursor-pointer w-full flex items-center justify-center p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
           >
             <svg
               className="w-5 h-5 text-green-600 dark:text-green-400 mr-3"
@@ -453,14 +453,14 @@ export default function QuickImportExport({
                       setShowPasswordDialog(false);
                       setEncryptPassword("");
                     }}
-                    className="px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    className="cursor-pointer px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                   >
                     取消
                   </button>
                   <button
                     onClick={() => handleQuickExport(true, encryptPassword)}
                     disabled={!encryptPassword}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                    className="cursor-pointer px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
                   >
                     加密导出
                   </button>

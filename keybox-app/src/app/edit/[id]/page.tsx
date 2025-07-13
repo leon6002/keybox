@@ -425,7 +425,7 @@ export default function EditPasswordPage() {
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="ml-1 text-muted-foreground hover:text-foreground"
+                      className="cursor-pointer ml-1 text-muted-foreground hover:text-foreground"
                     >
                       ×
                     </button>

@@ -85,7 +85,7 @@ export default function CategoryManager({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <svg
               className="w-6 h-6"
@@ -107,7 +107,7 @@ export default function CategoryManager({
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab("list")}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            className={`cursor-pointer flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === "list"
                 ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -117,7 +117,7 @@ export default function CategoryManager({
           </button>
           <button
             onClick={() => setActiveTab("templates")}
-            className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+            className={`cursor-pointer flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               activeTab === "templates"
                 ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -137,7 +137,7 @@ export default function CategoryManager({
                   setSelectedCategory(null);
                   setShowAddForm(true);
                 }}
-                className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                className="cursor-pointer w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
               >
                 <div className="flex items-center justify-center space-x-2 text-gray-500 dark:text-gray-400">
                   <svg
@@ -181,7 +181,7 @@ export default function CategoryManager({
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleEditCategory(category)}
-                        className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                        className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded cursor-pointer"
                         title="编辑"
                       >
                         <svg
@@ -200,7 +200,7 @@ export default function CategoryManager({
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded cursor-pointer"
                         title="删除"
                       >
                         <svg
@@ -273,7 +273,7 @@ export default function CategoryManager({
                     </div>
                     <button
                       onClick={() => handleAddFromTemplate(template)}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                     >
                       添加
                     </button>
@@ -306,13 +306,13 @@ export default function CategoryManager({
         <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"
           >
             取消
           </button>
           <button
             onClick={handleSaveCategories}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
           >
             保存更改
           </button>

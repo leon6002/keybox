@@ -139,7 +139,7 @@ export default function PasswordList({
           <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md transition-colors duration-200 ${
+              className={`cursor-pointer p-2 rounded-md transition-colors duration-200 ${
                 viewMode === "grid"
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -162,7 +162,7 @@ export default function PasswordList({
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md transition-colors duration-200 ${
+              className={`cursor-pointer p-2 rounded-md transition-colors duration-200 ${
                 viewMode === "list"
                   ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"

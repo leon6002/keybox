@@ -435,7 +435,7 @@ function ManagePasswordsContent() {
                 >
                   密码列表
                 </button>
-                <button className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
+                <button className="cursor-pointer px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
                   密码管理
                 </button>
               </div>
@@ -461,7 +461,7 @@ function ManagePasswordsContent() {
                   onClick={async () => {
                     const confirmed = await confirm({
                       title: "清除所有数据",
-                      description: "确定要清除所有数据吗？此操作无法撤销。",
+                      description: "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
                       confirmText: "清除",
                       cancelText: "取消",
                       variant: "destructive",

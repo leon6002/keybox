@@ -67,7 +67,7 @@ const CATEGORY_COLORS = [
   "#EC4899",
   "#6366F1",
   "#14B8A6",
-  "#F59E0B",
+  "#A855F7",
 ];
 
 export default function CategoryForm({
@@ -182,7 +182,7 @@ export default function CategoryForm({
             <button
               type="button"
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"
             >
               <svg
                 className="w-6 h-6"
@@ -262,7 +262,7 @@ export default function CategoryForm({
                             key={icon}
                             type="button"
                             onClick={() => handleInputChange("icon", icon)}
-                            className={`p-2 text-lg rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                            className={`cursor-pointer p-2 text-lg rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
                               formData.icon === icon
                                 ? "bg-blue-100 dark:bg-blue-900 ring-2 ring-blue-500"
                                 : ""
@@ -294,7 +294,7 @@ export default function CategoryForm({
                           key={color}
                           type="button"
                           onClick={() => handleInputChange("color", color)}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          className={`cursor-pointer w-8 h-8 rounded-full border-2 transition-all ${
                             formData.color === color
                               ? "border-gray-800 dark:border-white scale-110"
                               : "border-gray-300 dark:border-gray-600"
@@ -340,7 +340,7 @@ export default function CategoryForm({
                   <button
                     type="button"
                     onClick={addField}
-                    className="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -449,7 +449,7 @@ export default function CategoryForm({
                               type="button"
                               onClick={() => moveField(field.id, "up")}
                               disabled={index === 0}
-                              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                               title="上移"
                             >
                               <svg
@@ -471,7 +471,7 @@ export default function CategoryForm({
                               type="button"
                               onClick={() => moveField(field.id, "down")}
                               disabled={index === formData.fields.length - 1}
-                              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="cursor-pointer p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                               title="下移"
                             >
                               <svg
@@ -492,7 +492,7 @@ export default function CategoryForm({
                             <button
                               type="button"
                               onClick={() => removeField(field.id)}
-                              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                               title="删除"
                             >
                               <svg
@@ -546,13 +546,13 @@ export default function CategoryForm({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="cursor-pointer px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
               取消
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               {category ? "更新类目" : "创建类目"}
             </button>

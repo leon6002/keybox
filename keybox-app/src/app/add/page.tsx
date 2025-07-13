@@ -380,7 +380,7 @@ export default function AddPasswordPage() {
                 </button>
                 <button
                   onClick={() => (window.location.href = "/manage")}
-                  className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg"
+                  className="cursor-pointer px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg"
                 >
                   添加密码
                 </button>
@@ -453,7 +453,7 @@ export default function AddPasswordPage() {
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="ml-1 text-muted-foreground hover:text-foreground"
+                      className="cursor-pointer ml-1 text-muted-foreground hover:text-foreground"
                     >
                       ×
                     </button>

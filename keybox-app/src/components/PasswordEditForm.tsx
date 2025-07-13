@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -219,10 +219,10 @@ export default function PasswordEditForm({
     switch (field.type) {
       case "textarea":
         return (
-          <div key={field.id} className="space-y-2">
+          <div key={field.id} className="space-y-2 col-span-full">
             <Label
               htmlFor={fieldId}
-              className="flex items-center justify-between"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-between"
             >
               <span>
                 {field.name}{" "}
@@ -234,7 +234,7 @@ export default function PasswordEditForm({
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(field.value, field.name)}
-                  className="h-6 px-2"
+                  className="h-7 px-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -247,6 +247,7 @@ export default function PasswordEditForm({
               placeholder={field.placeholder || `输入${field.name}`}
               required={field.isRequired}
               rows={3}
+              className="border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         );
@@ -256,7 +257,7 @@ export default function PasswordEditForm({
           <div key={field.id} className="space-y-2">
             <Label
               htmlFor={fieldId}
-              className="flex items-center justify-between"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-between"
             >
               <span>
                 {field.name}{" "}
@@ -268,7 +269,7 @@ export default function PasswordEditForm({
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(field.value, field.name)}
-                  className="h-6 px-2"
+                  className="h-7 px-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -283,7 +284,7 @@ export default function PasswordEditForm({
                   onChange={(e) => updateCustomField(field.id, e.target.value)}
                   placeholder={field.placeholder || `输入${field.name}`}
                   required={field.isRequired}
-                  className="pr-10 font-mono"
+                  className="h-11 pr-10 font-mono border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                 />
                 <Button
                   type="button"
@@ -319,7 +320,7 @@ export default function PasswordEditForm({
           <div key={field.id} className="space-y-2">
             <Label
               htmlFor={fieldId}
-              className="flex items-center justify-between"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-between"
             >
               <span>
                 {field.name}{" "}
@@ -331,7 +332,7 @@ export default function PasswordEditForm({
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(field.value, field.name)}
-                  className="h-6 px-2"
+                  className="h-7 px-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <Copy className="w-3 h-3" />
                 </Button>
@@ -344,6 +345,7 @@ export default function PasswordEditForm({
               onChange={(e) => updateCustomField(field.id, e.target.value)}
               placeholder={field.placeholder || `输入${field.name}`}
               required={field.isRequired}
+              className="h-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         );
@@ -416,29 +418,40 @@ export default function PasswordEditForm({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-2xl space-y-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-6 space-y-8">
           {/* 基本信息 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>基本信息</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                基本信息
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* 标题 */}
               <div className="space-y-2">
-                <Label htmlFor="title">标题 *</Label>
+                <Label
+                  htmlFor="title"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  标题 <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder="输入标题"
+                  placeholder="输入密码条目标题"
                   required
+                  className="h-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
 
               {/* 类目选择 */}
               <div className="space-y-2">
-                <Label>类目 *</Label>
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  类目 <span className="text-red-500">*</span>
+                </Label>
                 <CategorySelector
                   categories={categories}
                   selectedCategory={formData.categoryId}
@@ -448,14 +461,37 @@ export default function PasswordEditForm({
                   showAll={false}
                 />
               </div>
+            </div>
+          </div>
 
-              {/* 动态字段 */}
-              {formData.customFields?.map(renderDynamicField)}
+          {/* 动态字段 */}
+          {formData.customFields && formData.customFields.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
+                <div className="w-1 h-5 bg-green-600 rounded-full"></div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  字段信息
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {formData.customFields?.map(renderDynamicField)}
+              </div>
+            </div>
+          )}
 
+          {/* 标签和备注 */}
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="w-1 h-5 bg-purple-600 rounded-full"></div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                附加信息
+              </h3>
+            </div>
+            <div className="space-y-6">
               {/* 标签 */}
-              <div className="space-y-2">
-                <Label className="flex items-center space-x-1">
-                  <Tag className="w-3 h-3" />
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center space-x-2">
+                  <Tag className="w-4 h-4" />
                   <span>标签</span>
                 </Label>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -479,14 +515,20 @@ export default function PasswordEditForm({
                     onChange={(e) => setTagInput(e.target.value)}
                     placeholder="添加标签"
                     onKeyPress={(e) => e.key === "Enter" && addTag()}
+                    className="h-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <Button type="button" variant="outline" onClick={addTag}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addTag}
+                    className="h-10 px-4"
+                  >
                     添加
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
