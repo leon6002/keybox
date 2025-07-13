@@ -1,0 +1,95 @@
+{
+  "name": "PandaKeyBox - 安全的密码管理器",
+  "short_name": "PandaKeyBox",
+  "description": "PandaKeyBox 是您的专属密码管家，采用军用级加密技术，让您的数字生活更安全、更便捷。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-CN",
+  "categories": ["productivity", "utilities", "security"],
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PandaKeyBox 密码管理界面"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "PandaKeyBox 移动端界面"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "添加密码",
+      "short_name": "添加",
+      "description": "快速添加新的密码条目",
+      "url": "/add",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "密码列表",
+      "short_name": "列表",
+      "description": "查看所有密码条目",
+      "url": "/passwords",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "密码管理",
+      "short_name": "管理",
+      "description": "管理和编辑密码",
+      "url": "/manage",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ]
+}
