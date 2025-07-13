@@ -1,0 +1,168 @@
+{
+  "version": "1.0.0",
+  "entries": [
+    {
+      "id": "sample1",
+      "title": "GitHub",
+      "username": "john.doe@example.com",
+      "password": "MySecurePassword123!",
+      "website": "https://github.com",
+      "description": "代码托管平台",
+      "notes": "用于个人项目和开源贡献",
+      "customFields": [
+        {
+          "id": "cf1",
+          "name": "两步验证密钥",
+          "value": "JBSWY3DPEHPK3PXP",
+          "type": "text"
+        }
+      ],
+      "tags": ["开发", "工作", "重要"],
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-20T14:45:00.000Z",
+      "isFavorite": true
+    },
+    {
+      "id": "sample2",
+      "title": "Gmail",
+      "username": "john.doe@gmail.com",
+      "password": "EmailPassword456@",
+      "website": "https://gmail.com",
+      "description": "个人邮箱账户",
+      "notes": "主要用于个人通信和注册各种服务",
+      "customFields": [
+        {
+          "id": "cf2",
+          "name": "恢复邮箱",
+          "value": "backup@example.com",
+          "type": "email"
+        },
+        {
+          "id": "cf3",
+          "name": "手机号码",
+          "value": "+86 138-0013-8000",
+          "type": "text"
+        }
+      ],
+      "tags": ["邮箱", "个人", "重要"],
+      "createdAt": "2024-01-10T09:15:00.000Z",
+      "updatedAt": "2024-01-25T16:20:00.000Z",
+      "isFavorite": true
+    },
+    {
+      "id": "sample3",
+      "title": "Netflix",
+      "username": "john.doe@example.com",
+      "password": "StreamingPass789#",
+      "website": "https://netflix.com",
+      "description": "视频流媒体服务",
+      "notes": "家庭共享账户，支持4K画质",
+      "customFields": [
+        {
+          "id": "cf4",
+          "name": "套餐类型",
+          "value": "高级套餐",
+          "type": "text"
+        },
+        {
+          "id": "cf5",
+          "name": "到期日期",
+          "value": "2024-12-31",
+          "type": "text"
+        }
+      ],
+      "tags": ["娱乐", "订阅", "家庭"],
+      "createdAt": "2024-01-05T20:00:00.000Z",
+      "updatedAt": "2024-01-15T11:30:00.000Z",
+      "isFavorite": false
+    },
+    {
+      "id": "sample4",
+      "title": "银行网银",
+      "username": "6222021234567890",
+      "password": "BankSecure2024!",
+      "website": "https://ebank.example.com",
+      "description": "工商银行网上银行",
+      "notes": "仅用于查询余额和转账，重要操作需要U盾",
+      "customFields": [
+        {
+          "id": "cf6",
+          "name": "开户行",
+          "value": "工商银行北京分行",
+          "type": "text"
+        },
+        {
+          "id": "cf7",
+          "name": "客服电话",
+          "value": "95588",
+          "type": "text"
+        },
+        {
+          "id": "cf8",
+          "name": "U盾序列号",
+          "value": "U123456789",
+          "type": "password"
+        }
+      ],
+      "tags": ["银行", "金融", "重要", "安全"],
+      "createdAt": "2024-01-01T08:00:00.000Z",
+      "updatedAt": "2024-01-30T10:15:00.000Z",
+      "isFavorite": true
+    },
+    {
+      "id": "sample5",
+      "title": "公司VPN",
+      "username": "john.doe",
+      "password": "VpnAccess2024@",
+      "website": "https://vpn.company.com",
+      "description": "公司远程访问VPN",
+      "notes": "用于在家办公时连接公司内网",
+      "customFields": [
+        {
+          "id": "cf9",
+          "name": "服务器地址",
+          "value": "vpn.company.com:443",
+          "type": "text"
+        },
+        {
+          "id": "cf10",
+          "name": "协议类型",
+          "value": "OpenVPN",
+          "type": "text"
+        }
+      ],
+      "tags": ["工作", "VPN", "远程"],
+      "createdAt": "2024-01-08T14:30:00.000Z",
+      "updatedAt": "2024-01-22T09:45:00.000Z",
+      "isFavorite": false
+    },
+    {
+      "id": "sample6",
+      "title": "阿里云",
+      "username": "john.doe@example.com",
+      "password": "CloudService123!",
+      "website": "https://ecs.console.aliyun.com",
+      "description": "云服务器管理控制台",
+      "notes": "用于管理个人网站和小程序后端服务",
+      "customFields": [
+        {
+          "id": "cf11",
+          "name": "AccessKey ID",
+          "value": "LTAI4G8mF7wX9Y2nB3qR5sT6",
+          "type": "password"
+        },
+        {
+          "id": "cf12",
+          "name": "AccessKey Secret",
+          "value": "9Xz7K2mN4pQ8wE5rT1yU6iO3aS0dF",
+          "type": "password"
+        }
+      ],
+      "tags": ["云服务", "开发", "服务器"],
+      "createdAt": "2024-01-12T16:20:00.000Z",
+      "updatedAt": "2024-01-28T13:10:00.000Z",
+      "isFavorite": false
+    }
+  ],
+  "exportedAt": "2024-01-30T12:00:00.000Z"
+}
