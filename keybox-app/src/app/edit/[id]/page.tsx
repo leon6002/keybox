@@ -254,7 +254,7 @@ export default function EditPasswordPage() {
     }
   };
 
-  const renderDynamicField = (field: CustomField, index: number) => {
+  const renderDynamicField = (field: CustomField) => {
     const fieldId = `field-${field.id}`;
 
     switch (field.type) {
@@ -410,9 +410,7 @@ export default function EditPasswordPage() {
             </div>
 
             {/* 动态字段 */}
-            {formData.customFields.map((field, index) =>
-              renderDynamicField(field, index)
-            )}
+            {formData.customFields.map((field) => renderDynamicField(field))}
 
             {/* 标签 */}
             <div className="space-y-2">
@@ -439,7 +437,12 @@ export default function EditPasswordPage() {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   placeholder="添加标签"
-                  onKeyPress={(e) => e.key === "Enter" && addTag()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
                 />
                 <Button type="button" variant="outline" onClick={addTag}>
                   添加

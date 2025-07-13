@@ -87,12 +87,18 @@ export default function PasswordGeneratorModal({
   };
 
   // 更新选项
-  const updateOptions = (key: keyof PasswordGenerator, value: any) => {
+  const updateOptions = (
+    key: keyof PasswordGenerator,
+    value: string | number | boolean
+  ) => {
     setOptions((prev) => ({ ...prev, [key]: value }));
   };
 
   // 更新易记忆选项
-  const updateMemorableOptions = (key: string, value: any) => {
+  const updateMemorableOptions = (
+    key: string,
+    value: string | number | boolean
+  ) => {
     // 处理分隔符的特殊情况
     const actualValue = key === "separator" && value === "none" ? "" : value;
 

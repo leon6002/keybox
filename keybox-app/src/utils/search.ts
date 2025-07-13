@@ -58,6 +58,7 @@ export class SearchEngine {
 
     searchTerms.forEach((term) => {
       searchFields.forEach(({ field, value, weight }) => {
+        if (!value) return;
         const fieldValue = value.toLowerCase();
         if (fieldValue.includes(term)) {
           if (!matchedFields.includes(field)) {
@@ -132,7 +133,7 @@ export class SearchEngine {
       }
 
       // 从网站获取建议
-      if (entry.website.toLowerCase().includes(queryLower)) {
+      if (entry.website && entry.website.toLowerCase().includes(queryLower)) {
         suggestions.add(entry.website);
       }
 

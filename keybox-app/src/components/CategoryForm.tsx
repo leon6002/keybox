@@ -531,7 +531,9 @@ export default function CategoryForm({
                         />
                       </svg>
                       <p>还没有添加字段</p>
-                      <p className="text-sm">点击"添加字段"按钮开始创建</p>
+                      <p className="text-sm">
+                        点击&ldquo;添加字段&rdquo;按钮开始创建
+                      </p>
                     </div>
                   )}
                 </div>

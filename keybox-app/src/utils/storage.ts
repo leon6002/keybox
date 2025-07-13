@@ -9,7 +9,6 @@ import { EncryptionUtil } from "./encryption";
 import { CategoryManager } from "./categories";
 
 const STORAGE_KEY = "keybox_passwords";
-const CATEGORIES_KEY = "keybox_categories";
 const CURRENT_VERSION = "1.0.0";
 
 // 本地存储管理类
@@ -268,26 +267,28 @@ export class StorageManager {
   }
 
   // 验证导入数据格式
-  private static validateImportData(database: any): boolean {
+  private static validateImportData(database: unknown): boolean {
     if (!database || typeof database !== "object") return false;
-    if (!Array.isArray(database.entries)) return false;
+    const db = database as Record<string, unknown>;
+    if (!Array.isArray(db.entries)) return false;
 
     // 验证每个条目的基本字段
-    return database.entries.every((entry: any) => {
+    return db.entries.every((entry: unknown) => {
+      if (!entry || typeof entry !== "object") return false;
+      const entryObj = entry as Record<string, unknown>;
       return (
-        typeof entry === "object" &&
-        typeof entry.title === "string" &&
-        typeof entry.username === "string" &&
-        typeof entry.password === "string" &&
-        typeof entry.website === "string" &&
-        Array.isArray(entry.customFields)
+        typeof entryObj.title === "string" &&
+        typeof entryObj.username === "string" &&
+        typeof entryObj.password === "string" &&
+        typeof entryObj.website === "string" &&
+        Array.isArray(entryObj.customFields)
       );
     });
   }
 
   // 生成唯一 ID
   static generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 
   // 清空所有数据
@@ -307,7 +308,7 @@ export class StorageManager {
         total,
         percentage: (used / total) * 100,
       };
-    } catch (error) {
+    } catch {
       return { used: 0, total: 0, percentage: 0 };
     }
   }

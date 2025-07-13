@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 
 interface SearchBarProps {
   value: string;
@@ -8,7 +8,11 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export default function SearchBar({ value, onChange, placeholder = "搜索..." }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = "搜索...",
+}: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -16,24 +20,24 @@ export default function SearchBar({ value, onChange, placeholder = "搜索..." }
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Ctrl/Cmd + K 聚焦搜索框
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
         event.preventDefault();
         inputRef.current?.focus();
       }
-      
+
       // ESC 清空搜索框
-      if (event.key === 'Escape' && isFocused) {
-        onChange('');
+      if (event.key === "Escape" && isFocused) {
+        onChange("");
         inputRef.current?.blur();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isFocused, onChange]);
 
   const handleClear = () => {
-    onChange('');
+    onChange("");
     inputRef.current?.focus();
   };
 
@@ -42,17 +46,15 @@ export default function SearchBar({ value, onChange, placeholder = "搜索..." }
       <div
         className={`relative flex items-center transition-all duration-200 ${
           isFocused
-            ? 'ring-2 ring-blue-500 ring-opacity-50'
-            : 'ring-1 ring-gray-300 dark:ring-gray-600'
+            ? "ring-2 ring-blue-500 ring-opacity-50"
+            : "ring-1 ring-gray-300 dark:ring-gray-600"
         } rounded-lg bg-white dark:bg-gray-800 shadow-sm`}
       >
         {/* Search Icon */}
         <div className="absolute left-3 flex items-center pointer-events-none">
           <svg
             className={`w-5 h-5 transition-colors duration-200 ${
-              isFocused
-                ? 'text-blue-500'
-                : 'text-gray-400 dark:text-gray-500'
+              isFocused ? "text-blue-500" : "text-gray-400 dark:text-gray-500"
             }`}
             fill="none"
             stroke="currentColor"
@@ -88,7 +90,12 @@ export default function SearchBar({ value, onChange, placeholder = "搜索..." }
               className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               title="清空搜索"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -103,7 +110,7 @@ export default function SearchBar({ value, onChange, placeholder = "搜索..." }
           {!isFocused && !value && (
             <div className="hidden sm:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500">
               <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
-                {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
+                {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}
               </kbd>
               <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
                 K
@@ -116,7 +123,7 @@ export default function SearchBar({ value, onChange, placeholder = "搜索..." }
       {/* Search Results Count */}
       {value && (
         <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
-          搜索: "{value}"
+          搜索: &ldquo;{value}&rdquo;
         </div>
       )}
     </div>

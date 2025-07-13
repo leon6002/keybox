@@ -10,13 +10,9 @@ import {
   Key,
   Zap,
   Globe,
-  Download,
-  Upload,
   Smartphone,
   ArrowRight,
-  CheckCircle,
   Star,
-  Users,
   Layers,
 } from "lucide-react";
 

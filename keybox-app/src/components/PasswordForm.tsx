@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PasswordEntry, CustomField, Category } from "@/types/password";
-import { PasswordGeneratorUtil } from "@/utils/passwordGenerator";
+
 import CategorySelector from "./CategorySelector";
 import PasswordGeneratorModal from "./PasswordGeneratorModal";
 
@@ -107,9 +107,7 @@ export default function PasswordForm({
   }, [selectedCategory, entry]);
 
   // 渲染动态字段
-  const renderDynamicField = (field: CustomField, index: number) => {
-    const isPasswordField = field.type === "password";
-
+  const renderDynamicField = (field: CustomField) => {
     switch (field.type) {
       case "textarea":
         return (
@@ -325,9 +323,7 @@ export default function PasswordForm({
 
             {/* Dynamic Fields based on Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {formData.customFields.map((field, index) =>
-                renderDynamicField(field, index)
-              )}
+              {formData.customFields.map((field) => renderDynamicField(field))}
             </div>
 
             {/* Tags */}
@@ -369,9 +365,12 @@ export default function PasswordForm({
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addTag())
-                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="添加标签"
                 />

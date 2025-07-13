@@ -356,7 +356,7 @@ export default function PasswordEditForm({
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "无效日期";
       return date.toLocaleString("zh-CN");
-    } catch (error) {
+    } catch {
       return "日期错误";
     }
   };

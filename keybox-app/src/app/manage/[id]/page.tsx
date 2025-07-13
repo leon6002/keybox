@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, Plus, Edit3 } from "lucide-react";
+import { ArrowLeft, Search, Plus } from "lucide-react";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import { SearchEngine } from "@/utils/search";
@@ -70,7 +70,7 @@ export default function ManagePasswordWithIdPage() {
       setFilteredEntries(entries);
     } else {
       const results = SearchEngine.search(entries, searchQuery);
-      setFilteredEntries(results);
+      setFilteredEntries(results.map((result) => result.entry));
     }
   }, [entries, searchQuery]);
 
@@ -281,8 +281,7 @@ export default function ManagePasswordWithIdPage() {
               entry={selectedEntry}
               categories={categories}
               onSave={handleSaveEntry}
-              onDelete={handleDeleteEntry}
-              onCancel={handleGoBack}
+              onDelete={() => handleDeleteEntry(selectedEntry.id)}
             />
           )}
         </div>

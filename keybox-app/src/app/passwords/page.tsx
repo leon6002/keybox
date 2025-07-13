@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import { SearchEngine } from "@/utils/search";
-import Header from "@/components/Header";
+
 import SearchBar from "@/components/SearchBar";
 import PasswordList from "@/components/PasswordList";
 import PasswordViewModal from "@/components/PasswordViewModal";
@@ -41,7 +41,7 @@ export default function PasswordsPage() {
       setFilteredEntries(entries);
     } else {
       const results = SearchEngine.search(entries, searchQuery);
-      setFilteredEntries(results);
+      setFilteredEntries(results.map((result) => result.entry));
     }
   }, [entries, searchQuery]);
 
@@ -125,7 +125,6 @@ export default function PasswordsPage() {
               >
                 导入/导出
               </button>
-
             </div>
           </div>
         </div>
@@ -198,7 +197,9 @@ export default function PasswordsPage() {
       {/* 弹窗组件 */}
       {showPasswordView && selectedEntry && (
         <PasswordViewModal
+          isOpen={showPasswordView}
           entry={selectedEntry}
+          categories={categories}
           onClose={() => {
             setShowPasswordView(false);
             setSelectedEntry(null);
@@ -211,7 +212,7 @@ export default function PasswordsPage() {
           entries={entries}
           categories={categories}
           onClose={() => setShowImportExport(false)}
-          onDataUpdate={handleDataUpdate}
+          onImport={handleDataUpdate}
         />
       )}
 
@@ -219,7 +220,7 @@ export default function PasswordsPage() {
         <CategoryManager
           categories={categories}
           onClose={() => setShowCategoryManager(false)}
-          onCategoriesUpdate={(newCategories) => {
+          onSave={(newCategories: Category[]) => {
             setCategories(newCategories);
             StorageManager.saveToLocalStorage(entries, newCategories);
           }}
@@ -232,7 +233,7 @@ export default function PasswordsPage() {
           entries={entries}
           categories={categories}
           onClose={() => setShowQuickImportExport(null)}
-          onDataUpdate={handleDataUpdate}
+          onImport={handleDataUpdate}
         />
       )}
     </div>

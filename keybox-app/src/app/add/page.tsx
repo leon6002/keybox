@@ -246,8 +246,7 @@ export default function AddPasswordPage() {
     }
   };
 
-  const renderDynamicField = (field: CustomField, index: number) => {
-    const isPasswordField = field.type === "password";
+  const renderDynamicField = (field: CustomField) => {
     const fieldId = `field-${field.id}`;
 
     switch (field.type) {
@@ -381,7 +380,8 @@ export default function AddPasswordPage() {
                 </button>
                 <button
                   onClick={() => (window.location.href = "/manage")}
-                  className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
+                  className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg"
+                >
                   添加密码
                 </button>
               </div>
@@ -438,9 +438,7 @@ export default function AddPasswordPage() {
             </div>
 
             {/* 动态字段 */}
-            {formData.customFields.map((field, index) =>
-              renderDynamicField(field, index)
-            )}
+            {formData.customFields.map((field) => renderDynamicField(field))}
 
             {/* 标签 */}
             <div className="space-y-2">
@@ -467,7 +465,12 @@ export default function AddPasswordPage() {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   placeholder="添加标签"
-                  onKeyPress={(e) => e.key === "Enter" && addTag()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
                 />
                 <Button type="button" variant="outline" onClick={addTag}>
                   添加
