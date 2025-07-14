@@ -146,7 +146,7 @@ export default function HomePage() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
-                onClick={() => router.push("/manage?action=new")}
+                onClick={() => router.push("/manage")}
                 className="px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-lg hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 cursor-pointer"
               >
                 {ready ? t("home.cta.addFirstPassword") : "添加第一个密码"}
