@@ -2,12 +2,21 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { User, LogOut, Settings, Crown, ChevronDown } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Settings,
+  Crown,
+  ChevronDown,
+  CreditCard,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasPremiumFeatures } from "@/utils/payment";
 import UserAvatar from "@/components/UserAvatar";
+import { useRouter } from "next/navigation";
 
 export default function UserProfile() {
+  const router = useRouter();
   const { t, ready } = useTranslation();
   const { user, isAuthenticated, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -105,6 +114,17 @@ export default function UserProfile() {
 
           {/* Menu Items */}
           <div className="py-1">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/account");
+              }}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4 mr-3" />
+              {ready ? t("account.subscription") : "账户订阅"}
+            </button>
+
             <button
               onClick={() => {
                 setIsOpen(false);
