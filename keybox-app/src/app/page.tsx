@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import UserProfile from "@/components/UserProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Shield,
   Lock,
@@ -21,6 +23,7 @@ import {
 export default function HomePage() {
   const router = useRouter();
   const { t, ready } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -113,10 +116,34 @@ export default function HomePage() {
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
             <button
-              onClick={() => router.push("/passwords")}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer"
+              onClick={() => router.push("/pricing")}
+              className="hidden sm:block px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
             >
-              {ready ? t("home.cta.getStarted") : "开始使用"}
+              {ready ? t("nav.pricing") : "定价"}
+            </button>
+
+            {/* 登录/用户资料 */}
+            {isAuthenticated ? (
+              <UserProfile />
+            ) : (
+              <button
+                onClick={() => router.push("/auth/signin")}
+                className="hidden sm:block px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                {ready ? t("auth.signin.title") : "登录"}
+              </button>
+            )}
+
+            <button
+              onClick={() => router.push("/passwords")}
+              className="px-3 sm:px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer text-sm sm:text-base whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">
+                {ready ? t("home.cta.getStarted") : "开始使用"}
+              </span>
+              <span className="sm:hidden">
+                {ready ? t("common.start") : "开始"}
+              </span>
             </button>
           </div>
         </nav>

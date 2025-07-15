@@ -576,7 +576,7 @@ function ManagePasswordsContent() {
               <div className="hidden md:flex items-center space-x-2">
                 {entries.length === 0 && (
                   <Button variant="outline" onClick={createSampleData}>
-                    创建示例数据
+                    {ready ? t("nav.createSampleData") : "创建示例数据"}
                   </Button>
                 )}
               </div>
@@ -595,7 +595,7 @@ function ManagePasswordsContent() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                首页
+                {ready ? t("nav.home") : "首页"}
               </button>
               <button
                 onClick={() => {
@@ -604,10 +604,10 @@ function ManagePasswordsContent() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                密码列表
+                {ready ? t("nav.passwordList") : "密码列表"}
               </button>
               <div className="w-full text-left px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
-                密码管理
+                {ready ? t("nav.passwordManage") : "密码管理"}
               </div>
 
               <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
@@ -620,7 +620,7 @@ function ManagePasswordsContent() {
                   }}
                   className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  创建示例数据
+                  {ready ? t("nav.createSampleData") : "创建示例数据"}
                 </button>
               )}
 
@@ -628,11 +628,18 @@ function ManagePasswordsContent() {
                 onClick={async () => {
                   setIsMobileMenuOpen(false);
                   const confirmed = await confirm({
-                    title: "清除所有数据",
-                    description:
-                      "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
-                    confirmText: "清除",
-                    cancelText: "取消",
+                    title: ready
+                      ? t("confirm.clearData.title")
+                      : "清除所有数据",
+                    description: ready
+                      ? t("confirm.clearData.description")
+                      : "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
+                    confirmText: ready
+                      ? t("confirm.clearData.confirmText")
+                      : "清除",
+                    cancelText: ready
+                      ? t("confirm.clearData.cancelText")
+                      : "取消",
                     variant: "destructive",
                   });
                   if (confirmed) {
@@ -642,7 +649,7 @@ function ManagePasswordsContent() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
               >
-                清除数据
+                {ready ? t("nav.clearData") : "清除数据"}
               </button>
             </div>
           </div>
@@ -682,7 +689,9 @@ function ManagePasswordsContent() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="搜索密码..."
+                placeholder={
+                  ready ? t("password.searchPlaceholder") : "搜索密码..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -694,7 +703,7 @@ function ManagePasswordsContent() {
               variant="outline"
             >
               <Plus className="w-4 h-4 mr-2" />
-              添加新密码
+              {ready ? t("password.addNew") : "添加新密码"}
             </Button>
           </div>
 
@@ -803,7 +812,9 @@ function ManagePasswordsContent() {
             {/* Entry Count */}
             <div className="flex items-center justify-center">
               <Badge variant="secondary" className="text-xs">
-                共 {entries.length} 个条目
+                {ready
+                  ? t("stats.totalEntries", { count: entries.length })
+                  : `共 ${entries.length} 个条目`}
               </Badge>
             </div>
 
@@ -814,11 +825,16 @@ function ManagePasswordsContent() {
               className="w-full text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
               onClick={async () => {
                 const confirmed = await confirm({
-                  title: "清除所有数据",
-                  description:
-                    "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
-                  confirmText: "清除",
-                  cancelText: "取消",
+                  title: ready ? t("confirm.clearData.title") : "清除所有数据",
+                  description: ready
+                    ? t("confirm.clearData.description")
+                    : "确定要清除所有数据吗？此操作无法撤销。建议在清除之前先导出数据文件到您的电脑，后续可随时通过该文件直接导入。",
+                  confirmText: ready
+                    ? t("confirm.clearData.confirmText")
+                    : "清除",
+                  cancelText: ready
+                    ? t("confirm.clearData.cancelText")
+                    : "取消",
                   variant: "destructive",
                 });
                 if (confirmed) {
@@ -827,7 +843,7 @@ function ManagePasswordsContent() {
                 }
               }}
             >
-              清除数据
+              {ready ? t("nav.clearData") : "清除数据"}
             </Button>
           </div>
         </div>
@@ -841,7 +857,7 @@ function ManagePasswordsContent() {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              密码列表
+              {ready ? t("nav.passwordList") : "密码列表"}
             </h2>
             <button
               onClick={() => setIsSidebarOpen(false)}
@@ -868,7 +884,9 @@ function ManagePasswordsContent() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="搜索密码..."
+                placeholder={
+                  ready ? t("password.searchPlaceholder") : "搜索密码..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -883,7 +901,7 @@ function ManagePasswordsContent() {
               variant="outline"
             >
               <Plus className="w-4 h-4 mr-2" />
-              添加新密码
+              {ready ? t("password.addNew") : "添加新密码"}
             </Button>
           </div>
 

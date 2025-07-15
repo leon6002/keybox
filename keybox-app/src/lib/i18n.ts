@@ -16,6 +16,7 @@ const resources = {
         edit: "Edit",
         delete: "Delete",
         save: "Save",
+        start: "Start",
         cancel: "Cancel",
         confirm: "Confirm",
         close: "Close",
@@ -54,6 +55,7 @@ const resources = {
         importExport: "Import/Export",
         clearData: "Clear Data",
         createSampleData: "Create Sample Data",
+        pricing: "Pricing",
       },
 
       // 首页
@@ -225,6 +227,200 @@ const resources = {
         dataExported: "Data exported successfully",
         dataCleared: "All data cleared successfully",
       },
+
+      // 导入导出
+      importExport: {
+        title: "Import/Export",
+        import: "Import",
+        export: "Export",
+        quickImport: "Quick Import",
+        quickExport: "Quick Export",
+        advancedImportExport: "Advanced Import/Export",
+
+        // 导入相关
+        importData: "Import Data",
+        selectFile: "Select File",
+        dragDropFile: "Drag and drop file here, or click to select",
+        supportedFormats: "Supported formats: JSON, KBX",
+        importing: "Importing data...",
+        importSuccess: "Successfully imported {{count}} password entries",
+        importFailed: "Import failed",
+
+        // 导出相关
+        exportData: "Export Data",
+        exportComplete: "Export Complete (JSON)",
+        exportEncrypted: "Export Encrypted (KBX)",
+        includePasswords: "Include passwords",
+        excludePasswords: "Exclude passwords (structure only)",
+
+        // 加密相关
+        encryptionPassword: "Encryption Password",
+        decryptionPassword: "Decryption Password",
+        enterPassword: "Enter password",
+        confirmPassword: "Confirm password",
+        passwordRequired: "Password is required for encrypted files",
+        encryptExport: "Encrypt Export",
+        decryptImport: "Decrypt Import",
+        generatePassword: "Generate Password",
+        showPassword: "Show Password",
+        hidePassword: "Hide Password",
+
+        // 警告和提示
+        encryptionWarning:
+          "This password is specifically for encrypting export data and will be needed for import. Please remember this password as the app does not store it.",
+        fileTypeError: "Please select JSON or KBX format files",
+        clearAllData: "Clear All Data",
+        clearAllDataConfirm:
+          "Are you sure you want to clear all data? This action cannot be undone!",
+
+        // 按钮
+        startImport: "Start Import",
+        startExport: "Start Export",
+        cancel: "Cancel",
+        close: "Close",
+      },
+
+      // 支付相关
+      payment: {
+        success: {
+          title: "Payment Successful!",
+          description:
+            "Thank you for your purchase! Your premium features have been activated.",
+          featuresUnlocked: "Features Unlocked",
+          autoRedirect: "Redirecting to homepage in {{seconds}} seconds",
+        },
+        cancel: {
+          title: "Payment Cancelled",
+          description:
+            "Your payment has been cancelled. No charges were made. You can try purchasing premium features again at any time.",
+          whyUpgrade: "Why Upgrade to Premium?",
+          tryAgain: "Try Again",
+        },
+      },
+
+      // 定价页面
+      pricing: {
+        title: "Choose Your Plan",
+        subtitle:
+          "Start with free, upgrade to Pro anytime to unlock powerful features",
+        popular: "Most Popular",
+
+        free: {
+          name: "Free",
+          price: "Free",
+          description: "Perfect for personal basic use",
+          feature1: "Up to 50 passwords",
+          feature2: "Basic encryption",
+          feature3: "Local storage",
+          feature4: "Basic import/export",
+          button: "Current Plan",
+        },
+
+        pro: {
+          name: "Professional",
+          price: "$0.99/month",
+          description: "Perfect for professionals and teams",
+          feature1: "Unlimited password storage",
+          feature2: "Advanced encryption algorithms",
+          feature3: "Cloud synchronization",
+          feature4: "Advanced import/export",
+          feature5: "Password strength analysis",
+          feature6: "Priority technical support",
+          button: "Upgrade Now",
+        },
+
+        enterprise: {
+          name: "Enterprise",
+          price: "$1.99/month",
+          description: "Perfect for large teams and enterprises",
+          feature1: "All Professional features",
+          feature2: "Team management",
+          feature3: "SSO single sign-on",
+          feature4: "Audit logs",
+          feature5: "API access",
+          feature6: "24/7 dedicated support",
+          button: "Contact Sales",
+        },
+
+        features: {
+          title: "Why Choose PandaKeyBox?",
+          subtitle:
+            "Professional password management to protect your digital life",
+          security: {
+            title: "Military-grade Encryption",
+            description: "AES-256 encryption protects your data",
+          },
+          sync: {
+            title: "Cloud Sync",
+            description: "Seamless sync across devices",
+          },
+          speed: {
+            title: "Lightning Fast",
+            description: "Millisecond response time",
+          },
+          support: {
+            title: "Professional Support",
+            description: "24/7 technical support",
+          },
+        },
+      },
+
+      // 功能特性
+      features: {
+        unlimitedPasswords: "Unlimited password storage",
+        advancedEncryption: "Advanced encryption features",
+        cloudSync: "Cloud synchronization",
+        prioritySupport: "Priority technical support",
+      },
+
+      // 认证相关
+      auth: {
+        signInWithGoogle: "Sign in with Google",
+        loadingGoogle: "Loading Google Sign-In...",
+        signingIn: "Signing in...",
+        signOut: "Sign Out",
+
+        signin: {
+          title: "Sign in to PandaKeyBox",
+          subtitle: "Securely manage all your passwords",
+          orContinue: "or continue with",
+          guestAccess: "Continue as Guest",
+          privacyNotice:
+            "By signing in, you agree to our Terms of Service and Privacy Policy. We do not store or view your password data.",
+        },
+
+        features: {
+          title: "Why Choose PandaKeyBox?",
+          subtitle:
+            "Professional password management to protect your digital life",
+          security: {
+            title: "Security Protection",
+            description:
+              "Military-grade encryption protects your password data",
+          },
+          sync: {
+            title: "Cloud Sync",
+            description: "Seamlessly sync your passwords across devices",
+          },
+          privacy: {
+            title: "Privacy First",
+            description: "We never store or view your passwords",
+          },
+          speed: {
+            title: "Lightning Fast",
+            description: "Millisecond response time, smooth user experience",
+          },
+        },
+      },
+
+      // 用户相关
+      user: {
+        profile: "Profile",
+        settings: "Settings",
+        premium: "Premium User",
+        free: "Free User",
+        upgradeToPremium: "Upgrade to Premium",
+      },
     },
   },
   zh: {
@@ -239,6 +435,7 @@ const resources = {
         edit: "编辑",
         delete: "删除",
         save: "保存",
+        start: "开始",
         cancel: "取消",
         confirm: "确认",
         close: "关闭",
@@ -277,6 +474,7 @@ const resources = {
         importExport: "导入/导出",
         clearData: "清除数据",
         createSampleData: "创建示例数据",
+        pricing: "定价",
       },
 
       // 首页
@@ -433,6 +631,194 @@ const resources = {
         dataImported: "数据导入成功",
         dataExported: "数据导出成功",
         dataCleared: "所有数据清除成功",
+      },
+
+      // 导入导出
+      importExport: {
+        title: "导入/导出",
+        import: "导入",
+        export: "导出",
+        quickImport: "快速导入",
+        quickExport: "快速导出",
+        advancedImportExport: "高级导入/导出",
+
+        // 导入相关
+        importData: "导入数据",
+        selectFile: "选择文件",
+        dragDropFile: "拖拽文件到此处，或点击选择文件",
+        supportedFormats: "支持格式：JSON、KBX",
+        importing: "正在导入数据...",
+        importSuccess: "成功导入 {{count}} 个密码条目",
+        importFailed: "导入失败",
+
+        // 导出相关
+        exportData: "导出数据",
+        exportComplete: "导出完整数据 (JSON)",
+        exportEncrypted: "导出加密数据 (KBX)",
+        includePasswords: "包含密码",
+        excludePasswords: "不包含密码（仅结构）",
+
+        // 加密相关
+        encryptionPassword: "加密密码",
+        decryptionPassword: "解密密码",
+        enterPassword: "输入密码",
+        confirmPassword: "确认密码",
+        passwordRequired: "加密文件需要密码",
+        encryptExport: "加密导出",
+        decryptImport: "解密导入",
+        generatePassword: "生成密码",
+        showPassword: "显示密码",
+        hidePassword: "隐藏密码",
+
+        // 警告和提示
+        encryptionWarning:
+          "此密码专门用于加密导出数据，导入时需要使用。请记住此密码，应用不会存储该密码。",
+        fileTypeError: "请选择 JSON 或 KBX 格式的文件",
+        clearAllData: "清空所有数据",
+        clearAllDataConfirm: "确定要清空所有数据吗？此操作不可撤销！",
+
+        // 按钮
+        startImport: "开始导入",
+        startExport: "开始导出",
+        cancel: "取消",
+        close: "关闭",
+      },
+
+      // 支付相关
+      payment: {
+        success: {
+          title: "支付成功！",
+          description: "感谢您的购买！您的高级功能已经激活。",
+          featuresUnlocked: "已解锁功能",
+          autoRedirect: "{{seconds}} 秒后自动返回首页",
+        },
+        cancel: {
+          title: "支付已取消",
+          description:
+            "您的支付已被取消，没有产生任何费用。您可以随时重新尝试购买高级功能。",
+          whyUpgrade: "升级高级版的好处",
+          tryAgain: "重新购买",
+        },
+      },
+
+      // 定价页面
+      pricing: {
+        title: "选择适合您的计划",
+        subtitle: "从免费版开始，随时升级到专业版解锁更多强大功能",
+        popular: "最受欢迎",
+
+        free: {
+          name: "免费版",
+          price: "免费",
+          description: "适合个人基础使用",
+          feature1: "最多 50 个密码",
+          feature2: "基础加密",
+          feature3: "本地存储",
+          feature4: "基础导入导出",
+          button: "当前计划",
+        },
+
+        pro: {
+          name: "专业版",
+          price: "¥29/月",
+          description: "适合专业用户和团队",
+          feature1: "无限密码存储",
+          feature2: "高级加密算法",
+          feature3: "云端同步",
+          feature4: "高级导入导出",
+          feature5: "密码强度分析",
+          feature6: "优先技术支持",
+          button: "立即升级",
+        },
+
+        enterprise: {
+          name: "企业版",
+          price: "¥99/月",
+          description: "适合大型团队和企业",
+          feature1: "专业版所有功能",
+          feature2: "团队管理",
+          feature3: "SSO 单点登录",
+          feature4: "审计日志",
+          feature5: "API 访问",
+          feature6: "24/7 专属支持",
+          button: "联系销售",
+        },
+
+        features: {
+          title: "为什么选择 PandaKeyBox？",
+          subtitle: "专业级密码管理，保护您的数字生活",
+          security: {
+            title: "军用级加密",
+            description: "AES-256 加密保护您的数据",
+          },
+          sync: {
+            title: "云端同步",
+            description: "多设备无缝同步",
+          },
+          speed: {
+            title: "极速体验",
+            description: "毫秒级响应速度",
+          },
+          support: {
+            title: "专业支持",
+            description: "7x24 技术支持",
+          },
+        },
+      },
+
+      // 功能特性
+      features: {
+        unlimitedPasswords: "无限密码存储",
+        advancedEncryption: "高级加密功能",
+        cloudSync: "云端同步",
+        prioritySupport: "优先技术支持",
+      },
+
+      // 认证相关
+      auth: {
+        signInWithGoogle: "使用 Google 登录",
+        loadingGoogle: "正在加载 Google 登录...",
+        signingIn: "登录中...",
+        signOut: "退出登录",
+
+        signin: {
+          title: "登录 PandaKeyBox",
+          subtitle: "安全管理您的所有密码",
+          orContinue: "或继续使用",
+          guestAccess: "以访客身份继续",
+          privacyNotice:
+            "登录即表示您同意我们的服务条款和隐私政策。我们不会存储或查看您的密码数据。",
+        },
+
+        features: {
+          title: "为什么选择 PandaKeyBox？",
+          subtitle: "专业级密码管理，保护您的数字生活安全",
+          security: {
+            title: "安全保护",
+            description: "军用级加密保护您的密码数据",
+          },
+          sync: {
+            title: "云端同步",
+            description: "多设备无缝同步您的密码",
+          },
+          privacy: {
+            title: "隐私优先",
+            description: "我们不会存储或查看您的密码",
+          },
+          speed: {
+            title: "极速体验",
+            description: "毫秒级响应，流畅使用体验",
+          },
+        },
+      },
+
+      // 用户相关
+      user: {
+        profile: "个人资料",
+        settings: "设置",
+        premium: "高级用户",
+        free: "免费用户",
+        upgradeToPremium: "升级到高级版",
       },
     },
   },

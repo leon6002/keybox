@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { RefreshCw, Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -20,6 +21,7 @@ export default function ImportExport({
   onImport,
   onClose,
 }: ImportExportProps) {
+  const { t, ready } = useTranslation();
   const [activeTab, setActiveTab] = useState<"import" | "export">("export");
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
@@ -41,7 +43,11 @@ export default function ImportExport({
   const handleFileSelect = async (file: File, password?: string) => {
     if (!file.name.endsWith(".json") && !file.name.endsWith(".kbx")) {
       setImportStatus("error");
-      setImportMessage("请选择 JSON 或 KBX 格式的文件");
+      setImportMessage(
+        ready
+          ? t("importExport.fileTypeError")
+          : "请选择 JSON 或 KBX 格式的文件"
+      );
       return;
     }
 
@@ -53,7 +59,7 @@ export default function ImportExport({
     }
 
     setImportStatus("loading");
-    setImportMessage("正在导入数据...");
+    setImportMessage(ready ? t("importExport.importing") : "正在导入数据...");
 
     try {
       const importedEntries = await StorageManager.importFromFile(
@@ -63,7 +69,11 @@ export default function ImportExport({
       );
       onImport(importedEntries);
       setImportStatus("success");
-      setImportMessage(`成功导入 ${importedEntries.length} 个密码条目`);
+      setImportMessage(
+        ready
+          ? t("importExport.importSuccess", { count: importedEntries.length })
+          : `成功导入 ${importedEntries.length} 个密码条目`
+      );
 
       // 清理状态
       setPendingFile(null);
@@ -75,7 +85,13 @@ export default function ImportExport({
       }, 2000);
     } catch (error) {
       setImportStatus("error");
-      setImportMessage(error instanceof Error ? error.message : "导入失败");
+      setImportMessage(
+        error instanceof Error
+          ? error.message
+          : ready
+          ? t("importExport.importFailed")
+          : "导入失败"
+      );
     }
   };
 
@@ -137,10 +153,16 @@ export default function ImportExport({
       setShowPasswordDialog(false);
     } catch (error) {
       await confirm({
-        title: "导出失败",
+        title: ready ? t("error.exportFailed") : "导出失败",
         description:
-          "导出失败: " + (error instanceof Error ? error.message : "未知错误"),
-        confirmText: "确定",
+          (ready ? t("error.exportFailed") : "导出失败") +
+          ": " +
+          (error instanceof Error
+            ? error.message
+            : ready
+            ? t("error.unknownError")
+            : "未知错误"),
+        confirmText: ready ? t("common.ok") : "确定",
         cancelText: "",
       });
     }
@@ -148,10 +170,12 @@ export default function ImportExport({
 
   const clearAllData = async () => {
     const confirmed = await confirm({
-      title: "清空所有数据",
-      description: "确定要清空所有数据吗？此操作不可撤销！",
-      confirmText: "清空",
-      cancelText: "取消",
+      title: ready ? t("importExport.clearAllData") : "清空所有数据",
+      description: ready
+        ? t("importExport.clearAllDataConfirm")
+        : "确定要清空所有数据吗？此操作不可撤销！",
+      confirmText: ready ? t("common.clear") : "清空",
+      cancelText: ready ? t("common.cancel") : "取消",
       variant: "destructive",
     });
     if (confirmed) {
@@ -166,7 +190,7 @@ export default function ImportExport({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            数据管理
+            {ready ? t("importExport.title") : "数据管理"}
           </h2>
           <button
             onClick={onClose}
@@ -198,7 +222,7 @@ export default function ImportExport({
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            导入数据
+            {ready ? t("importExport.importData") : "导入数据"}
           </button>
           <button
             onClick={() => setActiveTab("export")}
@@ -208,7 +232,7 @@ export default function ImportExport({
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            导出数据
+            {ready ? t("importExport.exportData") : "导出数据"}
           </button>
         </div>
 
@@ -218,10 +242,12 @@ export default function ImportExport({
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  导入密码数据
+                  {ready ? t("importExport.importData") : "导入密码数据"}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  支持导入.json后缀和.kbx后缀的密码文件
+                  {ready
+                    ? t("importExport.supportedFormats")
+                    : "支持导入.json后缀和.kbx后缀的密码文件"}
                 </p>
               </div>
 
@@ -255,10 +281,9 @@ export default function ImportExport({
 
                   <div>
                     <p className="text-lg font-medium text-gray-900 dark:text-white">
-                      拖拽文件到这里
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      或者
+                      {ready
+                        ? t("importExport.dragDropFile")
+                        : "拖拽文件到这里"}
                     </p>
                   </div>
 
@@ -279,7 +304,7 @@ export default function ImportExport({
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
-                    选择文件
+                    {ready ? t("importExport.selectFile") : "选择文件"}
                   </button>
 
                   <input
@@ -364,10 +389,12 @@ export default function ImportExport({
             <div className="space-y-6">
               <div className="text-center">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  导出密码数据
+                  {ready ? t("importExport.exportData") : "导出密码数据"}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  将您的密码数据导出, 以便在其他设备上恢复数据
+                  {ready
+                    ? t("importExport.exportData")
+                    : "将您的密码数据导出, 以便在其他设备上恢复数据"}
                 </p>
               </div>
 
@@ -376,11 +403,15 @@ export default function ImportExport({
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      当前数据统计
+                      {ready
+                        ? t("stats.totalEntries", { count: entries.length })
+                        : "当前数据统计"}
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {entries.length} 个密码条目
+                    {ready
+                      ? t("stats.totalEntries", { count: entries.length })
+                      : `${entries.length} 个密码条目`}
                   </div>
                 </div>
 
@@ -489,10 +520,14 @@ export default function ImportExport({
                       </svg>
                       <div className="text-left">
                         <div className="font-medium text-gray-900 dark:text-white">
-                          导出加密数据
+                          {ready
+                            ? t("importExport.exportEncrypted")
+                            : "导出加密数据"}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          使用密码加密保护，适合多设备同步
+                          {ready
+                            ? t("importExport.exportEncrypted")
+                            : "使用密码加密保护，适合多设备同步"}
                         </div>
                       </div>
                     </div>
@@ -530,17 +565,19 @@ export default function ImportExport({
                         />
                       </svg>
                       <span className="font-medium text-red-800 dark:text-red-200">
-                        危险操作
+                        {ready ? t("common.warning") : "危险操作"}
                       </span>
                     </div>
                     <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                      清空浏览器本地存储的密码数据。此操作不可撤销！建议清空前先务必导出文件，导出文件后可放心清空，之后可以从导出的文件中导入数据。
+                      {ready
+                        ? t("importExport.clearAllDataConfirm")
+                        : "清空浏览器本地存储的密码数据。此操作不可撤销！建议清空前先务必导出文件，导出文件后可放心清空，之后可以从导出的文件中导入数据。"}
                     </p>
                     <button
                       onClick={clearAllData}
                       className="cursor-pointer px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
                     >
-                      清空所有数据
+                      {ready ? t("importExport.clearAllData") : "清空所有数据"}
                     </button>
                   </div>
                 </div>
@@ -556,7 +593,13 @@ export default function ImportExport({
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
             <div className="p-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                {pendingFile ? "输入解密密码" : "设置加密密码"}
+                {pendingFile
+                  ? ready
+                    ? t("importExport.decryptionPassword")
+                    : "输入解密密码"
+                  : ready
+                  ? t("importExport.encryptionPassword")
+                  : "设置加密密码"}
               </h3>
 
               {/* 安全提示 - 仅在设置加密密码时显示 */}
@@ -578,29 +621,24 @@ export default function ImportExport({
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                        🔐 数据加密保护说明
+                        🔐{" "}
+                        {ready
+                          ? t("importExport.encryptionPassword")
+                          : "数据加密保护说明"}
                       </h4>
                       <div className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
                         <p>
-                          • <strong>此密码专门用于加密您的导出数据</strong>
-                          ，确保数据在传输和存储过程中的安全性
-                        </p>
-                        <p>
-                          • <strong>导入时需要使用相同密码</strong>
-                          才能解密和恢复您的数据
-                        </p>
-                        <p>
-                          • <strong>请务必牢记此密码</strong>
-                          ，我们不会存储或上传您的任何密码信息
-                        </p>
-                        <p>
-                          • <strong>建议使用强密码</strong>
-                          ，可点击右侧按钮生成安全密码
+                          {ready
+                            ? t("importExport.encryptionWarning")
+                            : "• 此密码专门用于加密您的导出数据，确保数据在传输和存储过程中的安全性"}
                         </p>
                       </div>
                       <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
                         <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
-                          ⚠️ 重要提醒：忘记此密码将无法导入数据，请妥善保管！
+                          ⚠️{" "}
+                          {ready
+                            ? t("importExport.encryptionWarning")
+                            : "重要提醒：忘记此密码将无法导入数据，请妥善保管！"}
                         </p>
                       </div>
                     </div>
@@ -611,7 +649,13 @@ export default function ImportExport({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {pendingFile ? "文件解密密码" : "加密密码"}
+                    {pendingFile
+                      ? ready
+                        ? t("importExport.decryptionPassword")
+                        : "文件解密密码"
+                      : ready
+                      ? t("importExport.encryptionPassword")
+                      : "加密密码"}
                   </label>
                   <div className="relative">
                     <input
@@ -625,7 +669,9 @@ export default function ImportExport({
                       className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                         !pendingFile ? "pr-20" : "pr-12"
                       }`}
-                      placeholder="请输入密码"
+                      placeholder={
+                        ready ? t("importExport.enterPassword") : "请输入密码"
+                      }
                       autoFocus
                     />
                     <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
@@ -634,7 +680,15 @@ export default function ImportExport({
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
-                        title={showPassword ? "隐藏密码" : "显示密码"}
+                        title={
+                          showPassword
+                            ? ready
+                              ? t("importExport.hidePassword")
+                              : "隐藏密码"
+                            : ready
+                            ? t("importExport.showPassword")
+                            : "显示密码"
+                        }
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -649,7 +703,11 @@ export default function ImportExport({
                           type="button"
                           onClick={() => setShowPasswordGenerator(true)}
                           className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
-                          title="生成密码"
+                          title={
+                            ready
+                              ? t("importExport.generatePassword")
+                              : "生成密码"
+                          }
                         >
                           <RefreshCw className="w-4 h-4" />
                         </button>
@@ -660,8 +718,18 @@ export default function ImportExport({
 
                 {!pendingFile && (
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    <p>• 密码长度建议至少8位</p>
-                    <p>• 包含大小写字母、数字和特殊字符</p>
+                    <p>
+                      •{" "}
+                      {ready
+                        ? t("error.passwordTooShort")
+                        : "密码长度建议至少8位"}
+                    </p>
+                    <p>
+                      •{" "}
+                      {ready
+                        ? t("password.passwordStrength")
+                        : "包含大小写字母、数字和特殊字符"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -677,7 +745,7 @@ export default function ImportExport({
                   }}
                   className="cursor-pointer px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                 >
-                  取消
+                  {ready ? t("importExport.cancel") : "取消"}
                 </button>
                 <button
                   onClick={() => {
@@ -696,7 +764,13 @@ export default function ImportExport({
                   disabled={pendingFile ? !decryptPassword : !encryptPassword}
                   className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
                 >
-                  {pendingFile ? "解密导入" : "加密导出"}
+                  {pendingFile
+                    ? ready
+                      ? t("importExport.decryptImport")
+                      : "解密导入"
+                    : ready
+                    ? t("importExport.encryptExport")
+                    : "加密导出"}
                 </button>
               </div>
             </div>

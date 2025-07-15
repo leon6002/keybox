@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 
@@ -19,6 +20,7 @@ export default function QuickImportExport({
   onClose,
   mode,
 }: QuickImportExportProps) {
+  const { t, ready } = useTranslation();
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -33,7 +35,11 @@ export default function QuickImportExport({
   const handleFileSelect = async (file: File, password?: string) => {
     if (!file.name.endsWith(".json") && !file.name.endsWith(".kbx")) {
       setImportStatus("error");
-      setImportMessage("请选择 JSON 或 KBX 格式的文件");
+      setImportMessage(
+        ready
+          ? t("importExport.fileTypeError")
+          : "请选择 JSON 或 KBX 格式的文件"
+      );
       return;
     }
 
@@ -45,7 +51,7 @@ export default function QuickImportExport({
     }
 
     setImportStatus("loading");
-    setImportMessage("正在导入数据...");
+    setImportMessage(ready ? t("importExport.importing") : "正在导入数据...");
 
     try {
       const importedEntries = await StorageManager.importFromFile(
@@ -55,7 +61,11 @@ export default function QuickImportExport({
       );
       onImport(importedEntries);
       setImportStatus("success");
-      setImportMessage(`成功导入 ${importedEntries.length} 个密码条目`);
+      setImportMessage(
+        ready
+          ? t("importExport.importSuccess", { count: importedEntries.length })
+          : `成功导入 ${importedEntries.length} 个密码条目`
+      );
 
       // 清理状态
       setPendingFile(null);
@@ -67,7 +77,13 @@ export default function QuickImportExport({
       }, 2000);
     } catch (error) {
       setImportStatus("error");
-      setImportMessage(error instanceof Error ? error.message : "导入失败");
+      setImportMessage(
+        error instanceof Error
+          ? error.message
+          : ready
+          ? t("importExport.importFailed")
+          : "导入失败"
+      );
     }
   };
 
@@ -89,7 +105,13 @@ export default function QuickImportExport({
       onClose();
     } catch (error) {
       alert(
-        "导出失败: " + (error instanceof Error ? error.message : "未知错误")
+        (ready ? t("error.exportFailed") : "导出失败") +
+          ": " +
+          (error instanceof Error
+            ? error.message
+            : ready
+            ? t("error.unknownError")
+            : "未知错误")
       );
     }
   };
@@ -182,10 +204,12 @@ export default function QuickImportExport({
 
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    拖拽文件到这里
+                    {ready ? t("importExport.dragDropFile") : "拖拽文件到这里"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    支持 JSON 和 KBX 格式
+                    {ready
+                      ? t("importExport.supportedFormats")
+                      : "支持 JSON 和 KBX 格式"}
                   </p>
                 </div>
 
@@ -193,7 +217,7 @@ export default function QuickImportExport({
                   onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                 >
-                  选择文件
+                  {ready ? t("importExport.selectFile") : "选择文件"}
                 </button>
 
                 <input
@@ -388,7 +412,7 @@ export default function QuickImportExport({
               />
             </svg>
             <span className="font-medium text-gray-900 dark:text-white">
-              导出完整数据 (JSON)
+              {ready ? t("importExport.exportComplete") : "导出完整数据 (JSON)"}
             </span>
           </button>
 
@@ -412,7 +436,7 @@ export default function QuickImportExport({
               />
             </svg>
             <span className="font-medium text-gray-900 dark:text-white">
-              导出加密数据 (KBX)
+              {ready ? t("importExport.exportEncrypted") : "导出加密数据 (KBX)"}
             </span>
           </button>
         </div>

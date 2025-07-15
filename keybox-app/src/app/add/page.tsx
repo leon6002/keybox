@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+// import { useTranslation } from "react-i18next"; // TODO: Add translations
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ const STORAGE_KEY = "keybox_draft_entry";
 
 export default function AddPasswordPage() {
   const router = useRouter();
+  // const { t, ready } = useTranslation(); // TODO: Add translations
   const [categories, setCategories] = useState<Category[]>([]);
 
   // 智能返回函数
