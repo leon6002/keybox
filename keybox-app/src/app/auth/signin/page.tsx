@@ -19,7 +19,7 @@ interface GoogleUser {
 
 export default function SignInPage() {
   const router = useRouter();
-  const { t, ready } = useTranslation();
+  const { t } = useTranslation();
   const { signIn, isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -45,31 +45,23 @@ export default function SignInPage() {
   const features = [
     {
       icon: Shield,
-      title: ready ? t("auth.features.security.title") : "安全保护",
-      description: ready
-        ? t("auth.features.security.description")
-        : "军用级加密保护您的密码数据",
+      title: t("auth.features.security.title"),
+      description: t("auth.features.security.description"),
     },
     {
       icon: Cloud,
-      title: ready ? t("auth.features.sync.title") : "云端同步",
-      description: ready
-        ? t("auth.features.sync.description")
-        : "多设备无缝同步您的密码",
+      title: t("auth.features.sync.title"),
+      description: t("auth.features.sync.description"),
     },
     {
       icon: Lock,
-      title: ready ? t("auth.features.privacy.title") : "隐私优先",
-      description: ready
-        ? t("auth.features.privacy.description")
-        : "我们不会存储或查看您的密码",
+      title: t("auth.features.privacy.title"),
+      description: t("auth.features.privacy.description"),
     },
     {
       icon: Zap,
-      title: ready ? t("auth.features.speed.title") : "极速体验",
-      description: ready
-        ? t("auth.features.speed.description")
-        : "毫秒级响应，流畅使用体验",
+      title: t("auth.features.speed.title"),
+      description: t("auth.features.speed.description"),
     },
   ];
 
@@ -91,7 +83,7 @@ export default function SignInPage() {
             onClick={() => router.push("/")}
             className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
           >
-            {ready ? t("nav.home") : "返回首页"}
+            {t("nav.home")}
           </button>
         </div>
       </nav>
@@ -103,10 +95,10 @@ export default function SignInPage() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {ready ? t("auth.signin.title") : "登录 PandaKeyBox"}
+                  {t("auth.signin.title")}
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {ready ? t("auth.signin.subtitle") : "安全管理您的所有密码"}
+                  {t("auth.signin.subtitle")}
                 </p>
               </div>
 
@@ -125,7 +117,7 @@ export default function SignInPage() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    {ready ? t("auth.signin.orContinue") : "或继续使用"}
+                    {t("auth.signin.orContinue")}
                   </span>
                 </div>
               </div>
@@ -136,15 +128,13 @@ export default function SignInPage() {
                   onClick={() => router.push("/")}
                   className="text-sm w-[300px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                 >
-                  {ready ? t("auth.signin.guestAccess") : "以访客身份继续"}
+                  {t("auth.signin.guestAccess")}
                 </button>
               </div>
 
               {/* Privacy Notice */}
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-                {ready
-                  ? t("auth.signin.privacyNotice")
-                  : "登录即表示您同意我们的服务条款和隐私政策。我们不会存储或查看您的密码数据。"}
+                {t("auth.signin.privacyNotice")}
               </p>
             </div>
           </div>
@@ -153,12 +143,10 @@ export default function SignInPage() {
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                {ready ? t("auth.features.title") : "为什么选择 PandaKeyBox？"}
+                {t("auth.features.title")}
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300">
-                {ready
-                  ? t("auth.features.subtitle")
-                  : "专业级密码管理，保护您的数字生活安全"}
+                {t("auth.features.subtitle")}
               </p>
             </div>
 

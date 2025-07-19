@@ -15,7 +15,7 @@ import QuickImportExport from "@/components/QuickImportExport";
 import CategoryFilter from "@/components/CategoryFilter";
 
 export default function PasswordsPage() {
-  const { t, ready } = useTranslation();
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,16 +175,16 @@ export default function PasswordsPage() {
                   onClick={() => (window.location.href = "/")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  {ready ? t("nav.home") : "首页"}
+                  {t("nav.home")}
                 </button>
                 <button className="px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
-                  {ready ? t("nav.passwordList") : "密码列表"}
+                  {t("nav.passwordList")}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/manage")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  {ready ? t("nav.passwordManage") : "密码管理"}
+                  {t("nav.passwordManage")}
                 </button>
               </div>
             </div>
@@ -192,19 +192,19 @@ export default function PasswordsPage() {
             {/* Desktop Right Actions */}
             <div className="hidden md:flex items-center space-x-2">
               <span className="hidden lg:inline text-sm text-gray-500 dark:text-gray-400">
-                共{entries.length} 个密码
+                {t("password.totalCount", { count: entries.length })}
               </span>
               <button
                 onClick={() => setShowCategoryManager(true)}
                 className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {ready ? t("nav.categoryManage") : "分类管理"}
+                {t("nav.categoryManage")}
               </button>
               <button
                 onClick={() => setShowImportExport(true)}
                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer text-sm"
               >
-                {ready ? t("nav.importExport") : "导入/导出"}
+                {t("nav.importExport")}
               </button>
             </div>
 
@@ -243,10 +243,10 @@ export default function PasswordsPage() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {ready ? t("nav.home") : "首页"}
+                {t("nav.home")}
               </button>
               <div className="w-full text-left px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
-                {ready ? t("nav.passwordList") : "密码列表"}
+                {t("nav.passwordList")}
               </div>
               <button
                 onClick={() => {
@@ -255,7 +255,7 @@ export default function PasswordsPage() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {ready ? t("nav.passwordManage") : "密码管理"}
+                {t("nav.passwordManage")}
               </button>
 
               <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
@@ -267,7 +267,7 @@ export default function PasswordsPage() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {ready ? t("nav.categoryManage") : "分类管理"}
+                {t("nav.categoryManage")}
               </button>
               <button
                 onClick={() => {
@@ -276,7 +276,7 @@ export default function PasswordsPage() {
                 }}
                 className="w-full text-left px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors cursor-pointer"
               >
-                {ready ? t("nav.importExport") : "导入/导出"}
+                {t("nav.importExport")}
               </button>
             </div>
           </div>
@@ -291,9 +291,7 @@ export default function PasswordsPage() {
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder={
-                  ready ? t("password.searchPlaceholder") : "搜索密码条目..."
-                }
+                placeholder={t("password.searchPlaceholder")}
               />
 
               {/* 类目筛选器和统计信息 */}
@@ -307,11 +305,18 @@ export default function PasswordsPage() {
 
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedCategoryId === "all" ? (
-                    <span>显示全部 {filteredEntries.length} 个密码</span>
+                    <span>
+                      {t("password.showingAll", {
+                        count: filteredEntries.length,
+                      })}
+                    </span>
                   ) : (
                     <span>
-                      筛选结果：{filteredEntries.length} 个密码
-                      {searchQuery && ` (搜索: "${searchQuery}")`}
+                      {t("password.filterResults", {
+                        count: filteredEntries.length,
+                      })}
+                      {searchQuery &&
+                        t("password.searchInFilter", { query: searchQuery })}
                     </span>
                   )}
                 </div>
@@ -347,28 +352,23 @@ export default function PasswordsPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              欢迎使用 PandaKeyBox
+              {t("password.welcomeTitle")}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md">
-              您还没有保存任何密码。开始创建您的第一个密码条目，让 PandaKeyBox
-              帮您安全管理所有密码。
+              {t("password.welcomeDescription")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => (window.location.href = "/manage?action=new")}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 cursor-pointer"
               >
-                {ready
-                  ? t("common.manage") + " " + t("password.password")
-                  : "开始管理密码"}
+                {t("password.startManaging")}
               </button>
               <button
                 onClick={() => setShowQuickImportExport("import")}
                 className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                {ready
-                  ? t("common.import") + " " + t("password.password")
-                  : "导入现有密码"}
+                {t("password.importExisting")}
               </button>
             </div>
           </div>

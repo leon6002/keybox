@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 
 export default function UserProfile() {
   const router = useRouter();
-  const { t, ready } = useTranslation();
+  const { t } = useTranslation();
   const { user, isAuthenticated, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
@@ -68,13 +68,7 @@ export default function UserProfile() {
             {user.given_name || user.name}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {isPremium
-              ? ready
-                ? t("user.premium")
-                : "高级用户"
-              : ready
-              ? t("user.free")
-              : "免费用户"}
+            {isPremium ? t("user.premium") : t("user.free")}
           </div>
         </div>
         <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -100,13 +94,7 @@ export default function UserProfile() {
                   {user.email}
                 </div>
                 <div className="text-xs text-blue-600 dark:text-blue-400">
-                  {isPremium
-                    ? ready
-                      ? t("user.premium")
-                      : "高级用户"
-                    : ready
-                    ? t("user.free")
-                    : "免费用户"}
+                  {isPremium ? t("user.premium") : t("user.free")}
                 </div>
               </div>
             </div>
@@ -122,7 +110,7 @@ export default function UserProfile() {
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
             >
               <CreditCard className="w-4 h-4 mr-3" />
-              {ready ? t("account.subscription") : "账户订阅"}
+              {t("account.subscription")}
             </button>
 
             <button
@@ -134,7 +122,7 @@ export default function UserProfile() {
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
             >
               <User className="w-4 h-4 mr-3" />
-              {ready ? t("user.profile") : "个人资料"}
+              {t("user.profile")}
             </button>
 
             <button
@@ -146,7 +134,7 @@ export default function UserProfile() {
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
             >
               <Settings className="w-4 h-4 mr-3" />
-              {ready ? t("user.settings") : "设置"}
+              {t("user.settings")}
             </button>
 
             {!isPremium && (
@@ -158,7 +146,7 @@ export default function UserProfile() {
                 className="flex items-center w-full px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer"
               >
                 <Crown className="w-4 h-4 mr-3" />
-                {ready ? t("user.upgradeToPremium") : "升级到高级版"}
+                {t("user.upgradeToPremium")}
               </button>
             )}
 
@@ -169,7 +157,7 @@ export default function UserProfile() {
               className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
             >
               <LogOut className="w-4 h-4 mr-3" />
-              {ready ? t("auth.signOut") : "退出登录"}
+              {t("auth.signOut")}
             </button>
           </div>
         </div>

@@ -1,6 +1,91 @@
 import { Category, CategoryField } from "@/types/password";
+import i18n from "@/lib/i18n";
 
-// 预定义的类目模板
+// 获取国际化的类目模板
+export const getLocalizedCategories = (): Omit<
+  Category,
+  "id" | "createdAt" | "updatedAt"
+>[] => {
+  const t = i18n.t;
+
+  return [
+    {
+      name: t("category.templates.general.name"),
+      icon: "🔧",
+      color: "#6B7280",
+      description: t("category.templates.general.description"),
+      fields: [
+        {
+          id: "title",
+          name: t("category.templates.general.fields.title"),
+          type: "text",
+          isRequired: true,
+          placeholder: t("category.templates.general.fields.titlePlaceholder"),
+        },
+        {
+          id: "content",
+          name: t("category.templates.general.fields.content"),
+          type: "textarea",
+          isRequired: false,
+          placeholder: t(
+            "category.templates.general.fields.contentPlaceholder"
+          ),
+        },
+        {
+          id: "notes",
+          name: t("category.templates.general.fields.notes"),
+          type: "textarea",
+          isRequired: false,
+          placeholder: t("category.templates.general.fields.notesPlaceholder"),
+        },
+      ],
+    },
+    {
+      name: t("category.templates.website.name"),
+      icon: "🌐",
+      color: "#3B82F6",
+      description: t("category.templates.website.description"),
+      fields: [
+        {
+          id: "username",
+          name: t("category.templates.website.fields.username"),
+          type: "text",
+          isRequired: true,
+          placeholder: t(
+            "category.templates.website.fields.usernamePlaceholder"
+          ),
+        },
+        {
+          id: "password",
+          name: t("category.templates.website.fields.password"),
+          type: "password",
+          isRequired: true,
+          placeholder: t(
+            "category.templates.website.fields.passwordPlaceholder"
+          ),
+        },
+        {
+          id: "website",
+          name: t("category.templates.website.fields.website"),
+          type: "url",
+          isRequired: false,
+          placeholder: t(
+            "category.templates.website.fields.websitePlaceholder"
+          ),
+        },
+        {
+          id: "email",
+          name: t("category.templates.website.fields.email"),
+          type: "email",
+          isRequired: false,
+          placeholder: t("category.templates.website.fields.emailPlaceholder"),
+        },
+      ],
+    },
+  ];
+};
+
+// 为了向后兼容，保留原始的 DEFAULT_CATEGORIES
 export const DEFAULT_CATEGORIES: Omit<
   Category,
   "id" | "createdAt" | "updatedAt"

@@ -22,6 +22,7 @@ import {
 import { PasswordEntry, Category, CustomField } from "@/types/password";
 import CategorySelector from "./CategorySelector";
 import PasswordGeneratorModal from "./PasswordGeneratorModal";
+import { useTranslation } from "react-i18next";
 
 interface PasswordEditFormProps {
   entry: PasswordEntry;
@@ -38,6 +39,7 @@ export default function PasswordEditForm({
   onDelete,
   isCreatingNew = false,
 }: PasswordEditFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: entry.title || "",
     categoryId: entry.categoryId || "",
@@ -147,9 +149,9 @@ export default function PasswordEditForm({
     try {
       await navigator.clipboard.writeText(text);
       // 这里可以添加 toast 通知
-      console.log(`${fieldName} 已复制到剪贴板`);
+      console.log(`${fieldName} Copied`);
     } catch (err) {
-      console.error("复制失败:", err);
+      console.error(t("password.copyFailed"), err);
     }
   };
 
@@ -353,13 +355,13 @@ export default function PasswordEditForm({
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "未知时间";
+    if (!dateString) return t("password.unknownTime");
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "无效日期";
+      if (isNaN(date.getTime())) return t("password.invalidDate");
       return date.toLocaleString("zh-CN");
     } catch {
-      return "日期错误";
+      return t("password.dateError");
     }
   };
 
@@ -370,7 +372,7 @@ export default function PasswordEditForm({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <h2 className="text-lg font-semibold">
-              {isCreatingNew ? "创建新密码" : entry.title}
+              {isCreatingNew ? t("password.createNewPassword") : entry.title}
             </h2>
             {!isCreatingNew && (
               <Button
@@ -392,14 +394,14 @@ export default function PasswordEditForm({
           <div className="flex items-center space-x-2">
             <Button variant="destructive" size="sm" onClick={onDelete}>
               <Trash2 className="w-4 h-4 mr-2" />
-              {isCreatingNew ? "取消" : "删除"}
+              {isCreatingNew ? t("common.cancel") : t("common.delete")}
             </Button>
             <Button
               onClick={handleSave}
               disabled={!hasChanges && !isCreatingNew}
             >
               <Save className="w-4 h-4 mr-2" />
-              {isCreatingNew ? "创建" : "保存"}
+              {isCreatingNew ? t("password.create") : t("common.save")}
             </Button>
           </div>
         </div>
@@ -408,11 +410,15 @@ export default function PasswordEditForm({
         <div className="flex items-center space-x-4 mt-2 text-sm text-muted-foreground">
           <div className="flex items-center space-x-1">
             <Calendar className="w-3 h-3" />
-            <span>创建：{formatDate(entry.createdAt)}</span>
+            <span>
+              {t("password.created")}：{formatDate(entry.createdAt)}
+            </span>
           </div>
           <div className="flex items-center space-x-1">
             <Calendar className="w-3 h-3" />
-            <span>更新：{formatDate(entry.updatedAt)}</span>
+            <span>
+              {t("password.updated")}：{formatDate(entry.updatedAt)}
+            </span>
           </div>
         </div>
       </div>
@@ -425,7 +431,7 @@ export default function PasswordEditForm({
             <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
               <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                基本信息
+                {t("password.basicInformation")}
               </h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -435,13 +441,14 @@ export default function PasswordEditForm({
                   htmlFor="title"
                   className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  标题 <span className="text-red-500">*</span>
+                  {t("password.titleRequired")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder="输入密码条目标题"
+                  placeholder={t("password.titlePlaceholder2")}
                   required
                   className="h-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                 />
@@ -450,7 +457,8 @@ export default function PasswordEditForm({
               {/* 类目选择 */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  类目 <span className="text-red-500">*</span>
+                  {t("password.categoryRequired")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <CategorySelector
                   categories={categories}
@@ -470,7 +478,7 @@ export default function PasswordEditForm({
               <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="w-1 h-5 bg-green-600 rounded-full"></div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  字段信息
+                  {t("password.fieldInformation")}
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -484,7 +492,7 @@ export default function PasswordEditForm({
             <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 dark:border-gray-700">
               <div className="w-1 h-5 bg-purple-600 rounded-full"></div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                附加信息
+                {t("password.additionalInformation")}
               </h3>
             </div>
             <div className="space-y-6">
@@ -492,7 +500,7 @@ export default function PasswordEditForm({
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center space-x-2">
                   <Tag className="w-4 h-4" />
-                  <span>标签</span>
+                  <span>{t("password.tagsLabel")}</span>
                 </Label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formData.tags.map((tag) => (
@@ -513,7 +521,7 @@ export default function PasswordEditForm({
                   <Input
                     value={tagInput || ""}
                     onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="添加标签"
+                    placeholder={t("password.addTagPlaceholder")}
                     onKeyPress={(e) => e.key === "Enter" && addTag()}
                     className="h-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
                   />
@@ -523,7 +531,7 @@ export default function PasswordEditForm({
                     onClick={addTag}
                     className="h-10 px-4"
                   >
-                    添加
+                    {t("password.addTagButton")}
                   </Button>
                 </div>
               </div>

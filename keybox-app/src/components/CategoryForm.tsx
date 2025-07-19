@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Category, CategoryField } from "@/types/password";
+// import useTranslation from "@/lib/i18n"; // TODO: 完成国际化
 import { CategoryManager } from "@/utils/categories";
 
 interface CategoryFormProps {
@@ -75,6 +76,7 @@ export default function CategoryForm({
   onSave,
   onCancel,
 }: CategoryFormProps) {
+  // const t = useTranslation(); // TODO: 完成国际化
   const [formData, setFormData] = useState({
     name: "",
     icon: "📁",

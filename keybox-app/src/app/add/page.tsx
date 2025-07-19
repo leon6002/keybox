@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-// import { useTranslation } from "react-i18next"; // TODO: Add translations
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ const STORAGE_KEY = "keybox_draft_entry";
 
 export default function AddPasswordPage() {
   const router = useRouter();
-  // const { t, ready } = useTranslation(); // TODO: Add translations
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
 
   // 智能返回函数
@@ -169,7 +169,7 @@ export default function AddPasswordPage() {
 
   const handleSave = () => {
     if (!formData.title.trim()) {
-      alert("请输入标题");
+      alert(t("password.pleaseEnterTitle"));
       return;
     }
 
@@ -226,14 +226,14 @@ export default function AddPasswordPage() {
   };
 
   const handleCancel = () => {
-    if (confirm("确定要取消吗？未保存的更改将丢失。")) {
+    if (confirm(t("password.confirmCancel"))) {
       localStorage.removeItem(STORAGE_KEY);
       handleGoBack();
     }
   };
 
   const clearDraft = () => {
-    if (confirm("确定要清除所有输入内容吗？")) {
+    if (confirm(t("password.confirmClear"))) {
       localStorage.removeItem(STORAGE_KEY);
       setFormData({
         title: "",
@@ -263,7 +263,10 @@ export default function AddPasswordPage() {
               id={fieldId}
               value={field.value}
               onChange={(e) => updateCustomField(field.id, e.target.value)}
-              placeholder={field.placeholder || `输入${field.name}`}
+              placeholder={
+                field.placeholder ||
+                t("password.enterField", { field: field.name })
+              }
               required={field.isRequired}
               rows={3}
             />
@@ -284,7 +287,10 @@ export default function AddPasswordPage() {
                   type={showPasswords[field.id] ? "text" : "password"}
                   value={field.value}
                   onChange={(e) => updateCustomField(field.id, e.target.value)}
-                  placeholder={field.placeholder || `输入${field.name}`}
+                  placeholder={
+                    field.placeholder ||
+                    t("password.enterField", { field: field.name })
+                  }
                   required={field.isRequired}
                   className="pr-10 font-mono"
                 />
@@ -329,7 +335,10 @@ export default function AddPasswordPage() {
               type={field.type}
               value={field.value}
               onChange={(e) => updateCustomField(field.id, e.target.value)}
-              placeholder={field.placeholder || `输入${field.name}`}
+              placeholder={
+                field.placeholder ||
+                t("password.enterField", { field: field.name })
+              }
               required={field.isRequired}
             />
           </div>
@@ -372,19 +381,19 @@ export default function AddPasswordPage() {
                   onClick={() => (window.location.href = "/")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  首页
+                  {t("password.home")}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/passwords")}
                   className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
                 >
-                  密码列表
+                  {t("password.passwordList")}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/manage")}
                   className="cursor-pointer px-3 py-2 text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg"
                 >
-                  添加密码
+                  {t("password.addPassword")}
                 </button>
               </div>
             </div>
@@ -393,14 +402,14 @@ export default function AddPasswordPage() {
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="sm" onClick={handleCancel}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                返回
+                {t("password.back")}
               </Button>
               <Button variant="outline" size="sm" onClick={clearDraft}>
-                清除
+                {t("password.clear")}
               </Button>
               <Button onClick={handleSave}>
                 <Save className="w-4 h-4 mr-2" />
-                保存
+                {t("password.save")}
               </Button>
             </div>
           </div>
@@ -411,24 +420,24 @@ export default function AddPasswordPage() {
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         <Card>
           <CardHeader>
-            <CardTitle>基本信息</CardTitle>
+            <CardTitle>{t("password.basicInfo")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* 标题 */}
             <div className="space-y-2">
-              <Label htmlFor="title">标题 *</Label>
+              <Label htmlFor="title">{t("password.titleRequired")}</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
-                placeholder="输入标题"
+                placeholder={t("password.titlePlaceholder")}
                 required
               />
             </div>
 
             {/* 类目选择 */}
             <div className="space-y-2">
-              <Label>类目 *</Label>
+              <Label>{t("password.categoryRequired")}</Label>
               <CategorySelector
                 categories={categories}
                 selectedCategory={formData.categoryId}
@@ -444,7 +453,7 @@ export default function AddPasswordPage() {
 
             {/* 标签 */}
             <div className="space-y-2">
-              <Label>标签</Label>
+              <Label>{t("password.tagsLabel")}</Label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((tag) => (
                   <span
@@ -466,7 +475,7 @@ export default function AddPasswordPage() {
                 <Input
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  placeholder="添加标签"
+                  placeholder={t("password.addTagPlaceholder")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();

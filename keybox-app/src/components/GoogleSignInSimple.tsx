@@ -27,7 +27,7 @@ export default function GoogleSignInSimple({
   onSuccess,
   onError,
 }: GoogleSignInSimpleProps) {
-  const { t, ready } = useTranslation();
+  const { t } = useTranslation();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -80,7 +80,7 @@ export default function GoogleSignInSimple({
         theme: "outline",
         size: "large",
         width: 300,
-        text: ready ? t("auth.signInWithGoogle") : "使用 Google 登录",
+        text: t("auth.signInWithGoogle"),
         logo_alignment: "center",
       });
 

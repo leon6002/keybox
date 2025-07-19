@@ -5,8 +5,10 @@ import { Category } from "@/types/password";
 import {
   CategoryManager as CategoryUtil,
   DEFAULT_CATEGORIES,
+  getLocalizedCategories,
 } from "@/utils/categories";
 import CategoryForm from "./CategoryForm";
+import { useTranslation } from "react-i18next";
 
 interface CategoryManagerProps {
   categories: Category[];
@@ -19,6 +21,7 @@ export default function CategoryManager({
   onSave,
   onClose,
 }: CategoryManagerProps) {
+  const { t } = useTranslation();
   const [localCategories, setLocalCategories] =
     useState<Category[]>(categories);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -33,9 +36,7 @@ export default function CategoryManager({
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    if (
-      confirm("确定要删除这个类目吗？删除后该类目下的所有条目将变为未分类。")
-    ) {
+    if (confirm(t("category.confirmDeleteCategory"))) {
       setLocalCategories((prev) => prev.filter((cat) => cat.id !== categoryId));
     }
   };
@@ -81,7 +82,7 @@ export default function CategoryManager({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            类目管理
+            {t("category.categoryManager")}
           </h2>
           <button
             onClick={onClose}
@@ -113,7 +114,7 @@ export default function CategoryManager({
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            我的类目 ({localCategories.length})
+            {t("category.myCategories")} ({localCategories.length})
           </button>
           <button
             onClick={() => setActiveTab("templates")}
@@ -123,7 +124,7 @@ export default function CategoryManager({
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            模板库
+            {t("category.templateLibrary")}
           </button>
         </div>
 
@@ -153,7 +154,7 @@ export default function CategoryManager({
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span>添加新类目</span>
+                  <span>{t("category.addNewCategory")}</span>
                 </div>
               </button>
 
@@ -182,7 +183,7 @@ export default function CategoryManager({
                       <button
                         onClick={() => handleEditCategory(category)}
                         className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded cursor-pointer"
-                        title="编辑"
+                        title={t("category.edit")}
                       >
                         <svg
                           className="w-4 h-4"
@@ -201,7 +202,7 @@ export default function CategoryManager({
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
                         className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded cursor-pointer"
-                        title="删除"
+                        title={t("category.delete")}
                       >
                         <svg
                           className="w-4 h-4"
@@ -238,7 +239,9 @@ export default function CategoryManager({
                     ))}
                     {category.fields.length > 4 && (
                       <span className="inline-flex items-center px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full">
-                        +{category.fields.length - 4} 更多
+                        {t("category.moreFields", {
+                          count: category.fields.length - 4,
+                        })}
                       </span>
                     )}
                   </div>
@@ -248,10 +251,10 @@ export default function CategoryManager({
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                选择模板快速创建常用类型的类目
+                {t("category.selectTemplateHint")}
               </p>
 
-              {DEFAULT_CATEGORIES.map((template, index) => (
+              {getLocalizedCategories().map((template, index) => (
                 <div
                   key={index}
                   className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
@@ -267,7 +270,9 @@ export default function CategoryManager({
                           {template.description}
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500">
-                          包含 {template.fields.length} 个预设字段
+                          {t("category.includesFields", {
+                            count: template.fields.length,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -275,7 +280,7 @@ export default function CategoryManager({
                       onClick={() => handleAddFromTemplate(template)}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                     >
-                      添加
+                      {t("category.addFromTemplate")}
                     </button>
                   </div>
 
@@ -308,13 +313,13 @@ export default function CategoryManager({
             onClick={onClose}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"
           >
-            取消
+            {t("category.cancel")}
           </button>
           <button
             onClick={handleSaveCategories}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
           >
-            保存更改
+            {t("category.saveChanges")}
           </button>
         </div>
       </div>
