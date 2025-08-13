@@ -1,171 +1,157 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Download,
-  Upload,
-  FileText,
-  Settings,
-  Menu,
-  Key,
-  Edit,
-} from "lucide-react";
-import { PasswordEntry } from "@/types/password";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import Link from "next/link";
 
-interface HeaderProps {
-  onImportExport: () => void;
-  onQuickImport: () => void;
-  onQuickExport: () => void;
-  onCategoryManager: () => void;
-  entriesCount: number;
-  entries: PasswordEntry[];
+interface PasswordNavHeaderProps {
+  currentPage: "passwords" | "manage";
+  entriesCount?: number;
+  onAddPassword?: () => void;
+  onImportExport?: () => void;
+  onCategoryManager?: () => void;
+  onBackups?: () => void;
+  onClearData?: () => void;
 }
 
-export default function Header({
-  onImportExport,
-  onQuickImport,
-  onQuickExport,
-  onCategoryManager,
-  entriesCount,
-  entries,
-}: HeaderProps) {
-  const router = useRouter();
+export default function PasswordNavHeader({
+  currentPage,
+}: PasswordNavHeaderProps) {
+  const { t } = useTranslation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProduction, setIsProduction] = useState(false);
 
-  const handleManageClick = () => {
-    if (!entries || entries.length === 0) {
-      // 如果没有密码，跳转到添加页面
-      router.push("/add");
-    } else {
-      // 如果有密码，跳转到密码列表页面
-      router.push("/manage");
-    }
-  };
+  useEffect(() => {
+    setIsProduction(process.env.NODE_ENV === "production");
+  }, []);
+
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo and Title */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Key className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">PandaKeyBox</h1>
-              <p className="text-sm text-muted-foreground">安全密码管理器</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="hidden md:flex items-center space-x-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{entriesCount}</div>
-              <div className="text-sm text-muted-foreground">密码条目</div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center space-x-3">
-            {/* Quick Import Button */}
-            <Button
-              onClick={onQuickImport}
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">导入</span>
-            </Button>
-
-            {/* Quick Export Button */}
-            <Button
-              onClick={onQuickExport}
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">导出</span>
-            </Button>
-
-            {/* Manage Passwords Button */}
-            <Button onClick={handleManageClick} variant="outline" size="sm">
-              <Edit className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">
-                {!entries || entries.length === 0 ? "添加密码" : "管理"}
+          <div className="flex items-center space-x-6">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                PandaKeyBox
               </span>
-            </Button>
-
-            {/* Menu Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Menu className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {/* 移动端快速导入导出 */}
-                <div className="sm:hidden">
-                  <DropdownMenuItem onClick={onQuickImport}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    快速导入
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={onQuickExport}>
-                    <Download className="w-4 h-4 mr-2" />
-                    快速导出
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </div>
-
-                <DropdownMenuItem onClick={onImportExport}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  高级导入/导出
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleManageClick}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  {!entries || entries.length === 0 ? "添加密码" : "密码管理"}
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={onCategoryManager}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  类目管理
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <div className="px-2 py-1.5">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    存储信息
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {entriesCount} 个条目
-                  </Badge>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Mobile Stats */}
-        <div className="md:hidden mt-4 pt-4 border-t">
-          <div className="flex justify-center">
-            <div className="text-center">
-              <div className="text-xl font-bold">{entriesCount}</div>
-              <div className="text-sm text-muted-foreground">密码条目</div>
+            </div>
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex items-center space-x-1">
+              <Link
+                href="/"
+                className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                {t("nav.home")}
+              </Link>
+              <Link
+                href="/passwords"
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  currentPage === "passwords"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {t("nav.passwordList")}
+              </Link>
+              <Link
+                href="/manage"
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  currentPage === "manage"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {t("nav.passwordManage")}
+              </Link>
+              {/* Temporary Security Test Link - Remove in production */}
+              {!isProduction && (
+                <Link
+                  href="/security-test"
+                  className="px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                  title="Test new security system"
+                >
+                  🔐 Security Test
+                </Link>
+              )}
             </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="mobile-menu-button p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown - Overlay Style */}
+        {isMobileMenuOpen && (
+          <div className="mobile-menu absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="px-4 py-3 space-y-1">
+              <Link
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+              >
+                {t("nav.home")}
+              </Link>
+              <Link
+                href="/passwords"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  currentPage === "passwords"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {t("nav.passwordList")}
+              </Link>
+              <Link
+                href="/manage"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                  currentPage === "manage"
+                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {t("nav.passwordManage")}
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
-    </header>
+    </nav>
   );
 }

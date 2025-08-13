@@ -13,6 +13,7 @@ import { PasswordEntry, Category, CustomField } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import CategorySelector from "@/components/CategorySelector";
 import PasswordGeneratorModal from "@/components/PasswordGeneratorModal";
+import toast from "react-hot-toast";
 
 const STORAGE_KEY = "keybox_draft_entry";
 
@@ -169,7 +170,7 @@ export default function AddPasswordPage() {
 
   const handleSave = () => {
     if (!formData.title.trim()) {
-      alert(t("password.pleaseEnterTitle"));
+      toast.error(t("password.pleaseEnterTitle"));
       return;
     }
 

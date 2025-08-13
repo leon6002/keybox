@@ -107,7 +107,7 @@ export default function PasswordViewModal({
                 size="sm"
                 onClick={() => copyToClipboard(field.value, field.name)}
                 className="h-6 w-6 p-0"
-                title="复制"
+                title="copy"
               >
                 {copiedField === field.name ? (
                   <Check className="w-3 h-3 text-green-600" />
@@ -122,7 +122,7 @@ export default function PasswordViewModal({
                 size="sm"
                 onClick={() => togglePasswordVisibility(fieldId)}
                 className="h-6 w-6 p-0"
-                title={showPasswords[fieldId] ? "隐藏" : "显示"}
+                title={showPasswords[fieldId] ? "Hide" : "Show"}
               >
                 {showPasswords[fieldId] ? (
                   <EyeOff className="w-3 h-3" />
@@ -208,7 +208,7 @@ export default function PasswordViewModal({
                 }}
               >
                 <Edit3 className="w-4 h-4 mr-2" />
-                编辑
+                Edit
               </Button>
               <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="w-4 h-4" />
@@ -220,26 +220,26 @@ export default function PasswordViewModal({
           {(entry.website || entry.username || entry.description) && (
             <Card className="mb-4">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">基本信息</CardTitle>
+                <CardTitle className="text-base">basics</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-1">
                 {entry.website && (
                   <div className="group hover:bg-gray-50/50 dark:hover:bg-gray-700/30 rounded-lg p-3 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        网站地址
+                        website url
                       </span>
                       <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            copyToClipboard(entry.website!, "网站地址")
+                            copyToClipboard(entry.website!, "website url")
                           }
                           className="h-6 w-6 p-0"
-                          title="复制"
+                          title="copy"
                         >
-                          {copiedField === "网站地址" ? (
+                          {copiedField === "website url" ? (
                             <Check className="w-3 h-3 text-green-600" />
                           ) : (
                             <Copy className="w-3 h-3" />
@@ -257,7 +257,7 @@ export default function PasswordViewModal({
                             )
                           }
                           className="h-6 w-6 p-0"
-                          title="访问网站"
+                          title="visit website"
                         >
                           <ExternalLink className="w-3 h-3" />
                         </Button>
@@ -275,19 +275,19 @@ export default function PasswordViewModal({
                   <div className="group hover:bg-gray-50/50 dark:hover:bg-gray-700/30 rounded-lg p-3 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        用户名
+                        username
                       </span>
                       <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            copyToClipboard(entry.username!, "用户名")
+                            copyToClipboard(entry.username!, "username")
                           }
                           className="h-6 w-6 p-0"
-                          title="复制"
+                          title="copy"
                         >
-                          {copiedField === "用户名" ? (
+                          {copiedField === "username" ? (
                             <Check className="w-3 h-3 text-green-600" />
                           ) : (
                             <Copy className="w-3 h-3" />
@@ -307,7 +307,7 @@ export default function PasswordViewModal({
                   <div className="group hover:bg-gray-50/50 dark:hover:bg-gray-700/30 rounded-lg p-3 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        描述
+                        description
                       </span>
                     </div>
                     <div className="flex items-center min-h-[24px]">
@@ -325,7 +325,7 @@ export default function PasswordViewModal({
           {entry.customFields && entry.customFields.length > 0 && (
             <Card className="mb-4">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">详细信息</CardTitle>
+                <CardTitle className="text-base">detail</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-1">
                 {entry.customFields.map(renderCustomField)}
@@ -337,7 +337,7 @@ export default function PasswordViewModal({
           {((entry.tags && entry.tags.length > 0) || entry.notes) && (
             <Card className="mb-4">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">附加信息</CardTitle>
+                <CardTitle className="text-base">extra info</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-1">
                 {entry.tags && entry.tags.length > 0 && (
@@ -345,7 +345,7 @@ export default function PasswordViewModal({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center">
                         <Tag className="w-3 h-3 mr-1" />
-                        标签
+                        tag
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -366,7 +366,7 @@ export default function PasswordViewModal({
                   <div className="group hover:bg-gray-50/50 dark:hover:bg-gray-700/30 rounded-lg p-3 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        备注
+                        remark
                       </span>
                     </div>
                     <div className="flex items-start min-h-[24px]">
@@ -383,7 +383,7 @@ export default function PasswordViewModal({
           {/* 元数据 */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">元数据</CardTitle>
+              <CardTitle className="text-base">meta data</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -391,7 +391,7 @@ export default function PasswordViewModal({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
-                      创建时间
+                      create time
                     </span>
                   </div>
                   <div className="flex items-center min-h-[24px]">
@@ -404,7 +404,7 @@ export default function PasswordViewModal({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
-                      更新时间
+                      update time
                     </span>
                   </div>
                   <div className="flex items-center min-h-[24px]">

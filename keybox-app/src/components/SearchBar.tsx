@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface SearchBarProps {
   value: string;
@@ -42,13 +43,25 @@ export default function SearchBar({
   };
 
   return (
-    <div className="relative max-w-2xl mx-auto">
-      <div
+    <motion.div
+      className="relative max-w-2xl mx-auto"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
         className={`relative flex items-center transition-all duration-200 ${
           isFocused
             ? "ring-2 ring-blue-500 ring-opacity-50"
             : "ring-1 ring-gray-300 dark:ring-gray-600"
         } rounded-lg bg-white dark:bg-gray-800 shadow-sm`}
+        animate={{
+          scale: isFocused ? 1.02 : 1,
+          boxShadow: isFocused
+            ? "0 4px 12px rgba(59, 130, 246, 0.15)"
+            : "0 1px 3px rgba(0, 0, 0, 0.1)",
+        }}
+        transition={{ duration: 0.2 }}
       >
         {/* Search Icon */}
         <div className="absolute left-3 flex items-center pointer-events-none">
@@ -107,25 +120,49 @@ export default function SearchBar({
           )}
 
           {/* Keyboard Shortcut Hint */}
-          {!isFocused && !value && (
-            <div className="hidden sm:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500">
-              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
-                {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}
-              </kbd>
-              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
-                K
-              </kbd>
-            </div>
-          )}
+          <AnimatePresence>
+            {!isFocused && !value && (
+              <motion.div
+                className="hidden sm:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <motion.kbd
+                  className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}
+                </motion.kbd>
+                <motion.kbd
+                  className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  K
+                </motion.kbd>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
 
       {/* Search Results Count */}
-      {value && (
-        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
-          搜索: &ldquo;{value}&rdquo;
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {value && (
+          <motion.div
+            className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            搜索: &ldquo;{value}&rdquo;
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

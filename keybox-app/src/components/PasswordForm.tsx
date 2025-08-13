@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PasswordEntry, CustomField, Category } from "@/types/password";
+import toast from "react-hot-toast";
 
 import CategorySelector from "./CategorySelector";
 import PasswordGeneratorModal from "./PasswordGeneratorModal";
@@ -218,7 +219,7 @@ export default function PasswordForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      alert("请输入标题");
+      toast.error("Please enter a title");
       return;
     }
     onSave(formData);
@@ -266,7 +267,7 @@ export default function PasswordForm({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {entry ? "编辑密码" : "添加密码"}
+              {entry ? "edit password" : "create password"}
             </h2>
             <button
               type="button"
@@ -294,7 +295,7 @@ export default function PasswordForm({
             {/* Category Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                类目 *
+                Category *
               </label>
               <CategorySelector
                 categories={categories}
@@ -309,14 +310,14 @@ export default function PasswordForm({
             {/* Title Field (Always shown) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                标题 *
+                Title *
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="输入标题"
+                placeholder="input title"
                 required
               />
             </div>
@@ -329,7 +330,7 @@ export default function PasswordForm({
             {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                标签
+                tag
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((tag, index) => (
@@ -372,7 +373,7 @@ export default function PasswordForm({
                     }
                   }}
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="添加标签"
+                  placeholder="add tag"
                 />
                 <button
                   type="button"
@@ -387,14 +388,14 @@ export default function PasswordForm({
             {/* Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                备注
+                remark
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => handleInputChange("notes", e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="添加备注..."
+                placeholder="add remark..."
               />
             </div>
 

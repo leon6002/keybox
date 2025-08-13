@@ -21,17 +21,19 @@ import {
 } from "lucide-react";
 
 export default function HomePage() {
+  return <HomePageContent />;
+}
+
+function HomePageContent() {
   const router = useRouter();
   const { t, ready } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   // 加载数据统计
   useEffect(() => {
     const loadedData = StorageManager.loadFromLocalStorage();
     setEntries(loadedData.entries);
-    setCategories(loadedData.categories);
   }, []);
 
   const features = [
@@ -78,11 +80,6 @@ export default function HomePage() {
       labelKey: "home.stats.savedPasswords",
       value: entries.length,
       icon: Lock,
-    },
-    {
-      labelKey: "home.stats.categoryCount",
-      value: categories.length,
-      icon: Layers,
     },
     {
       labelKey: "home.stats.securityLevel",

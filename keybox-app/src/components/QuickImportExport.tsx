@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
+import toast from "react-hot-toast";
 
 interface QuickImportExportProps {
   entries: PasswordEntry[];
@@ -104,7 +105,7 @@ export default function QuickImportExport({
       setShowPasswordDialog(false);
       onClose();
     } catch (error) {
-      alert(
+      toast.error(
         (ready ? t("error.exportFailed") : "导出失败") +
           ": " +
           (error instanceof Error

@@ -20,7 +20,7 @@ interface GoogleUser {
 export default function SignInPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signIn, isAuthenticated } = useAuth();
+  const { signInWithGoogle, isAuthenticated } = useAuth();
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -29,12 +29,17 @@ export default function SignInPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleGoogleSuccess = (user: GoogleUser) => {
-    signIn(user);
-    // Redirect to the page user was trying to access or home
-    const returnUrl =
-      new URLSearchParams(window.location.search).get("returnUrl") || "/";
-    router.push(returnUrl);
+  const handleGoogleSuccess = async (user: GoogleUser) => {
+    try {
+      await signInWithGoogle(user);
+      // Redirect to the page user was trying to access or home
+      const returnUrl =
+        new URLSearchParams(window.location.search).get("returnUrl") || "/";
+      router.push(returnUrl);
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+      // You could show a toast notification here
+    }
   };
 
   const handleGoogleError = (error: any) => {

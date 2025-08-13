@@ -1,17 +1,17 @@
-// 类目定义
-export interface Category {
+// 文件夹定义
+export interface Folder {
   id: string;
   name: string;
   icon: string;
   color: string;
   description?: string;
-  fields: CategoryField[];
+  fields: FolderField[];
   createdAt: string;
   updatedAt: string;
 }
 
-// 类目字段定义
-export interface CategoryField {
+// 文件夹字段定义
+export interface FolderField {
   id: string;
   name: string;
   type:
@@ -51,7 +51,7 @@ export interface CustomField {
 export interface PasswordEntry {
   id: string;
   title: string;
-  categoryId: string;
+  folderId: string;
   username?: string;
   password?: string;
   website?: string;
@@ -62,14 +62,19 @@ export interface PasswordEntry {
   createdAt: string;
   updatedAt: string;
   isFavorite: boolean;
+  passwordType?: string; // Type of password entry (website, banking, credit-card, etc.)
+  // Legacy field for backward compatibility
+  categoryId?: string;
 }
 
 // 密码数据库接口
 export interface PasswordDatabase {
   version: string;
   entries: PasswordEntry[];
-  categories: Category[];
+  folders: Folder[];
   exportedAt: string;
+  // Legacy field for backward compatibility during migration
+  categories?: any[];
 }
 
 // 搜索结果接口
@@ -109,17 +114,21 @@ export interface ExportOptions {
 // 应用状态接口
 export interface AppState {
   entries: PasswordEntry[];
-  categories: Category[];
+  folders: Folder[];
   searchQuery: string;
   filteredEntries: PasswordEntry[];
   selectedEntry: PasswordEntry | null;
-  selectedCategory: string | null;
+  selectedFolder: string | null;
   isEditing: boolean;
   showAddForm: boolean;
-  showCategoryManager: boolean;
+  showFolderManager: boolean;
   sortBy: "title" | "createdAt" | "updatedAt";
   sortOrder: "asc" | "desc";
   viewMode: "list" | "grid" | "table";
+  // Legacy fields for backward compatibility (removed)
+  // categories?: any[];
+  // selectedCategory?: string | null;
+  // showCategoryManager?: boolean;
 }
 
 // 工具函数类型

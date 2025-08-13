@@ -9,7 +9,7 @@ interface I18nProviderProps {
 }
 
 export default function I18nProvider({ children }: I18nProviderProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // 确保 i18n 已初始化
@@ -23,9 +23,9 @@ export default function I18nProvider({ children }: I18nProviderProps) {
   }, []);
 
   // 在 hydration 完成之前不渲染内容，避免 SSR/Client 不匹配
-  if (!isInitialized) {
-    return <div>{children}</div>;
-  }
+  // if (!isInitialized) {
+  //   return <div>{children}</div>;
+  // }
 
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }

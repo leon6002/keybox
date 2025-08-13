@@ -376,6 +376,47 @@ const resources = {
         },
       },
 
+      // Backup system
+      backup: {
+        title: "Backup Management",
+        auto: "Auto",
+        manual: "Manual",
+        noBackups: "No Backups Found",
+        noBackupsDescription:
+          "You haven't created any backups yet. Create your first backup to keep your data safe.",
+        createFirst: "Create First Backup",
+        createManual: "Create Manual Backup",
+        createManualDescription:
+          "Create a manual backup with a custom version name.",
+        restoreFromFile: "Restore from File",
+        restoreFromFileDescription:
+          "Select a KBX backup file to restore your data.",
+        versionName: "Version Name",
+        versionNamePlaceholder: "Enter version name (e.g., Before Update)",
+        useCustomPassword: "Use custom password",
+        customPassword: "Custom Password",
+        customPasswordPlaceholder: "Enter custom encryption password",
+        selectFile: "Select KBX File",
+        password: "Password",
+        passwordPlaceholder: "Enter decryption password",
+        create: "Create Backup",
+        restore: "Restore",
+        confirmRestore:
+          "Are you sure you want to restore from {{filename}}? This will replace your current data with {{count}} entries.",
+        confirmDelete: "Delete Backup",
+        confirmDeleteDescription:
+          "Are you sure you want to delete {{filename}}? This action cannot be undone.",
+        createSuccess: "Backup created successfully: {{filename}}",
+        createFailed: "Failed to create backup",
+        restoreSuccess: "Data restored successfully",
+        restoreFailed:
+          "Failed to restore data. Please check your password and try again.",
+        autoBackupEnabled: "Auto backup enabled (every 5 minutes)",
+        autoBackupDisabled: "Auto backup disabled",
+        loginRequiredDescription:
+          "Please sign in to access backup management features.",
+      },
+
       // 操作确认
       confirm: {
         deletePassword: {
@@ -567,6 +608,8 @@ const resources = {
 
       // 认证相关
       auth: {
+        signIn: "Sign In",
+        loginRequired: "Login Required",
         signInWithGoogle: "Sign in with Google",
         loadingGoogle: "Loading Google Sign-In...",
         signingIn: "Signing in...",
@@ -1003,6 +1046,43 @@ const resources = {
         },
       },
 
+      // Backup system
+      backup: {
+        title: "备份管理",
+        auto: "自动",
+        manual: "手动",
+        noBackups: "暂无备份",
+        noBackupsDescription:
+          "您还没有创建任何备份。创建您的第一个备份来保护您的数据安全。",
+        createFirst: "创建第一个备份",
+        createManual: "创建手动备份",
+        createManualDescription: "创建一个带有自定义版本名称的手动备份。",
+        restoreFromFile: "从文件恢复",
+        restoreFromFileDescription: "选择一个 KBX 备份文件来恢复您的数据。",
+        versionName: "版本名称",
+        versionNamePlaceholder: "输入版本名称（例如：更新前备份）",
+        useCustomPassword: "使用自定义密码",
+        customPassword: "自定义密码",
+        customPasswordPlaceholder: "输入自定义加密密码",
+        selectFile: "选择 KBX 文件",
+        password: "密码",
+        passwordPlaceholder: "输入解密密码",
+        create: "创建备份",
+        restore: "恢复",
+        confirmRestore:
+          "确定要从 {{filename}} 恢复吗？这将用 {{count}} 个条目替换您当前的数据。",
+        confirmDelete: "删除备份",
+        confirmDeleteDescription:
+          "确定要删除 {{filename}} 吗？此操作无法撤销。",
+        createSuccess: "备份创建成功：{{filename}}",
+        createFailed: "创建备份失败",
+        restoreSuccess: "数据恢复成功",
+        restoreFailed: "恢复数据失败。请检查您的密码并重试。",
+        autoBackupEnabled: "自动备份已启用（每5分钟）",
+        autoBackupDisabled: "自动备份已禁用",
+        loginRequiredDescription: "请登录以访问备份管理功能。",
+      },
+
       // 操作确认
       confirm: {
         deletePassword: {
@@ -1189,6 +1269,8 @@ const resources = {
 
       // 认证相关
       auth: {
+        signIn: "登录",
+        loginRequired: "需要登录",
         signInWithGoogle: "使用 Google 登录",
         loadingGoogle: "正在加载 Google 登录...",
         signingIn: "登录中...",

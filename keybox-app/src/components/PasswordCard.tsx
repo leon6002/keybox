@@ -32,6 +32,23 @@ export default function PasswordCard({
   // 获取条目对应的类目信息
   const category = categories.find((cat) => cat.id === entry.categoryId);
 
+  // 从 customFields 中提取用户名和密码（如果直接属性为空）
+  const getFieldValue = (fieldNames: string[]) => {
+    for (const fieldName of fieldNames) {
+      const field = entry.customFields.find(
+        (f) => f.name.toLowerCase() === fieldName.toLowerCase()
+      );
+      if (field && field.value) {
+        return field.value;
+      }
+    }
+    return "";
+  };
+
+  const displayUsername =
+    entry.username || getFieldValue(["用户名", "username", "邮箱", "email"]);
+  const displayPassword = entry.password || getFieldValue(["密码", "password"]);
+
   const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -121,11 +138,11 @@ export default function PasswordCard({
                 )}
               </div>
               <div className="flex items-center space-x-4">
-                {entry.username && (
+                {displayUsername && (
                   <span
                     className="text-sm text-gray-500 dark:text-gray-400 truncate"
                     dangerouslySetInnerHTML={{
-                      __html: highlightText(entry.username),
+                      __html: highlightText(displayUsername),
                     }}
                   />
                 )}
@@ -155,7 +172,8 @@ export default function PasswordCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (entry.username) copyToClipboard(entry.username, "用户名");
+                  if (displayUsername)
+                    copyToClipboard(displayUsername, "用户名");
                 }}
                 className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 cursor-pointer"
                 title="复制用户名"
@@ -194,7 +212,7 @@ export default function PasswordCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (entry.password) copyToClipboard(entry.password, "密码");
+                  if (displayPassword) copyToClipboard(displayPassword, "密码");
                 }}
                 className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 cursor-pointer"
                 title="复制密码"
@@ -342,13 +360,13 @@ export default function PasswordCard({
             <span
               className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-32"
               dangerouslySetInnerHTML={{
-                __html: highlightText(entry.username || ""),
+                __html: highlightText(displayUsername || ""),
               }}
             />
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (entry.username) copyToClipboard(entry.username, "用户名");
+                if (displayUsername) copyToClipboard(displayUsername, "用户名");
               }}
               className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
               title="复制用户名"
@@ -391,7 +409,7 @@ export default function PasswordCard({
           <span className="text-sm text-gray-500 dark:text-gray-400">密码</span>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-900 dark:text-white font-mono">
-              {showPassword ? entry.password : "••••••••"}
+              {showPassword ? displayPassword : "••••••••"}
             </span>
             <button
               onClick={(e) => {
@@ -427,7 +445,7 @@ export default function PasswordCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (entry.password) copyToClipboard(entry.password, "密码");
+                if (displayPassword) copyToClipboard(displayPassword, "密码");
               }}
               className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
               title="复制密码"

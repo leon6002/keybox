@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Eye, EyeOff, RefreshCw, Trash2 } from "lucide-react";
 import { PasswordEntry, Category, CustomField } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import CategorySelector from "@/components/CategorySelector";
+import toast from "react-hot-toast";
 
 const STORAGE_KEY_PREFIX = "keybox_draft_edit_";
 
@@ -170,7 +171,7 @@ export default function EditPasswordPage() {
 
   const handleSave = () => {
     if (!formData.title.trim()) {
-      alert("请输入标题");
+      toast.error("Please enter a title");
       return;
     }
 

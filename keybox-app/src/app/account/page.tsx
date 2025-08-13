@@ -20,7 +20,8 @@ import { Button } from "@/components/ui/button";
 export default function AccountPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut, getGoogleUser } = useAuth();
+  const googleUser = getGoogleUser();
   const [activeTab, setActiveTab] = useState<"subscription" | "team">(
     "subscription"
   );
@@ -91,17 +92,17 @@ export default function AccountPage() {
               <LanguageSwitcher />
               <div className="flex items-center space-x-3">
                 <UserAvatar
-                  src={user.picture}
-                  alt={user.name}
+                  src={googleUser?.picture || ""}
+                  alt={googleUser?.name || "User"}
                   size="sm"
                   showPremium={isPremium}
                 />
                 <div className="hidden sm:block">
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user.name}
+                    {googleUser?.name || "User"}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {user.email}
+                    {googleUser?.email || ""}
                   </div>
                 </div>
               </div>

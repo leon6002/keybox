@@ -3,10 +3,10 @@ import {
   PasswordDatabase,
   ImportOptions,
   ExportOptions,
-  Category,
+  Folder,
 } from "@/types/password";
 import { EncryptionUtil } from "./encryption";
-import { CategoryManager } from "./categories";
+import { BackupService } from "@/services/backupService";
 
 const STORAGE_KEY = "keybox_passwords";
 const CURRENT_VERSION = "1.0.0";
@@ -16,13 +16,13 @@ export class StorageManager {
   // 保存密码数据到 localStorage
   static saveToLocalStorage(
     entries: PasswordEntry[],
-    categories: Category[] = []
+    folders: Folder[] = []
   ): void {
     try {
       const database: PasswordDatabase = {
         version: CURRENT_VERSION,
         entries,
-        categories,
+        folders: folders,
         exportedAt: new Date().toISOString(),
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(database));
@@ -35,39 +35,35 @@ export class StorageManager {
   // 从 localStorage 加载密码数据
   static loadFromLocalStorage(): {
     entries: PasswordEntry[];
-    categories: Category[];
+    folders: Folder[];
   } {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       if (!data) {
-        // 如果没有数据，返回默认类目
+        // 如果没有数据，返回空数据
         return {
           entries: [],
-          categories: CategoryManager.getDefaultCategories(),
+          folders: [],
         };
       }
 
       const database: PasswordDatabase = JSON.parse(data);
 
-      // 获取类目数据，如果没有则使用默认类目
-      const categories =
-        database.categories && database.categories.length > 0
-          ? database.categories
-          : CategoryManager.getDefaultCategories();
+      const folders = database.folders || [];
 
       // 确保所有条目都有必要的属性
       const entries = (database.entries || []).map((entry, index) => {
-        // 如果 categoryId 为空或不存在于类目中，使用第一个类目的 ID
-        let categoryId = entry.categoryId || "";
-        if (!categoryId || !categories.find((cat) => cat.id === categoryId)) {
-          categoryId = categories.length > 0 ? categories[0].id : "";
+        // 如果 folderId 为空或不存在于文件夹中，使用第一个文件夹的 ID
+        let folderId = entry.folderId;
+        if (!folderId || !folders.find((folder) => folder.id === folderId)) {
+          folderId = folders.length > 0 ? folders[0].id : "";
         }
 
         return {
           ...entry,
           id: entry.id || `entry-${Date.now()}-${index}`, // 确保有唯一 ID
           title: entry.title || "",
-          categoryId,
+          folderId: folderId,
           customFields: entry.customFields || [],
           tags: entry.tags || [],
           isFavorite: entry.isFavorite || false,
@@ -83,13 +79,13 @@ export class StorageManager {
 
       return {
         entries,
-        categories,
+        folders,
       };
     } catch (error) {
       console.error("Failed to load from localStorage:", error);
       return {
         entries: [],
-        categories: CategoryManager.getDefaultCategories(),
+        folders: [],
       };
     }
   }
@@ -97,7 +93,7 @@ export class StorageManager {
   // 导出数据到 JSON 文件
   static async exportToFile(
     entries: PasswordEntry[],
-    categories: Category[] = [],
+    folders: Folder[] = [],
     options: ExportOptions = { includePasswords: true, format: "json" }
   ): Promise<void> {
     try {
@@ -125,7 +121,7 @@ export class StorageManager {
       const database: PasswordDatabase = {
         version: CURRENT_VERSION,
         entries: dataToExport,
-        categories,
+        folders: folders,
         exportedAt: new Date().toISOString(),
       };
 
@@ -204,33 +200,76 @@ export class StorageManager {
             }
 
             try {
-              const encryptedFile = JSON.parse(content);
+              let decryptedData: string;
 
-              // 验证加密文件格式
-              if (
-                !encryptedFile.metadata ||
-                !encryptedFile.data ||
-                !encryptedFile.hash
-              ) {
-                throw new Error("加密文件格式不正确");
+              console.log("Processing KBX file:", {
+                filename: file.name,
+                size: file.size,
+                contentPreview: content.substring(0, 50) + "...",
+                startsWithSalted: content.startsWith("U2FsdGVkX1"),
+              });
+
+              // 检查文件格式：是否是直接的加密字符串（Supabase 格式）
+              if (content.startsWith("U2FsdGVkX1")) {
+                console.log("Detected Supabase encrypted format (CryptoJS)");
+                // 使用 BackupService 的解密方法（CryptoJS）
+                decryptedData = BackupService.decryptData(content, password);
+                console.log(
+                  "Decryption successful, data length:",
+                  decryptedData.length
+                );
+              } else {
+                // 尝试解析为旧格式的 JSON 结构
+                console.log("Detected legacy encrypted format");
+                try {
+                  const encryptedFile = JSON.parse(content);
+
+                  // 验证加密文件格式
+                  if (
+                    !encryptedFile.metadata ||
+                    !encryptedFile.data ||
+                    !encryptedFile.hash
+                  ) {
+                    throw new Error("加密文件格式不正确");
+                  }
+
+                  // 解密数据 - 检查加密格式
+                  if (encryptedFile.data.startsWith("U2FsdGVkX1")) {
+                    // CryptoJS 格式
+                    decryptedData = BackupService.decryptData(
+                      encryptedFile.data,
+                      password
+                    );
+                  } else {
+                    // Web Crypto API 格式
+                    decryptedData = await EncryptionUtil.decryptData(
+                      encryptedFile.data,
+                      password
+                    );
+                  }
+
+                  // 验证文件完整性
+                  const isValid = await EncryptionUtil.verifyFileIntegrity(
+                    decryptedData,
+                    encryptedFile.hash
+                  );
+                  if (!isValid) {
+                    throw new Error("文件完整性验证失败，文件可能已损坏");
+                  }
+                } catch (jsonError) {
+                  console.error("Failed to parse as legacy format:", jsonError);
+                  throw new Error(
+                    "无法解析 KBX 文件格式。请确认文件是否正确或尝试使用正确的密码。"
+                  );
+                }
               }
 
-              // 解密数据
-              const decryptedData = await EncryptionUtil.decryptData(
-                encryptedFile.data,
-                password
-              );
-
-              // 验证文件完整性
-              const isValid = await EncryptionUtil.verifyFileIntegrity(
-                decryptedData,
-                encryptedFile.hash
-              );
-              if (!isValid) {
-                throw new Error("文件完整性验证失败，文件可能已损坏");
-              }
-
+              console.log("Attempting to parse decrypted data as JSON...");
               database = JSON.parse(decryptedData);
+              console.log("Successfully parsed database:", {
+                entriesCount: database.entries?.length || 0,
+                version: database.version,
+              });
             } catch (error) {
               console.error("Failed to decrypt file:", error);
               reject(

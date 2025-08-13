@@ -1,71 +1,96 @@
-// 加密工具类
+// Legacy encryption utility class - DEPRECATED
+// Use the new security services in /lib/security/ instead
+// This is kept for backward compatibility during migration
+
+import {
+  SecurityServiceFactory,
+  KdfType,
+  SECURITY_CONSTANTS,
+} from "../lib/security";
+
 export class EncryptionUtil {
-  // 生成密钥
-  private static async generateKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  // DEPRECATED: Use SecurityServiceFactory.getCryptoService() instead
+  private static async generateKey(
+    password: string,
+    salt: Uint8Array
+  ): Promise<CryptoKey> {
+    console.warn(
+      "EncryptionUtil.generateKey is deprecated. Use the new security services."
+    );
+
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       encoder.encode(password),
-      { name: 'PBKDF2' },
+      { name: "PBKDF2" },
       false,
-      ['deriveBits', 'deriveKey']
+      ["deriveBits", "deriveKey"]
     );
 
     return crypto.subtle.deriveKey(
       {
-        name: 'PBKDF2',
+        name: "PBKDF2",
         salt: salt,
-        iterations: 100000,
-        hash: 'SHA-256',
+        iterations: SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS, // Updated to use security constants
+        hash: "SHA-256",
       },
       keyMaterial,
-      { name: 'AES-GCM', length: 256 },
+      { name: "AES-GCM", length: 256 },
       true,
-      ['encrypt', 'decrypt']
+      ["encrypt", "decrypt"]
     );
   }
 
-  // 加密数据
+  // DEPRECATED: Use SecurityServiceFactory.getCryptoService().encrypt() instead
   static async encryptData(data: string, password: string): Promise<string> {
+    console.warn(
+      "EncryptionUtil.encryptData is deprecated. Use the new security services."
+    );
+
     try {
-      const encoder = new TextEncoder();
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      
-      const key = await this.generateKey(password, salt);
-      const encodedData = encoder.encode(data);
-      
-      const encryptedData = await crypto.subtle.encrypt(
-        {
-          name: 'AES-GCM',
-          iv: iv,
-        },
-        key,
-        encodedData
+      // For backward compatibility, use the new crypto service
+      const cryptoService = SecurityServiceFactory.getCryptoService();
+      const salt = cryptoService.generateSalt();
+
+      const kdfConfig = {
+        type: KdfType.PBKDF2_SHA256,
+        iterations: SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
+        salt,
+        memory: undefined,
+        parallelism: undefined,
+      };
+
+      const key = await cryptoService.deriveKeyFromPassword(
+        password,
+        salt,
+        kdfConfig
       );
+      const encryptedString = await cryptoService.encrypt(data, key);
 
-      // 将 salt、iv 和加密数据组合
-      const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
-      combined.set(salt, 0);
-      combined.set(iv, salt.length);
-      combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
+      // Return in legacy format for compatibility
+      const legacyFormat = {
+        salt: Array.from(salt),
+        encryptedData: encryptedString,
+      };
 
-      // 转换为 Base64
-      return btoa(String.fromCharCode(...combined));
+      return btoa(JSON.stringify(legacyFormat));
     } catch (error) {
-      console.error('Encryption failed:', error);
-      throw new Error('加密失败');
+      console.error("Encryption failed:", error);
+      throw new Error("加密失败");
     }
   }
 
   // 解密数据
-  static async decryptData(encryptedData: string, password: string): Promise<string> {
+  static async decryptData(
+    encryptedData: string,
+    password: string
+  ): Promise<string> {
     try {
       // 从 Base64 解码
       const combined = new Uint8Array(
         atob(encryptedData)
-          .split('')
-          .map(char => char.charCodeAt(0))
+          .split("")
+          .map((char) => char.charCodeAt(0))
       );
 
       // 提取 salt、iv 和加密数据
@@ -74,10 +99,10 @@ export class EncryptionUtil {
       const encrypted = combined.slice(28);
 
       const key = await this.generateKey(password, salt);
-      
+
       const decryptedData = await crypto.subtle.decrypt(
         {
-          name: 'AES-GCM',
+          name: "AES-GCM",
           iv: iv,
         },
         key,
@@ -87,21 +112,22 @@ export class EncryptionUtil {
       const decoder = new TextDecoder();
       return decoder.decode(decryptedData);
     } catch (error) {
-      console.error('Decryption failed:', error);
-      throw new Error('解密失败，请检查密码是否正确');
+      console.error("Decryption failed:", error);
+      throw new Error("解密失败，请检查密码是否正确");
     }
   }
 
   // 生成强密码
   static generateStrongPassword(length: number = 32): string {
-    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
-    let password = '';
-    
+    const charset =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
+    let password = "";
+
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charset.length);
       password += charset[randomIndex];
     }
-    
+
     return password;
   }
 
@@ -120,7 +146,7 @@ export class EncryptionUtil {
     } else if (password.length >= 8) {
       score += 15;
     } else {
-      feedback.push('密码长度至少应为8位');
+      feedback.push("密码长度至少应为8位");
     }
 
     // 字符类型检查
@@ -129,33 +155,33 @@ export class EncryptionUtil {
     const hasNumbers = /\d/.test(password);
     const hasSymbols = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
 
-    const charTypeCount = [hasUppercase, hasLowercase, hasNumbers, hasSymbols].filter(Boolean).length;
+    const charTypeCount = [
+      hasUppercase,
+      hasLowercase,
+      hasNumbers,
+      hasSymbols,
+    ].filter(Boolean).length;
     score += charTypeCount * 15;
 
-    if (!hasUppercase) feedback.push('建议包含大写字母');
-    if (!hasLowercase) feedback.push('建议包含小写字母');
-    if (!hasNumbers) feedback.push('建议包含数字');
-    if (!hasSymbols) feedback.push('建议包含特殊符号');
+    if (!hasUppercase) feedback.push("建议包含大写字母");
+    if (!hasLowercase) feedback.push("建议包含小写字母");
+    if (!hasNumbers) feedback.push("建议包含数字");
+    if (!hasSymbols) feedback.push("建议包含特殊符号");
 
     // 重复字符检查
     const repeatedChars = password.match(/(.)\1{2,}/g);
     if (repeatedChars) {
       score -= repeatedChars.length * 10;
-      feedback.push('避免连续重复字符');
+      feedback.push("避免连续重复字符");
     }
 
     // 常见模式检查
-    const commonPatterns = [
-      /123456/,
-      /abcdef/,
-      /qwerty/,
-      /password/i,
-    ];
+    const commonPatterns = [/123456/, /abcdef/, /qwerty/, /password/i];
 
-    commonPatterns.forEach(pattern => {
+    commonPatterns.forEach((pattern) => {
       if (pattern.test(password)) {
         score -= 20;
-        feedback.push('避免使用常见模式');
+        feedback.push("避免使用常见模式");
       }
     });
 
@@ -168,13 +194,19 @@ export class EncryptionUtil {
   // 生成文件哈希（用于验证文件完整性）
   static async generateFileHash(data: string): Promise<string> {
     const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data));
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode(data)
+    );
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   // 验证文件完整性
-  static async verifyFileIntegrity(data: string, expectedHash: string): Promise<boolean> {
+  static async verifyFileIntegrity(
+    data: string,
+    expectedHash: string
+  ): Promise<boolean> {
     const actualHash = await this.generateFileHash(data);
     return actualHash === expectedHash;
   }
@@ -182,20 +214,22 @@ export class EncryptionUtil {
   // 创建加密文件元数据
   static createEncryptedFileMetadata() {
     return {
-      version: '1.0.0',
-      algorithm: 'AES-GCM',
-      keyDerivation: 'PBKDF2',
+      version: "1.0.0",
+      algorithm: "AES-GCM",
+      keyDerivation: "PBKDF2",
       iterations: 100000,
       createdAt: new Date().toISOString(),
-      application: 'KeyBox Password Manager'
+      application: "KeyBox Password Manager",
     };
   }
 
   // 检查浏览器是否支持 Web Crypto API
   static isWebCryptoSupported(): boolean {
-    return typeof crypto !== 'undefined' && 
-           typeof crypto.subtle !== 'undefined' &&
-           typeof crypto.subtle.encrypt === 'function' &&
-           typeof crypto.subtle.decrypt === 'function';
+    return (
+      typeof crypto !== "undefined" &&
+      typeof crypto.subtle !== "undefined" &&
+      typeof crypto.subtle.encrypt === "function" &&
+      typeof crypto.subtle.decrypt === "function"
+    );
   }
 }

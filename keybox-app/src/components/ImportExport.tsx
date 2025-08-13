@@ -7,6 +7,8 @@ import { PasswordEntry, Category } from "@/types/password";
 import { StorageManager } from "@/utils/storage";
 import { useConfirm } from "@/hooks/useConfirm";
 import PasswordGeneratorModal from "@/components/PasswordGeneratorModal";
+import { EncryptedCacheService } from "@/lib/storage/encryptedCacheService";
+import { OptimisticUpdateService } from "@/lib/storage/optimisticUpdateService";
 
 interface ImportExportProps {
   entries: PasswordEntry[];
@@ -179,8 +181,43 @@ export default function ImportExport({
       variant: "destructive",
     });
     if (confirmed) {
-      StorageManager.clearAllData();
-      window.location.reload();
+      try {
+        console.log("🗑️ Clearing all data from ImportExport...");
+
+        // Clear all IndexedDB data
+        try {
+          const cacheService = EncryptedCacheService.getInstance();
+          const optimisticService = OptimisticUpdateService.getInstance();
+
+          await cacheService.clearAllCache();
+          console.log("✅ Encrypted cache cleared");
+
+          await optimisticService.clearAllData();
+          console.log("✅ Optimistic updates cleared");
+        } catch (indexedDBError) {
+          console.error("❌ Failed to clear IndexedDB:", indexedDBError);
+          // Continue even if IndexedDB clear fails
+        }
+
+        // Clear localStorage
+        StorageManager.clearAllData();
+        localStorage.clear();
+        console.log("✅ localStorage cleared");
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+        console.log("✅ sessionStorage cleared");
+
+        console.log("✅ All data cleared, reloading...");
+        window.location.reload();
+      } catch (error) {
+        console.error("❌ Failed to clear data:", error);
+        // Fallback to just clearing localStorage
+        StorageManager.clearAllData();
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.reload();
+      }
     }
   };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { PasswordEntry, Category } from "@/types/password";
 // import { SearchEngine } from "@/utils/search";
 import PasswordCard from "./PasswordCard";
@@ -63,58 +64,53 @@ export default function PasswordList({
   //   }
   // };
 
-  if (entries.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-          <svg
-            className="w-12 h-12 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          {searchQuery ? "未找到匹配的密码条目" : "还没有密码条目"}
-        </h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">
-          {searchQuery
-            ? "尝试使用不同的搜索关键词"
-            : '点击"添加密码"按钮创建您的第一个密码条目'}
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
         {/* Results Count */}
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <motion.div
+          className="text-sm text-gray-600 dark:text-gray-400"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           显示 {entries.length} 个条目
           {searchQuery && (
-            <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs">
+            <motion.span
+              className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
               搜索结果
-            </span>
+            </motion.span>
           )}
-        </div>
+        </motion.div>
 
         {/* Controls */}
-        <div className="flex items-center space-x-4">
+        <motion.div
+          className="flex items-center space-x-4"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
           {/* Sort Controls */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
               排序:
             </span>
-            <select
+            <motion.select
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
                 const [field, order] = e.target.value.split("-") as [
@@ -125,6 +121,8 @@ export default function PasswordList({
                 setSortOrder(order);
               }}
               className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              whileFocus={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <option value="title-asc">标题 A-Z</option>
               <option value="title-desc">标题 Z-A</option>
@@ -132,12 +130,17 @@ export default function PasswordList({
               <option value="createdAt-asc">创建时间 (旧到新)</option>
               <option value="updatedAt-desc">更新时间 (新到旧)</option>
               <option value="updatedAt-asc">更新时间 (旧到新)</option>
-            </select>
+            </motion.select>
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            <button
+          <motion.div
+            className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+            <motion.button
               onClick={() => setViewMode("grid")}
               className={`cursor-pointer p-2 rounded-md transition-colors duration-200 ${
                 viewMode === "grid"
@@ -145,6 +148,9 @@ export default function PasswordList({
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
               title="网格视图"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <svg
                 className="w-4 h-4"
@@ -159,8 +165,8 @@ export default function PasswordList({
                   d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
                 />
               </svg>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => setViewMode("list")}
               className={`cursor-pointer p-2 rounded-md transition-colors duration-200 ${
                 viewMode === "list"
@@ -168,6 +174,9 @@ export default function PasswordList({
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
               title="列表视图"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <svg
                 className="w-4 h-4"
@@ -182,31 +191,112 @@ export default function PasswordList({
                   d="M4 6h16M4 10h16M4 14h16M4 18h16"
                 />
               </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
       {/* Password Cards */}
-      <div
-        className={
-          viewMode === "grid"
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
-        }
-      >
-        {sortedEntries.map((entry) => (
-          <PasswordCard
-            key={entry.id}
-            entry={entry}
-            categories={categories}
-            searchQuery={searchQuery}
-            onDelete={onDelete}
-            onView={onView}
-            viewMode={viewMode}
-          />
-        ))}
-      </div>
-    </div>
+      <AnimatePresence mode="wait">
+        {sortedEntries.length > 0 ? (
+          <motion.div
+            key="passwords"
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
+            }
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {sortedEntries.map((entry, index) => (
+              <motion.div
+                key={entry.id}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.05,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 25,
+                }}
+                layout
+                whileHover={{
+                  y: -4,
+                  transition: { duration: 0.2 },
+                }}
+              >
+                <PasswordCard
+                  entry={entry}
+                  categories={categories}
+                  searchQuery={searchQuery}
+                  onDelete={onDelete}
+                  onView={onView}
+                  viewMode={viewMode}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="text-center py-16"
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{
+                duration: 0.6,
+                delay: 0.2,
+                type: "spring",
+                stiffness: 200,
+                damping: 15,
+              }}
+            >
+              <svg
+                className="w-12 h-12 text-blue-600 dark:text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </motion.div>
+            <motion.h3
+              className="text-2xl font-semibold text-gray-900 dark:text-white mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              {searchQuery ? "未找到匹配的密码条目" : "还没有密码条目"}
+            </motion.h3>
+            <motion.p
+              className="text-gray-600 dark:text-gray-400 mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              {searchQuery
+                ? "尝试使用不同的搜索关键词"
+                : '点击"添加密码"按钮创建您的第一个密码条目'}
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
