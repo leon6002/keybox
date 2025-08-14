@@ -163,7 +163,7 @@ function HomePageContent() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
               <button
-                onClick={() => router.push("/passwords")}
+                onClick={() => router.push("/vault")}
                 className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl flex items-center space-x-2"
               >
                 <span>{ready ? t("home.cta.viewPasswords") : "查看密码"}</span>
@@ -254,7 +254,7 @@ function HomePageContent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <button
-              onClick={() => router.push("/passwords")}
+              onClick={() => router.push("/vault")}
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold text-lg hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 cursor-pointer shadow-lg"
             >
               Get Started

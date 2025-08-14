@@ -5,10 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit3 } from "lucide-react";
 import { PasswordEntry, Folder } from "@/types/password";
-import { StorageManager } from "@/utils/storage";
 import { SearchEngine } from "@/utils/search";
 import PasswordEditForm from "@/components/PasswordEditForm";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -34,8 +32,7 @@ import { DesktopSidebar } from "@/components/manage/DesktopSidebar";
 function ManagePasswordsContent() {
   const router = useRouter();
   const { t, ready } = useTranslation();
-  const { user, getGoogleUser, getUserKey } = useAuth();
-  const googleUser = getGoogleUser();
+  const { user, getUserKey } = useAuth();
   const searchParams = useSearchParams();
   const entryId = searchParams.get("id");
 
