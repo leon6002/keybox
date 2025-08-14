@@ -46,10 +46,36 @@ export async function POST(request: NextRequest) {
       `✅ Loaded ${ciphers?.length || 0} encrypted passwords from database`
     );
 
+    // Parse encrypted fields that may have been double-serialized
+    const processedCiphers = (ciphers || []).map((cipher) => {
+      try {
+        return {
+          ...cipher,
+          name:
+            typeof cipher.name === "string" && cipher.name.startsWith("{")
+              ? JSON.parse(cipher.name)
+              : cipher.name,
+          data:
+            typeof cipher.data === "string" && cipher.data.startsWith("{")
+              ? JSON.parse(cipher.data)
+              : cipher.data,
+          notes:
+            cipher.notes &&
+            typeof cipher.notes === "string" &&
+            cipher.notes.startsWith("{")
+              ? JSON.parse(cipher.notes)
+              : cipher.notes,
+        };
+      } catch (parseError) {
+        console.warn(`⚠️ Failed to parse cipher ${cipher.id}:`, parseError);
+        return cipher; // Return original if parsing fails
+      }
+    });
+
     return NextResponse.json({
       success: true,
-      ciphers: ciphers || [],
-      count: ciphers?.length || 0,
+      ciphers: processedCiphers,
+      count: processedCiphers.length,
     });
   } catch (error) {
     console.error("❌ Password load API error:", error);

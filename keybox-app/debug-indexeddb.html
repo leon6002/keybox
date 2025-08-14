@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Debug IndexedDB</title>
+  </head>
+  <body>
+    <h1>IndexedDB Debug Tool</h1>
+    <button onclick="debugIndexedDB()">Check IndexedDB Contents</button>
+    <div id="output"></div>
+
+    <script>
+      async function debugIndexedDB() {
+        const output = document.getElementById("output");
+        output.innerHTML = "<h2>Checking IndexedDB...</h2>";
+
+        try {
+          // Open the optimistic update database
+          const dbRequest = indexedDB.open("KeyboxOptimisticUpdates", 2);
+
+          dbRequest.onsuccess = function (event) {
+            const db = event.target.result;
+            output.innerHTML += "<p>✅ Database opened successfully</p>";
+
+            // Check what stores exist
+            const storeNames = Array.from(db.objectStoreNames);
+            output.innerHTML += `<p>📦 Object stores: ${storeNames.join(
+              ", "
+            )}</p>`;
+
+            if (storeNames.includes("localPasswords")) {
+              // Get all entries from localPasswords store
+              const transaction = db.transaction(
+                ["localPasswords"],
+                "readonly"
+              );
+              const store = transaction.objectStore("localPasswords");
+              const getAllRequest = store.getAll();
+
+              getAllRequest.onsuccess = function () {
+                const entries = getAllRequest.result;
+                output.innerHTML += `<h3>📋 Found ${entries.length} entries in localPasswords store:</h3>`;
+
+                entries.forEach((entry, index) => {
+                  output.innerHTML += `
+                                    <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                                        <h4>Entry ${index + 1}:</h4>
+                                        <p><strong>ID:</strong> ${entry.id}</p>
+                                        <p><strong>User ID:</strong> ${
+                                          entry.userId
+                                        }</p>
+                                        <p><strong>Title:</strong> ${
+                                          entry.title
+                                        }</p>
+                                        <p><strong>Sync Status:</strong> ${
+                                          entry.syncStatus
+                                        }</p>
+                                        <p><strong>Created At:</strong> ${
+                                          entry.createdAt
+                                        }</p>
+                                        <p><strong>Has Username:</strong> ${!!entry.username}</p>
+                                        <p><strong>Has Password:</strong> ${!!entry.password}</p>
+                                    </div>
+                                `;
+                });
+
+                // Get unique user IDs
+                const userIds = [...new Set(entries.map((e) => e.userId))];
+                output.innerHTML += `<h3>👥 Unique User IDs found: ${userIds.join(
+                  ", "
+                )}</h3>`;
+              };
+
+              getAllRequest.onerror = function () {
+                output.innerHTML +=
+                  "<p>❌ Failed to get entries from localPasswords store</p>";
+              };
+            } else {
+              output.innerHTML += "<p>⚠️ localPasswords store not found</p>";
+            }
+          };
+
+          dbRequest.onerror = function () {
+            output.innerHTML += "<p>❌ Failed to open database</p>";
+          };
+        } catch (error) {
+          output.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+        }
+      }
+    </script>
+  </body>
+</html>

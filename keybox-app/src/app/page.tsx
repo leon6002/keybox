@@ -132,7 +132,7 @@ function HomePageContent() {
             )}
 
             <button
-              onClick={() => router.push("/passwords")}
+              onClick={() => router.push("/vault")}
               className="px-3 sm:px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer text-sm sm:text-base whitespace-nowrap"
             >
               <span className="hidden sm:inline">
@@ -245,23 +245,25 @@ function HomePageContent() {
       <div className="py-24 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600">
         <div className="max-w-4xl mx-auto text-center px-6 lg:px-8">
           <h2 className="text-4xl lg:text-5xl font-bold text-white mb-8">
-            立即开始您的安全之旅
+            Start your secure journey today.
           </h2>
           <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
-            加入数千名用户的行列，体验最安全、最便捷的密码管理服务。您的数字安全，我们来守护。
+            Join thousands of users and experience the most secure and
+            convenient password management service. We guard your digital
+            security.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <button
               onClick={() => router.push("/passwords")}
               className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold text-lg hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 cursor-pointer shadow-lg"
             >
-              立即体验
+              Get Started
             </button>
             <button
               onClick={() => router.push("/add")}
               className="px-8 py-4 border-2 border-white text-white rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all duration-200 cursor-pointer"
             >
-              创建密码
+              Create Your Password
             </button>
           </div>
         </div>
@@ -279,7 +281,9 @@ function HomePageContent() {
                 <span className="text-2xl font-bold">PandaKeyBox</span>
               </div>
               <p className="text-gray-400 mb-6 max-w-md">
-                专业的密码管理工具，采用企业级加密技术，为您的数字生活提供全方位的安全保护。
+                Professional password management tool, with enterprise-level
+                encryption technology, providing comprehensive security
+                protection for your digital life.
               </p>
               <div className="flex space-x-4">
                 <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
@@ -295,44 +299,44 @@ function HomePageContent() {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">产品功能</h3>
+              <h3 className="text-lg font-semibold mb-4">Product Features</h3>
               <ul className="space-y-2 text-gray-400">
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  密码生成
+                  Password Generator
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  安全存储
+                  Safe Storage
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  数据同步
+                  Data Sync
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  分类管理
+                  Password Manage
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-4">支持</h3>
+              <h3 className="text-lg font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  使用指南
+                  User Guide
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  常见问题
+                  Common Question
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  联系我们
+                  Contact Us
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">
-                  隐私政策
+                  Privacy Policy
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-slate-800 mt-12 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 PandaKeyBox. 保留所有权利。</p>
+            <p>&copy; 2024 PandaKeyBox. All rights reserved.</p>
           </div>
         </div>
       </footer>

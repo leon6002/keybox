@@ -11,9 +11,9 @@ export default function ManageLayout({
   const pathname = usePathname();
 
   // 根据当前路径确定页面类型
-  const getCurrentPage = (): "passwords" | "manage" => {
-    if (pathname.startsWith("/passwords")) {
-      return "passwords";
+  const getCurrentPage = (): "vault" | "manage" => {
+    if (pathname.startsWith("/vault")) {
+      return "vault";
     } else if (pathname.startsWith("/manage")) {
       return "manage";
     }

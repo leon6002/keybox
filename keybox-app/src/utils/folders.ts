@@ -1,4 +1,3 @@
-// 文件夹管理工具类
 export class FolderManager {
   // Fixed UUIDs for common folders (shared across all users)
   static readonly COMMON_FOLDER_IDS = {
@@ -24,7 +23,8 @@ export class FolderManager {
       }
     );
   }
-}
 
-// Legacy export for backward compatibility
-export const CategoryManager = FolderManager;
+  static getDefaultFolderId(): string {
+    return this.COMMON_FOLDER_IDS.PERSONAL;
+  }
+}

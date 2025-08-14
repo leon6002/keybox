@@ -8,6 +8,7 @@ import {
   initializeDatabaseService,
   initializeDatabaseWithMasterKey,
 } from "../database";
+import { OptimisticUpdateService } from "../storage/optimisticUpdateService";
 
 export interface GoogleUser {
   id: string;
@@ -62,30 +63,119 @@ export class UnifiedAuthService {
 
   private constructor() {
     this.authService = SecurityServiceFactory.getAuthService();
-    this.initializeAuth();
+    // Initialize asynchronously to avoid SSR issues
+    if (typeof window !== "undefined") {
+      this.initializeAuth();
+    }
   }
 
   // Initialize authentication state
   private async initializeAuth(): Promise<void> {
     try {
+      // Check if we're in a browser environment
+      if (
+        typeof window === "undefined" ||
+        typeof localStorage === "undefined"
+      ) {
+        console.log("🔄 Server-side rendering, skipping auth initialization");
+        this.currentState.isLoading = false;
+        this.notifyListeners();
+        return;
+      }
+
+      // Add a small delay to ensure DOM is ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Check for stored Google user
-      const storedGoogleUser = localStorage.getItem("google_user");
+      let storedGoogleUser: string | null = null;
+      try {
+        storedGoogleUser = localStorage.getItem("google_user");
+      } catch (error) {
+        console.warn(
+          "⚠️ Failed to access localStorage for google_user:",
+          error
+        );
+      }
+
       if (storedGoogleUser) {
         const googleUser: GoogleUser = JSON.parse(storedGoogleUser);
 
         // Check if user has database encryption setup
         const hasEncryption = await this.checkEncryptionSetup(googleUser.email);
 
+        // Try to restore vault unlock state and user key from sessionStorage
+        let storedVaultState: string | null = null;
+        let storedUserKey: string | null = null;
+        let storedDatabaseUser: string | null = null;
+
+        try {
+          storedVaultState = sessionStorage.getItem("vault_unlock_state");
+          storedUserKey = sessionStorage.getItem("user_key");
+          storedDatabaseUser = sessionStorage.getItem("database_user");
+        } catch (error) {
+          console.warn("⚠️ Failed to access sessionStorage:", error);
+        }
+
+        let isVaultUnlocked = false;
+        let userKey: Uint8Array | undefined;
+        let databaseUser: any = null;
+
+        if (
+          storedVaultState === "unlocked" &&
+          storedUserKey &&
+          storedDatabaseUser
+        ) {
+          try {
+            // Restore user key from base64
+            const userKeyArray = JSON.parse(storedUserKey);
+            userKey = new Uint8Array(userKeyArray);
+            databaseUser = JSON.parse(storedDatabaseUser);
+            isVaultUnlocked = true;
+            console.log("✅ Restored vault unlock state from session storage");
+
+            // Initialize database services with restored user key
+            try {
+              await initializeDatabaseService();
+              await initializeDatabaseWithMasterKey(userKey);
+
+              // Initialize OptimisticUpdateService
+              const optimisticService = OptimisticUpdateService.getInstance();
+              await optimisticService.initialize();
+              console.log("✅ OptimisticUpdateService initialized");
+
+              console.log(
+                "✅ Database services initialized with restored user key"
+              );
+            } catch (error) {
+              console.warn(
+                "⚠️ Failed to initialize database services with restored key:",
+                error
+              );
+            }
+          } catch (error) {
+            console.warn(
+              "⚠️ Failed to restore vault state, user will need to unlock again:",
+              error
+            );
+            // Clear invalid stored data
+            sessionStorage.removeItem("vault_unlock_state");
+            sessionStorage.removeItem("user_key");
+            sessionStorage.removeItem("database_user");
+          }
+        }
+
         this.currentState = {
           user: {
             googleUser,
+            databaseUser,
             hasEncryptionSetup: hasEncryption,
-            isVaultUnlocked: false,
+            isVaultUnlocked,
+            userKey,
           },
           isAuthenticated: true,
           isLoading: false,
           needsEncryptionSetup: !hasEncryption,
-          isVaultLocked: hasEncryption, // If they have encryption, vault starts locked
+          isVaultLocked: hasEncryption && !isVaultUnlocked,
         };
       } else {
         this.currentState.isLoading = false;
@@ -104,7 +194,11 @@ export class UnifiedAuthService {
       console.log("🚀 Starting Google sign-in for:", googleUser.email);
 
       // Store Google user info
-      localStorage.setItem("google_user", JSON.stringify(googleUser));
+      try {
+        localStorage.setItem("google_user", JSON.stringify(googleUser));
+      } catch (error) {
+        console.warn("⚠️ Failed to store Google user in localStorage:", error);
+      }
 
       // Check if user has encryption setup
       const hasEncryption = await this.checkEncryptionSetup(googleUser.email);
@@ -273,7 +367,7 @@ export class UnifiedAuthService {
     }
   }
 
-  // Unlock vault with master password
+  // Unlock vault with master password (CLIENT-SIDE ONLY - ZERO KNOWLEDGE)
   async unlockVault(masterPassword: string): Promise<void> {
     if (!this.currentState.user?.googleUser) {
       throw new Error("Must be signed in first");
@@ -289,59 +383,118 @@ export class UnifiedAuthService {
         this.currentState.user.googleUser.email
       );
 
-      // Use API route to unlock vault (handles database lookup and password verification)
-      const response = await fetch("/api/auth/unlock-vault", {
+      // SECURITY: Get user's encrypted data from server WITHOUT sending master password
+      const response = await fetch("/api/auth/get-user-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: this.currentState.user.googleUser.email,
-          masterPassword,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("❌ Vault unlock failed:", errorData);
-        throw new Error(errorData.error || "Failed to unlock vault");
+        console.error("❌ Failed to get user data:", errorData);
+        throw new Error(errorData.error || "Failed to get user data");
       }
 
       const responseData = await response.json();
-      console.log("📦 Unlock API response:", responseData);
+      console.log("📦 User data retrieved from server");
 
-      const { user: databaseUser, userKey } = responseData;
-      console.log("✅ Vault unlocked successfully");
+      const { user: databaseUser } = responseData;
 
-      // Convert userKey array back to Uint8Array
-      const userKeyBytes = new Uint8Array(userKey.key);
-      console.log("🔑 Storing user key in state:", {
-        originalLength: userKey.key.length,
-        convertedLength: userKeyBytes.length,
-        firstFewBytes: Array.from(userKeyBytes.slice(0, 8)),
-      });
+      // SECURITY: Perform ALL cryptographic operations CLIENT-SIDE
+      const { SecurityServiceFactory } = await import("@/lib/security");
+      const keyManagementService =
+        SecurityServiceFactory.getKeyManagementService();
 
-      // Initialize database services with master key
-      await initializeDatabaseService();
-      await initializeDatabaseWithMasterKey(userKeyBytes);
+      // Recreate master key from password and stored KDF parameters (CLIENT-SIDE ONLY)
+      console.log("🔐 Deriving master key client-side...");
+      const saltBytes = new Uint8Array(
+        Buffer.from(databaseUser.kdfSalt, "base64")
+      );
+      const masterKey = await keyManagementService.createMasterKey(
+        masterPassword,
+        {
+          type: databaseUser.kdfType,
+          iterations: databaseUser.kdfIterations,
+          memory: databaseUser.kdfMemory,
+          parallelism: databaseUser.kdfParallelism,
+          salt: saltBytes,
+        }
+      );
 
-      // Update state
-      this.currentState = {
-        ...this.currentState,
-        user: {
-          ...this.currentState.user,
-          databaseUser,
-          isVaultUnlocked: true,
-          userKey: userKeyBytes,
-        },
-        isVaultLocked: false,
-      };
+      // Verify password by attempting to decrypt user key (CLIENT-SIDE ONLY)
+      console.log("🔐 Attempting to decrypt user key client-side...");
+      const encryptedUserKey = JSON.parse(databaseUser.userKeyEncrypted);
 
-      console.log("✅ State updated with user key:", {
-        userKeyLength: this.currentState.user?.userKey?.length ?? 0,
-      });
+      try {
+        const userKey = await keyManagementService.decryptUserKey(
+          encryptedUserKey,
+          masterKey
+        );
 
-      this.notifyListeners();
+        // Convert ArrayBuffer to Uint8Array if needed
+        let userKeyBytes: Uint8Array;
+        if (userKey.key instanceof ArrayBuffer) {
+          userKeyBytes = new Uint8Array(userKey.key);
+        } else if (userKey.key instanceof Uint8Array) {
+          userKeyBytes = userKey.key;
+        } else {
+          throw new Error(
+            `Unexpected user key type: ${userKey.key?.constructor.name}`
+          );
+        }
+
+        if (!userKeyBytes || userKeyBytes.length === 0) {
+          throw new Error("Decrypted user key is empty");
+        }
+
+        console.log("✅ Vault unlocked successfully (client-side decryption)");
+
+        // Initialize database services with master key
+        await initializeDatabaseService();
+        await initializeDatabaseWithMasterKey(userKeyBytes);
+
+        // Update state with decrypted user key
+        this.currentState = {
+          ...this.currentState,
+          user: {
+            ...this.currentState.user,
+            databaseUser,
+            isVaultUnlocked: true,
+            userKey: userKeyBytes,
+          },
+          isVaultLocked: false,
+        };
+
+        console.log("✅ State updated with client-side decrypted user key:", {
+          userKeyLength: this.currentState.user?.userKey?.length ?? 0,
+        });
+
+        // Persist vault unlock state and user key in sessionStorage for page refresh
+        try {
+          sessionStorage.setItem("vault_unlock_state", "unlocked");
+          sessionStorage.setItem(
+            "user_key",
+            JSON.stringify(Array.from(userKeyBytes))
+          );
+          sessionStorage.setItem("database_user", JSON.stringify(databaseUser));
+          console.log("💾 Persisted vault unlock state to session storage");
+        } catch (error) {
+          console.warn("⚠️ Failed to persist vault state:", error);
+        }
+
+        this.notifyListeners();
+      } catch (decryptionError) {
+        console.error(
+          "❌ Client-side decryption failed (incorrect password):",
+          decryptionError
+        );
+        throw new Error("Incorrect master password");
+      }
     } catch (error) {
       console.error("Vault unlock error:", error);
       throw error;
@@ -351,6 +504,16 @@ export class UnifiedAuthService {
   // Lock vault
   lockVault(): void {
     this.authService.logout();
+
+    // Clear persisted vault state
+    try {
+      sessionStorage.removeItem("vault_unlock_state");
+      sessionStorage.removeItem("user_key");
+      sessionStorage.removeItem("database_user");
+      console.log("🔒 Cleared persisted vault state from session storage");
+    } catch (error) {
+      console.warn("⚠️ Failed to clear vault state:", error);
+    }
 
     if (this.currentState.user) {
       this.currentState = {
@@ -374,7 +537,20 @@ export class UnifiedAuthService {
       await supabase.auth.signOut();
 
       // Clear local storage
-      localStorage.removeItem("google_user");
+      try {
+        localStorage.removeItem("google_user");
+      } catch (error) {
+        console.warn("⚠️ Failed to clear localStorage:", error);
+      }
+
+      // Clear session storage (vault state)
+      try {
+        sessionStorage.removeItem("vault_unlock_state");
+        sessionStorage.removeItem("user_key");
+        sessionStorage.removeItem("database_user");
+      } catch (error) {
+        console.warn("⚠️ Failed to clear sessionStorage:", error);
+      }
 
       // Logout from auth service
       this.authService.logout();
@@ -457,6 +633,14 @@ export class UnifiedAuthService {
     return { ...this.currentState };
   }
 
+  // Force client-side initialization
+  async forceClientInitialization(): Promise<void> {
+    if (typeof window !== "undefined") {
+      console.log("🔄 Forcing client-side auth initialization");
+      await this.initializeAuth();
+    }
+  }
+
   subscribe(listener: (state: AuthState) => void): () => void {
     this.listeners.push(listener);
     return () => {
@@ -498,10 +682,25 @@ export class UnifiedAuthService {
     const userKey = this.currentState.user?.userKey ?? null;
     console.log("🔑 getUserKey called:", {
       hasUser: !!this.currentState.user,
+      isAuthenticated: this.currentState.isAuthenticated,
+      isVaultLocked: this.currentState.isVaultLocked,
       isVaultUnlocked: this.currentState.user?.isVaultUnlocked,
+      hasEncryptionSetup: this.currentState.user?.hasEncryptionSetup,
+      needsEncryptionSetup: this.currentState.needsEncryptionSetup,
       userKeyLength: userKey?.length ?? 0,
       userKeyType: userKey?.constructor.name ?? "null",
     });
+
+    if (!this.currentState.isAuthenticated) {
+      console.warn("🔑 User key unavailable: User not authenticated");
+    } else if (this.currentState.isVaultLocked) {
+      console.warn("🔑 User key unavailable: Vault is locked");
+    } else if (!this.currentState.user?.isVaultUnlocked) {
+      console.warn("🔑 User key unavailable: Vault not unlocked in user state");
+    } else if (!userKey) {
+      console.warn("🔑 User key unavailable: User key is null");
+    }
+
     return userKey;
   }
 }

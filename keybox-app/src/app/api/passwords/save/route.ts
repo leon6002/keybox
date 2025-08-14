@@ -38,11 +38,19 @@ export async function POST(request: NextRequest) {
       folder_id: encryptedCipher.folderId || null, // ✅ Use actual folder ID
       favorite: encryptedCipher.favorite || false, // ✅ Use actual favorite value
       reprompt: encryptedCipher.reprompt || 0, // Use actual reprompt value
-      name: JSON.stringify(encryptedCipher.name), // Store complete EncryptedString object
-      data: JSON.stringify(encryptedCipher.data), // Store complete EncryptedString object
+      name:
+        typeof encryptedCipher.name === "string"
+          ? encryptedCipher.name
+          : JSON.stringify(encryptedCipher.name), // Handle both string and object formats
+      data:
+        typeof encryptedCipher.data === "string"
+          ? encryptedCipher.data
+          : JSON.stringify(encryptedCipher.data), // Handle both string and object formats
       notes: encryptedCipher.notes
-        ? JSON.stringify(encryptedCipher.notes)
-        : null, // Store complete EncryptedString object
+        ? typeof encryptedCipher.notes === "string"
+          ? encryptedCipher.notes
+          : JSON.stringify(encryptedCipher.notes)
+        : null, // Handle both string and object formats
       key: null, // Individual cipher key (optional)
       attachments: null,
       deleted_at: null,

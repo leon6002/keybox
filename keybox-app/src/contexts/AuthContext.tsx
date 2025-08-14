@@ -57,7 +57,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Initialize auth state
     const initialState = unifiedAuthService.getState();
     console.log("🔄 AuthContext initial state:", initialState);
+    console.log("🔄 AuthContext environment check:", {
+      isClient: typeof window !== "undefined",
+      isLoading: initialState.isLoading,
+      isAuthenticated: initialState.isAuthenticated,
+      hasUser: !!initialState.user,
+      isVaultUnlocked: initialState.user?.isVaultUnlocked,
+    });
     setAuthState(initialState);
+
+    // Force re-initialization on client side
+    if (typeof window !== "undefined") {
+      console.log("🔄 Client-side initialization starting");
+      unifiedAuthService.forceClientInitialization();
+    }
 
     return unsubscribe;
   }, []);

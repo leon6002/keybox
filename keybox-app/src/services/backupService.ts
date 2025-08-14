@@ -1,5 +1,5 @@
 import CryptoJS from "crypto-js";
-import { PasswordEntry, Category } from "@/types/password";
+import { PasswordEntry, Category, Folder } from "@/types/password";
 import { SupabaseBackupService } from "@/lib/supabase";
 import {
   SecurityServiceFactory,
@@ -166,7 +166,7 @@ export class BackupService {
   static startAutoBackup(
     userId: string,
     getEntries: () => PasswordEntry[],
-    getCategories: () => Category[],
+    getFolders: () => Folder[],
     onBackupComplete?: (filename: string) => void,
     onBackupError?: (error: Error) => void
   ) {
@@ -177,14 +177,14 @@ export class BackupService {
     this.autoBackupTimer = setInterval(async () => {
       try {
         const entries = getEntries();
-        const categories = getCategories();
+        const folders = getFolders();
         if (entries.length === 0) return; // 没有数据时不备份
 
         const backupKey = this.getUserBackupKey(userId);
         const filename = this.generateFilename("auto");
         const blob = await this.exportKBXFile(
           entries,
-          categories,
+          folders,
           backupKey,
           "auto"
         );

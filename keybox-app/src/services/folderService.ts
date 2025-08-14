@@ -1,6 +1,6 @@
 import { Folder } from "@/types/password";
 import { SecurityServiceFactory } from "@/lib/security";
-import { CategoryManager } from "@/utils/folders";
+import { FolderManager } from "@/utils/folders";
 
 export class FolderService {
   /**
@@ -38,7 +38,7 @@ export class FolderService {
       // Decrypt folders
       const vaultService = SecurityServiceFactory.getVaultService();
       const userKeyObj = { key: userKey };
-      const decryptedFolders: Folder[] = [];
+      const decryptedCustomFolders: Folder[] = []; // Only store custom folders here
 
       for (const encryptedFolder of encryptedFolders) {
         try {
@@ -58,12 +58,11 @@ export class FolderService {
             icon: this.getDefaultIcon(decryptedName),
             color: this.getDefaultColor(decryptedName),
             description: `Custom folder: ${decryptedName}`,
-            fields: CategoryManager.getDefaultCategories()[0]?.fields || [],
             createdAt: encryptedFolder.created_at,
             updatedAt: encryptedFolder.updated_at,
           };
 
-          decryptedFolders.push(folder);
+          decryptedCustomFolders.push(folder);
         } catch (error) {
           console.error(
             `❌ Failed to decrypt folder ${encryptedFolder.id}:`,
@@ -74,20 +73,16 @@ export class FolderService {
       }
 
       console.log(
-        `✅ Decrypted ${decryptedFolders.length} folders successfully`
+        `✅ Decrypted ${decryptedCustomFolders.length} custom folders successfully`
       );
 
-      // If no folders were successfully decrypted, return common folders
-      if (decryptedFolders.length === 0) {
-        console.log(
-          "📁 No folders decrypted successfully, returning common folders"
-        );
-        return this.getCommonFolders();
-      }
-
-      // Return common folders (with fixed UUIDs) + user's custom folders
+      // Always return common folders + user's custom folders
       const commonFolders = this.getCommonFolders();
-      const allFolders = [...commonFolders, ...decryptedFolders];
+      const allFolders = [...commonFolders, ...decryptedCustomFolders];
+
+      console.log(
+        `📁 Returning ${commonFolders.length} common folders + ${decryptedCustomFolders.length} custom folders = ${allFolders.length} total folders`
+      );
 
       return allFolders;
     } catch (error) {
@@ -103,62 +98,56 @@ export class FolderService {
   static getCommonFolders(): Folder[] {
     return [
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.WORK,
+        id: FolderManager.COMMON_FOLDER_IDS.WORK,
         name: "Work",
         icon: "💼",
         color: "#3B82F6",
         description: "Work-related passwords and accounts",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.PERSONAL,
+        id: FolderManager.COMMON_FOLDER_IDS.PERSONAL,
         name: "Personal",
         icon: "🏠",
         color: "#10B981",
         description: "Personal accounts and information",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.SOCIAL,
+        id: FolderManager.COMMON_FOLDER_IDS.SOCIAL,
         name: "Social",
         icon: "👥",
         color: "#8B5CF6",
         description: "Social media and communication",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.FINANCE,
+        id: FolderManager.COMMON_FOLDER_IDS.FINANCE,
         name: "Finance",
         icon: "💰",
         color: "#F59E0B",
         description: "Banking and financial accounts",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.SHOPPING,
+        id: FolderManager.COMMON_FOLDER_IDS.SHOPPING,
         name: "Shopping",
         icon: "🛒",
         color: "#EF4444",
         description: "E-commerce and shopping accounts",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
-        id: CategoryManager.COMMON_FOLDER_IDS.ENTERTAINMENT,
+        id: FolderManager.COMMON_FOLDER_IDS.ENTERTAINMENT,
         name: "Entertainment",
         icon: "🎬",
         color: "#EC4899",
         description: "Streaming and entertainment services",
-        fields: [],
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z",
       },
@@ -242,7 +231,7 @@ export class FolderService {
     } catch (error) {
       console.error("❌ Failed to create default folders:", error);
       // Fallback to in-memory default folders if database creation fails
-      return CategoryManager.getDefaultFolders();
+      return this.getCommonFolders();
     }
   }
 
@@ -301,7 +290,6 @@ export class FolderService {
         icon: folder.icon,
         color: folder.color,
         description: folder.description,
-        fields: folder.fields,
         createdAt: savedFolder.created_at,
         updatedAt: savedFolder.updated_at,
       };

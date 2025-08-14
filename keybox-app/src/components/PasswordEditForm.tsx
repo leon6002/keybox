@@ -30,15 +30,15 @@ import { PasswordEntry, Folder, CustomField } from "@/types/password";
 import FolderSelector from "./FolderSelector";
 import PasswordGeneratorModal from "./PasswordGeneratorModal";
 import { useTranslation } from "react-i18next";
-import { CategoryManager } from "@/utils/folders";
+import { FolderManager } from "@/utils/folders";
+import { PasswordTypeManager } from "@/utils/PasswordTypes";
 
 interface PasswordEditFormProps {
   entry: PasswordEntry;
-  folders: Folder[]; // Folders are now required
+  folders: Folder[];
   onSave: (entry: PasswordEntry) => void;
   onDelete: () => void;
   onCreateFolder?: (folderName: string) => void;
-  isCreatingNew?: boolean;
   isDeleting?: boolean; // Loading state for delete operation
 }
 
@@ -48,19 +48,20 @@ export default function PasswordEditForm({
   onSave,
   onDelete,
   onCreateFolder,
-  isCreatingNew = false,
   isDeleting = false,
 }: PasswordEditFormProps) {
+  console.log("rendering PasswordEditForm ");
   const { t } = useTranslation();
   const [formData, setFormData] = useState(() => {
+    console.log("initing password form: ", entry);
     return {
       title: entry.title || "",
-      categoryId: entry.categoryId || "",
-      folderId: entry.folderId || CategoryManager.COMMON_FOLDER_IDS.PERSONAL, // Default to Personal folder
-      customFields: entry.customFields || [], // Start with existing fields or empty array
+      folderId: entry.folderId || FolderManager.getDefaultFolderId(),
+      customFields:
+        entry.customFields || PasswordTypeManager.getDefaultFields(),
       tags: entry.tags || [],
       isFavorite: entry.isFavorite || false,
-      passwordType: entry.passwordType || "website", // Use entry's type or default to website
+      passwordType: entry.passwordType || "website",
     };
   });
   const [showPasswords, setShowPasswords] = useState<{
@@ -76,29 +77,10 @@ export default function PasswordEditForm({
 
   // 使用 useMemo 来计算是否有变化，避免无限循环
   const hasFormChanges = useMemo(() => {
-    // For new entries, enable save button if:
-    // 1. Title is not empty, OR
-    // 2. Any field has content, OR
-    // 3. Tags are added, OR
-    // 4. Favorite is set, OR
-    // 5. Custom fields are initialized (meaning user has interacted with the form)
-    if (isCreatingNew) {
-      return (
-        formData.title.trim() !== "" ||
-        formData.customFields.some(
-          (field) => field.value && field.value.trim() !== ""
-        ) ||
-        formData.tags.length > 0 ||
-        formData.isFavorite ||
-        (formData.customFields && formData.customFields.length > 0) // Fields are initialized
-      );
-    }
-
     // For existing entries, compare with original values
     return (
       formData.title !== (entry.title || "") ||
-      formData.categoryId !== (entry.categoryId || "") ||
-      formData.folderId !== (entry.folderId || entry.categoryId || "") ||
+      formData.folderId !== (entry.folderId || "") ||
       formData.isFavorite !== (entry.isFavorite || false) ||
       JSON.stringify(formData.customFields) !==
         JSON.stringify(entry.customFields || []) ||
@@ -106,18 +88,15 @@ export default function PasswordEditForm({
     );
   }, [
     formData.title,
-    formData.categoryId,
     formData.folderId,
     formData.isFavorite,
     formData.customFields,
     formData.tags,
     entry.title,
-    entry.categoryId,
     entry.folderId,
     entry.isFavorite,
     entry.customFields,
     entry.tags,
-    isCreatingNew,
   ]);
 
   // 监听表单变化
@@ -130,8 +109,7 @@ export default function PasswordEditForm({
     return {
       id: entry.id,
       title: entry.title,
-      categoryId: entry.categoryId,
-      folderId: entry.folderId || entry.categoryId, // Support both new and legacy
+      folderId: entry.folderId,
       isFavorite: entry.isFavorite,
       customFieldsHash: JSON.stringify(entry.customFields || []),
       tagsHash: JSON.stringify(entry.tags || []),
@@ -139,27 +117,22 @@ export default function PasswordEditForm({
   }, [
     entry.id,
     entry.title,
-    entry.categoryId,
     entry.folderId,
     entry.isFavorite,
     entry.customFields,
     entry.tags,
   ]);
 
-  // 当选中的条目变化时，重置表单
+  // reset form when selected entry changes
   useEffect(() => {
     const customFields = JSON.parse(entrySignature.customFieldsHash);
     setFormData({
       title: entrySignature.title || "",
-      categoryId: entrySignature.categoryId || "",
-      folderId:
-        entrySignature.folderId ||
-        entrySignature.categoryId ||
-        CategoryManager.COMMON_FOLDER_IDS.PERSONAL,
-      customFields: customFields,
+      folderId: entrySignature.folderId || FolderManager.getDefaultFolderId(),
+      customFields: customFields || PasswordTypeManager.getDefaultFields(),
       tags: JSON.parse(entrySignature.tagsHash),
       isFavorite: entrySignature.isFavorite || false,
-      passwordType: entry.passwordType || "website", // Use actual password type from entry
+      passwordType: entry.passwordType || "website",
     });
     setHasChanges(false);
     setShowPasswords({});
@@ -168,18 +141,10 @@ export default function PasswordEditForm({
   // Ensure custom fields are properly initialized based on password type
   useEffect(() => {
     // For new entries, always initialize fields based on password type
-    if (isCreatingNew) {
-      const fieldsForType = getFieldsForType(formData.passwordType);
-      if (fieldsForType.length > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          customFields: fieldsForType,
-        }));
-      }
-    }
-    // For existing entries, only initialize if custom fields are empty
-    else if (!formData.customFields || formData.customFields.length === 0) {
-      const fieldsForType = getFieldsForType(formData.passwordType);
+    if (!formData.customFields || formData.customFields.length === 0) {
+      const fieldsForType = PasswordTypeManager.getFieldsForType(
+        formData.passwordType
+      );
       if (fieldsForType.length > 0) {
         setFormData((prev) => ({
           ...prev,
@@ -188,7 +153,7 @@ export default function PasswordEditForm({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.passwordType, isCreatingNew]); // Run when password type changes or when creating new
+  }, [formData.passwordType]); // Run when password type changes or when creating new
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -210,7 +175,7 @@ export default function PasswordEditForm({
 
   // Handle type change
   const handleTypeChange = (typeId: string) => {
-    const newFields = getFieldsForType(typeId);
+    const newFields = PasswordTypeManager.getFieldsForType(typeId);
 
     // Preserve existing field values when changing types
     const mergedFields = newFields.map((newField) => {
@@ -228,394 +193,6 @@ export default function PasswordEditForm({
       passwordType: typeId,
       customFields: mergedFields,
     }));
-  };
-
-  // Get fields for specific type
-  const getFieldsForType = (typeId: string): CustomField[] => {
-    switch (typeId) {
-      case "website":
-        return [
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "Enter username",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "Enter password",
-            value: "",
-          },
-          {
-            id: "website",
-            name: "Website URL",
-            type: "url" as const,
-            isRequired: false,
-            placeholder: "https://example.com",
-            value: "",
-          },
-        ];
-      case "banking":
-        return [
-          {
-            id: "account-number",
-            name: "Account Number",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "Enter account number",
-            value: "",
-          },
-          {
-            id: "routing-number",
-            name: "Routing Number",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "Enter routing number",
-            value: "",
-          },
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "Online banking username",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: false,
-            placeholder: "Online banking password",
-            value: "",
-          },
-          {
-            id: "website",
-            name: "Bank Website",
-            type: "url" as const,
-            isRequired: false,
-            placeholder: "https://bank.com",
-            value: "",
-          },
-        ];
-      case "credit-card":
-        return [
-          {
-            id: "card-number",
-            name: "Card Number",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "1234 5678 9012 3456",
-            value: "",
-          },
-          {
-            id: "cardholder-name",
-            name: "Cardholder Name",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "John Doe",
-            value: "",
-          },
-          {
-            id: "expiry-date",
-            name: "Expiry Date",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "MM/YY",
-            value: "",
-          },
-          {
-            id: "cvv",
-            name: "CVV",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "123",
-            value: "",
-          },
-          {
-            id: "pin",
-            name: "PIN",
-            type: "password" as const,
-            isRequired: false,
-            placeholder: "1234",
-            value: "",
-          },
-        ];
-      case "social":
-        return [
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "Enter username",
-            value: "",
-          },
-          {
-            id: "email",
-            name: "Email",
-            type: "email" as const,
-            isRequired: false,
-            placeholder: "user@example.com",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "Enter password",
-            value: "",
-          },
-          {
-            id: "website",
-            name: "Platform URL",
-            type: "url" as const,
-            isRequired: false,
-            placeholder: "https://platform.com",
-            value: "",
-          },
-        ];
-      case "email":
-        return [
-          {
-            id: "email",
-            name: "Email Address",
-            type: "email" as const,
-            isRequired: true,
-            placeholder: "user@example.com",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "Enter password",
-            value: "",
-          },
-          {
-            id: "smtp-server",
-            name: "SMTP Server",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "smtp.example.com",
-            value: "",
-          },
-          {
-            id: "imap-server",
-            name: "IMAP Server",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "imap.example.com",
-            value: "",
-          },
-        ];
-      case "database":
-        return [
-          {
-            id: "host",
-            name: "Host",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "localhost or IP address",
-            value: "",
-          },
-          {
-            id: "port",
-            name: "Port",
-            type: "number" as const,
-            isRequired: false,
-            placeholder: "3306",
-            value: "",
-          },
-          {
-            id: "database",
-            name: "Database Name",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "database_name",
-            value: "",
-          },
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "db_user",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "db_password",
-            value: "",
-          },
-        ];
-      case "server":
-        return [
-          {
-            id: "server-name",
-            name: "Server Name",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "server.example.com",
-            value: "",
-          },
-          {
-            id: "ip-address",
-            name: "IP Address",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "192.168.1.100",
-            value: "",
-          },
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "admin",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "server_password",
-            value: "",
-          },
-          {
-            id: "ssh-port",
-            name: "SSH Port",
-            type: "number" as const,
-            isRequired: false,
-            placeholder: "22",
-            value: "",
-          },
-        ];
-      case "wifi":
-        return [
-          {
-            id: "network-name",
-            name: "Network Name (SSID)",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "WiFi Network Name",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: true,
-            placeholder: "WiFi Password",
-            value: "",
-          },
-          {
-            id: "security",
-            name: "Security Type",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "WPA2/WPA3",
-            value: "",
-          },
-          {
-            id: "location",
-            name: "Location",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "Home/Office",
-            value: "",
-          },
-        ];
-      case "software":
-        return [
-          {
-            id: "software-name",
-            name: "Software Name",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "Software Name",
-            value: "",
-          },
-          {
-            id: "license-key",
-            name: "License Key",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "XXXXX-XXXXX-XXXXX",
-            value: "",
-          },
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "Username",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: false,
-            placeholder: "Password",
-            value: "",
-          },
-          {
-            id: "version",
-            name: "Version",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "1.0.0",
-            value: "",
-          },
-        ];
-      default: // "other"
-        return [
-          {
-            id: "title",
-            name: "Title",
-            type: "text" as const,
-            isRequired: true,
-            placeholder: "Enter title",
-            value: "",
-          },
-          {
-            id: "username",
-            name: "Username",
-            type: "text" as const,
-            isRequired: false,
-            placeholder: "Enter username",
-            value: "",
-          },
-          {
-            id: "password",
-            name: "Password",
-            type: "password" as const,
-            isRequired: false,
-            placeholder: "Enter password",
-            value: "",
-          },
-          {
-            id: "content",
-            name: "Content",
-            type: "textarea" as const,
-            isRequired: false,
-            placeholder: "Additional information",
-            value: "",
-          },
-        ];
-    }
   };
 
   const updateCustomField = (id: string, value: string) => {
@@ -671,7 +248,7 @@ export default function PasswordEditForm({
 
     try {
       // Add a small delay for smooth animation
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const now = new Date().toISOString();
 
@@ -734,15 +311,6 @@ export default function PasswordEditForm({
 
   const renderDynamicField = (field: CustomField) => {
     const fieldId = `field-${field.id}`;
-
-    // Skip notes field - it will be rendered in the additional details section
-    if (
-      field.id === "notes" ||
-      field.name.toLowerCase().includes("notes") ||
-      field.name.toLowerCase().includes("备注")
-    ) {
-      return null;
-    }
 
     // Get field icon based on type
     const getFieldIcon = () => {
@@ -947,25 +515,21 @@ export default function PasswordEditForm({
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <h2 className="text-lg font-semibold">
-              {isCreatingNew ? t("password.createNewPassword") : entry.title}
-            </h2>
-            {!isCreatingNew && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  handleInputChange("isFavorite", !formData.isFavorite)
-                }
-                className={formData.isFavorite ? "text-yellow-500" : ""}
-              >
-                {formData.isFavorite ? (
-                  <Star className="w-4 h-4 fill-current" />
-                ) : (
-                  <StarOff className="w-4 h-4" />
-                )}
-              </Button>
-            )}
+            <h2 className="text-lg font-semibold">{entry.title}</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                handleInputChange("isFavorite", !formData.isFavorite)
+              }
+              className={formData.isFavorite ? "text-yellow-500" : ""}
+            >
+              {formData.isFavorite ? (
+                <Star className="w-4 h-4 fill-current" />
+              ) : (
+                <StarOff className="w-4 h-4" />
+              )}
+            </Button>
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -993,16 +557,12 @@ export default function PasswordEditForm({
                 ) : (
                   <Trash2 className="w-4 h-4 mr-2" />
                 )}
-                {isDeleting
-                  ? "Deleting..."
-                  : isCreatingNew
-                  ? t("common.cancel")
-                  : t("common.delete")}
+                {isDeleting ? "Deleting..." : t("common.delete")}
               </motion.div>
             </Button>
             <Button
               onClick={handleSave}
-              disabled={(!hasChanges && !isCreatingNew) || isSaving}
+              disabled={!hasChanges || isSaving}
               className="relative overflow-hidden"
             >
               <motion.div
@@ -1023,11 +583,7 @@ export default function PasswordEditForm({
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
                 )}
-                {isSaving
-                  ? "Saving..."
-                  : isCreatingNew
-                  ? t("password.create")
-                  : t("common.save")}
+                {isSaving ? "Saving..." : t("common.save")}
               </motion.div>
             </Button>
           </div>
@@ -1071,12 +627,10 @@ export default function PasswordEditForm({
               </div>
               <div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                  {isCreatingNew ? "Create New Password" : "Edit Password"}
+                  Edit Password
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {isCreatingNew
-                    ? "Secure your digital life with a new password entry"
-                    : "Update your password information"}
+                  Update your password information
                 </p>
               </div>
             </div>
@@ -1198,8 +752,6 @@ export default function PasswordEditForm({
               }
               onSelect={(folderId) => {
                 handleInputChange("folderId", folderId || "");
-                // Also update categoryId for backward compatibility
-                handleInputChange("categoryId", folderId || "");
               }}
               showAll={false}
               allowCreate={true}

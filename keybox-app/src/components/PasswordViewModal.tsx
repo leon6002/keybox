@@ -17,19 +17,17 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { PasswordEntry, Category } from "@/types/password";
+import { PasswordEntry } from "@/types/password";
 
 interface PasswordViewModalProps {
   isOpen: boolean;
   entry: PasswordEntry | null;
-  categories: Category[];
   onClose: () => void;
 }
 
 export default function PasswordViewModal({
   isOpen,
   entry,
-  categories,
   onClose,
 }: PasswordViewModalProps) {
   const [showPasswords, setShowPasswords] = useState<{
@@ -39,9 +37,6 @@ export default function PasswordViewModal({
   const router = useRouter();
 
   if (!isOpen || !entry) return null;
-
-  // 获取类目信息
-  const category = categories.find((cat) => cat.id === entry.categoryId);
 
   // 复制到剪贴板
   const copyToClipboard = async (text: string, fieldName: string) => {
@@ -187,14 +182,6 @@ export default function PasswordViewModal({
                     <Star className="w-5 h-5 text-yellow-500 ml-2 fill-current" />
                   )}
                 </h2>
-                {category && (
-                  <div className="flex items-center mt-1">
-                    <span className="text-lg mr-1">{category.icon}</span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {category.name}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 

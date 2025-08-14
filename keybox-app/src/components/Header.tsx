@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import Link from "next/link";
 
 interface PasswordNavHeaderProps {
-  currentPage: "passwords" | "manage";
+  currentPage: "vault" | "manage";
   entriesCount?: number;
   onAddPassword?: () => void;
   onImportExport?: () => void;
@@ -17,7 +16,6 @@ interface PasswordNavHeaderProps {
 export default function PasswordNavHeader({
   currentPage,
 }: PasswordNavHeaderProps) {
-  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProduction, setIsProduction] = useState(false);
 
@@ -57,17 +55,17 @@ export default function PasswordNavHeader({
                 href="/"
                 className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {t("nav.home")}
+                Home
               </Link>
               <Link
-                href="/passwords"
+                href="/vault"
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                  currentPage === "passwords"
+                  currentPage === "vault"
                     ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {t("nav.passwordList")}
+                Vault
               </Link>
               <Link
                 href="/manage"
@@ -77,7 +75,7 @@ export default function PasswordNavHeader({
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {t("nav.passwordManage")}
+                Manage
               </Link>
               {/* Temporary Security Test Link - Remove in production */}
               {!isProduction && (
@@ -124,18 +122,18 @@ export default function PasswordNavHeader({
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block w-full text-left px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                {t("nav.home")}
+                Home
               </Link>
               <Link
-                href="/passwords"
+                href="/vault"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block w-full text-left px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                  currentPage === "passwords"
+                  currentPage === "vault"
                     ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {t("nav.passwordList")}
+                Vault
               </Link>
               <Link
                 href="/manage"
@@ -146,7 +144,7 @@ export default function PasswordNavHeader({
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
-                {t("nav.passwordManage")}
+                Manage
               </Link>
             </div>
           </div>

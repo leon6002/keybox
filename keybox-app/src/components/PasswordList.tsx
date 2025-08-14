@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { PasswordEntry, Category } from "@/types/password";
-// import { SearchEngine } from "@/utils/search";
+import { PasswordEntry, Folder } from "@/types/password";
 import PasswordCard from "./PasswordCard";
 
 interface PasswordListProps {
   entries: PasswordEntry[];
-  categories: Category[];
+  folders: Folder[];
   searchQuery: string;
   onDelete: (id: string) => void;
   onView: (entry: PasswordEntry) => void;
@@ -16,7 +15,7 @@ interface PasswordListProps {
 
 export default function PasswordList({
   entries,
-  categories,
+  folders,
   searchQuery,
   onDelete,
   onView,
@@ -55,15 +54,6 @@ export default function PasswordList({
     return 0;
   });
 
-  // const handleSort = (field: "title" | "createdAt" | "updatedAt") => {
-  //   if (sortBy === field) {
-  //     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-  //   } else {
-  //     setSortBy(field);
-  //     setSortOrder("asc");
-  //   }
-  // };
-
   return (
     <motion.div
       className="space-y-6"
@@ -85,7 +75,7 @@ export default function PasswordList({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          显示 {entries.length} 个条目
+          showing {entries.length} entries
           {searchQuery && (
             <motion.span
               className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs"
@@ -93,7 +83,7 @@ export default function PasswordList({
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             >
-              搜索结果
+              search result
             </motion.span>
           )}
         </motion.div>
@@ -108,7 +98,7 @@ export default function PasswordList({
           {/* Sort Controls */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              排序:
+              sort:
             </span>
             <motion.select
               value={`${sortBy}-${sortOrder}`}
@@ -124,12 +114,12 @@ export default function PasswordList({
               whileFocus={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <option value="title-asc">标题 A-Z</option>
-              <option value="title-desc">标题 Z-A</option>
-              <option value="createdAt-desc">创建时间 (新到旧)</option>
-              <option value="createdAt-asc">创建时间 (旧到新)</option>
-              <option value="updatedAt-desc">更新时间 (新到旧)</option>
-              <option value="updatedAt-asc">更新时间 (旧到新)</option>
+              <option value="title-asc">title A-Z</option>
+              <option value="title-desc">title Z-A</option>
+              <option value="createdAt-desc">create time (newest)</option>
+              <option value="createdAt-asc">creat time (oldest)</option>
+              <option value="updatedAt-desc">update time (newest)</option>
+              <option value="updatedAt-asc">update time (oldest)</option>
             </motion.select>
           </div>
 
@@ -232,7 +222,7 @@ export default function PasswordList({
               >
                 <PasswordCard
                   entry={entry}
-                  categories={categories}
+                  folders={folders}
                   searchQuery={searchQuery}
                   onDelete={onDelete}
                   onView={onView}

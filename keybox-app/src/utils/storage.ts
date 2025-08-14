@@ -38,6 +38,17 @@ export class StorageManager {
     folders: Folder[];
   } {
     try {
+      // Check if localStorage is available (avoid SSR issues)
+      if (
+        typeof window === "undefined" ||
+        typeof localStorage === "undefined"
+      ) {
+        return {
+          entries: [],
+          folders: [],
+        };
+      }
+
       const data = localStorage.getItem(STORAGE_KEY);
       if (!data) {
         // 如果没有数据，返回空数据
@@ -328,13 +339,29 @@ export class StorageManager {
     return db.entries.every((entry: unknown) => {
       if (!entry || typeof entry !== "object") return false;
       const entryObj = entry as Record<string, unknown>;
-      return (
+
+      // Basic required fields
+      const hasRequiredFields =
         typeof entryObj.title === "string" &&
         typeof entryObj.username === "string" &&
         typeof entryObj.password === "string" &&
         typeof entryObj.website === "string" &&
-        Array.isArray(entryObj.customFields)
-      );
+        Array.isArray(entryObj.customFields);
+
+      // Validate custom fields structure
+      const validCustomFields =
+        Array.isArray(entryObj.customFields) &&
+        (entryObj.customFields as unknown[]).every((field: unknown) => {
+          if (!field || typeof field !== "object") return false;
+          const fieldObj = field as Record<string, unknown>;
+          return (
+            typeof fieldObj.name === "string" &&
+            typeof fieldObj.value === "string" &&
+            typeof fieldObj.type === "string"
+          );
+        });
+
+      return hasRequiredFields && validCustomFields;
     });
   }
 
@@ -345,12 +372,28 @@ export class StorageManager {
 
   // 清空所有数据
   static clearAllData(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      if (
+        typeof window !== "undefined" &&
+        typeof localStorage !== "undefined"
+      ) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to clear localStorage:", error);
+    }
   }
 
   // 获取存储使用情况
   static getStorageInfo(): { used: number; total: number; percentage: number } {
     try {
+      if (
+        typeof window === "undefined" ||
+        typeof localStorage === "undefined"
+      ) {
+        return { used: 0, total: 0, percentage: 0 };
+      }
+
       const data = localStorage.getItem(STORAGE_KEY);
       const used = data ? new Blob([data]).size : 0;
       const total = 5 * 1024 * 1024; // 假设 localStorage 限制为 5MB

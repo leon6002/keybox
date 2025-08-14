@@ -6,6 +6,7 @@ import { EncryptedCacheService } from "./encryptedCacheService";
 import { OptimisticUpdateService } from "./optimisticUpdateService";
 import { SecurityServiceFactory } from "../security";
 import { UserKey } from "../security/types";
+import { FolderService } from "@/services/folderService";
 
 export interface LoadOptions {
   forceRefresh?: boolean;
@@ -70,17 +71,63 @@ export class OptimizedLoadService {
 
     console.log("⚡ Starting optimized password load for user:", userId);
 
+    // Early check: if user key is not available, return empty result with common folders
+    const userKey = await this.getUserKey();
+    if (!userKey) {
+      console.warn(
+        "⚠️ User key not available at start of load, returning empty result with common folders"
+      );
+      console.warn(
+        "💡 This is normal during initial load or when user is not authenticated"
+      );
+      console.warn(
+        "💡 The UI should handle this gracefully and show appropriate state"
+      );
+      return {
+        entries: [],
+        folders: FolderService.getCommonFolders(),
+        isFromCache: false,
+        totalCount: 0,
+        hasMore: false,
+      };
+    }
+
     try {
       // 1. Try to get from local optimistic updates first (most recent)
       let localEntries: any[] = [];
+      let localFolders: any[] = [];
       try {
+        console.log(`🔍 Attempting to get local passwords for user: ${userId}`);
         localEntries = await this.optimisticService.getLocalPasswords(userId);
+        localFolders = await this.optimisticService.getLocalFolders(userId);
         console.log(
-          `🔍 Local optimistic entries found: ${localEntries.length}`
+          `🔍 Local optimistic entries found: ${localEntries.length}, folders: ${localFolders.length}`
         );
+        if (localEntries.length > 0) {
+          console.log(`🔍 Sample local entry:`, {
+            id: localEntries[0].id,
+            title: localEntries[0].title,
+            hasUsername: !!localEntries[0].username,
+            hasPassword: !!localEntries[0].password,
+            createdAt: localEntries[0].createdAt,
+          });
+        }
       } catch (error) {
         console.warn("⚠️ Failed to get local optimistic entries:", error);
         localEntries = [];
+      }
+
+      // Load folders using the user key we already have
+      let userFolders: any[] = [];
+      try {
+        userFolders = await FolderService.loadEncryptedFolders(
+          userId,
+          userKey.key
+        );
+        console.log(`📁 Loaded ${userFolders.length} folders`);
+      } catch (error) {
+        console.warn("⚠️ Failed to load folders, using common folders:", error);
+        userFolders = FolderService.getCommonFolders();
       }
 
       if (localEntries.length > 0) {
@@ -91,7 +138,7 @@ export class OptimizedLoadService {
 
         return {
           entries: localEntries.slice(offset, offset + limit),
-          folders: [], // TODO: Add folder support
+          folders: userFolders, // Use properly loaded folders
           isFromCache: true,
           totalCount: localEntries.length,
           hasMore: localEntries.length > offset + limit,
@@ -143,7 +190,7 @@ export class OptimizedLoadService {
 
         return {
           entries: decryptedEntries.slice(offset, offset + limit),
-          folders: [], // TODO: Add folder support
+          folders: userFolders, // Use properly loaded folders
           isFromCache: true,
           totalCount: decryptedEntries.length,
           hasMore: decryptedEntries.length > offset + limit,
@@ -165,7 +212,7 @@ export class OptimizedLoadService {
         console.error("❌ API fallback also failed:", apiError);
         return {
           entries: [],
-          folders: [],
+          folders: FolderService.getCommonFolders(),
           isFromCache: false,
           totalCount: 0,
           hasMore: false,
@@ -191,6 +238,7 @@ export class OptimizedLoadService {
     // Process in batches for better performance
     for (let i = 0; i < encryptedCiphers.length; i += batchSize) {
       const batch = encryptedCiphers.slice(i, i + batchSize);
+      console.log("batch is => : ", batch);
 
       try {
         const batchPromises = batch.map(async (cipher) => {
@@ -223,6 +271,21 @@ export class OptimizedLoadService {
     return decryptedEntries;
   }
 
+  private async fetchUserPasswords(userId: string): Promise<any[]> {
+    const response = await fetch("/api/passwords/load", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.ciphers || [];
+  }
+
   // Load from API (fallback or first time)
   private async loadFromAPI(
     userId: string,
@@ -231,18 +294,30 @@ export class OptimizedLoadService {
     console.log("🌐 Loading passwords from API...");
 
     try {
-      const response = await fetch("/api/passwords/load", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      const userKey = await this.getUserKey();
+      if (!userKey) {
+        console.warn(
+          "⚠️ User key not available for API load, returning empty result"
+        );
+        console.warn(
+          "This usually means the user is not authenticated or vault is locked"
+        );
+        // Return empty result instead of throwing error
+        return {
+          entries: [],
+          folders: FolderService.getCommonFolders(),
+          isFromCache: false,
+          totalCount: 0,
+          hasMore: false,
+        };
       }
 
-      const data = await response.json();
-      const encryptedCiphers = data.ciphers || [];
+      const encryptedCiphers = await this.fetchUserPasswords(userId);
+
+      const userFolders = await FolderService.loadEncryptedFolders(
+        userId,
+        userKey.key
+      );
 
       console.log(
         `📥 Loaded ${encryptedCiphers.length} encrypted passwords from API`
@@ -271,7 +346,7 @@ export class OptimizedLoadService {
           options.offset || 0,
           (options.offset || 0) + (options.limit || 50)
         ),
-        folders: [], // TODO: Add folder support
+        folders: userFolders, // TODO: Add folder support
         isFromCache: false,
         totalCount: decryptedEntries.length,
         hasMore:
@@ -382,14 +457,31 @@ export class OptimizedLoadService {
   // Get user key for decryption
   private async getUserKey(): Promise<UserKey | null> {
     try {
+      console.log("🔍 getUserKey debug info:", {
+        hasUserKeyGetter: !!this.userKeyGetter,
+        userKeyGetterType: typeof this.userKeyGetter,
+      });
+
       if (this.userKeyGetter) {
         const userKeyBytes = this.userKeyGetter();
+        console.log("🔍 userKeyGetter result:", {
+          hasUserKeyBytes: !!userKeyBytes,
+          userKeyLength: userKeyBytes?.length ?? 0,
+          userKeyType: userKeyBytes?.constructor.name ?? "null",
+        });
+
         if (userKeyBytes) {
           return { key: userKeyBytes };
         }
       }
 
-      console.warn("⚠️ User key not available for decryption");
+      console.warn(
+        "⚠️ User key not available for decryption - possible causes:"
+      );
+      console.warn("  1. User not authenticated");
+      console.warn("  2. Vault is locked");
+      console.warn("  3. User key getter not set");
+      console.warn("  4. User key getter returned null");
       return null;
     } catch (error) {
       console.error("❌ Failed to get user key:", error);

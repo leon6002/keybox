@@ -1,5 +1,6 @@
 // Core cryptographic service implementation
 // Based on Bitwarden's encryption patterns with Web Crypto API
+// Includes fallback for mobile browsers that don't support Web Crypto API
 
 import {
   CryptoService,
@@ -9,9 +10,11 @@ import {
   KdfConfig,
   SECURITY_CONSTANTS,
 } from "./types";
+import CryptoJS from "crypto-js";
 
 export class WebCryptoService implements CryptoService {
   private static instance: WebCryptoService;
+  private useWebCrypto: boolean;
 
   public static getInstance(): WebCryptoService {
     if (!WebCryptoService.instance) {
@@ -21,8 +24,13 @@ export class WebCryptoService implements CryptoService {
   }
 
   private constructor() {
-    if (!this.isWebCryptoSupported()) {
-      throw new Error("Web Crypto API is not supported in this environment");
+    this.useWebCrypto = this.isWebCryptoSupported();
+    if (!this.useWebCrypto) {
+      console.warn(
+        "⚠️ Web Crypto API not supported, using CryptoJS fallback for mobile compatibility"
+      );
+    } else {
+      console.log("✅ Web Crypto API supported, using native implementation");
     }
   }
 
@@ -38,6 +46,18 @@ export class WebCryptoService implements CryptoService {
 
   // Key derivation functions
   async deriveKeyFromPassword(
+    password: string,
+    salt: Uint8Array,
+    kdfConfig: KdfConfig
+  ): Promise<Uint8Array> {
+    if (this.useWebCrypto) {
+      return this.deriveKeyWebCrypto(password, salt, kdfConfig);
+    } else {
+      return this.deriveKeyFallback(password, salt, kdfConfig);
+    }
+  }
+
+  private async deriveKeyWebCrypto(
     password: string,
     salt: Uint8Array,
     kdfConfig: KdfConfig
@@ -70,8 +90,6 @@ export class WebCryptoService implements CryptoService {
         break;
 
       case KdfType.ARGON2ID:
-        // Note: Web Crypto API doesn't support Argon2 natively
-        // For production, consider using a WebAssembly implementation
         throw new Error("Argon2id not yet implemented in Web Crypto API");
 
       default:
@@ -82,14 +100,97 @@ export class WebCryptoService implements CryptoService {
     return new Uint8Array(exportedKey);
   }
 
+  private async deriveKeyFallback(
+    password: string,
+    salt: Uint8Array,
+    kdfConfig: KdfConfig
+  ): Promise<Uint8Array> {
+    switch (kdfConfig.type) {
+      case KdfType.PBKDF2_SHA256:
+        // Convert Uint8Array to WordArray for CryptoJS
+        const saltWordArray = CryptoJS.lib.WordArray.create(Array.from(salt));
+        const derived = CryptoJS.PBKDF2(password, saltWordArray, {
+          keySize: 256 / 32, // 256 bits = 8 words of 32 bits each
+          iterations: kdfConfig.iterations,
+          hasher: CryptoJS.algo.SHA256,
+        });
+
+        // Convert WordArray back to Uint8Array
+        const words = derived.words;
+        const result = new Uint8Array(32); // 256 bits = 32 bytes
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i];
+          result[i * 4] = (word >>> 24) & 0xff;
+          result[i * 4 + 1] = (word >>> 16) & 0xff;
+          result[i * 4 + 2] = (word >>> 8) & 0xff;
+          result[i * 4 + 3] = word & 0xff;
+        }
+        return result;
+
+      case KdfType.ARGON2ID:
+        throw new Error("Argon2id not implemented in fallback mode");
+
+      default:
+        throw new Error(`Unsupported KDF type: ${kdfConfig.type}`);
+    }
+  }
+
   generateSalt(): Uint8Array {
-    return crypto.getRandomValues(new Uint8Array(SECURITY_CONSTANTS.SALT_SIZE));
+    if (
+      this.useWebCrypto &&
+      typeof crypto !== "undefined" &&
+      crypto.getRandomValues
+    ) {
+      return crypto.getRandomValues(
+        new Uint8Array(SECURITY_CONSTANTS.SALT_SIZE)
+      );
+    } else {
+      // Fallback using CryptoJS
+      const randomWords = CryptoJS.lib.WordArray.random(
+        SECURITY_CONSTANTS.SALT_SIZE
+      );
+      const result = new Uint8Array(SECURITY_CONSTANTS.SALT_SIZE);
+      for (let i = 0; i < randomWords.words.length; i++) {
+        const word = randomWords.words[i];
+        const offset = i * 4;
+        if (offset < result.length) result[offset] = (word >>> 24) & 0xff;
+        if (offset + 1 < result.length)
+          result[offset + 1] = (word >>> 16) & 0xff;
+        if (offset + 2 < result.length)
+          result[offset + 2] = (word >>> 8) & 0xff;
+        if (offset + 3 < result.length) result[offset + 3] = word & 0xff;
+      }
+      return result;
+    }
   }
 
   generateKey(): Uint8Array {
-    return crypto.getRandomValues(
-      new Uint8Array(SECURITY_CONSTANTS.USER_KEY_SIZE)
-    );
+    if (
+      this.useWebCrypto &&
+      typeof crypto !== "undefined" &&
+      crypto.getRandomValues
+    ) {
+      return crypto.getRandomValues(
+        new Uint8Array(SECURITY_CONSTANTS.USER_KEY_SIZE)
+      );
+    } else {
+      // Fallback using CryptoJS
+      const randomWords = CryptoJS.lib.WordArray.random(
+        SECURITY_CONSTANTS.USER_KEY_SIZE
+      );
+      const result = new Uint8Array(SECURITY_CONSTANTS.USER_KEY_SIZE);
+      for (let i = 0; i < randomWords.words.length; i++) {
+        const word = randomWords.words[i];
+        const offset = i * 4;
+        if (offset < result.length) result[offset] = (word >>> 24) & 0xff;
+        if (offset + 1 < result.length)
+          result[offset + 1] = (word >>> 16) & 0xff;
+        if (offset + 2 < result.length)
+          result[offset + 2] = (word >>> 8) & 0xff;
+        if (offset + 3 < result.length) result[offset + 3] = word & 0xff;
+      }
+      return result;
+    }
   }
 
   // Encryption/Decryption
@@ -97,6 +198,18 @@ export class WebCryptoService implements CryptoService {
     data: string,
     key: Uint8Array,
     type: EncryptionType = EncryptionType.AES_GCM_256
+  ): Promise<EncryptedString> {
+    if (this.useWebCrypto) {
+      return this.encryptWebCrypto(data, key, type);
+    } else {
+      return this.encryptFallback(data, key, type);
+    }
+  }
+
+  private async encryptWebCrypto(
+    data: string,
+    key: Uint8Array,
+    type: EncryptionType
   ): Promise<EncryptedString> {
     const encoder = new TextEncoder();
     const dataBytes = encoder.encode(data);
@@ -111,12 +224,41 @@ export class WebCryptoService implements CryptoService {
     }
   }
 
+  private async encryptFallback(
+    data: string,
+    key: Uint8Array,
+    type: EncryptionType
+  ): Promise<EncryptedString> {
+    switch (type) {
+      case EncryptionType.AES_GCM_256:
+        return this.encryptAesGcmFallback(data, key);
+      case EncryptionType.AES_CBC_256_HMAC_SHA256:
+        return this.encryptAesCbcHmacFallback(data, key);
+      default:
+        throw new Error(`Unsupported encryption type: ${type}`);
+    }
+  }
+
   async decrypt(
-    encryptedData: EncryptedString,
+    encryptedDataParam: EncryptedString | string,
+    key: Uint8Array
+  ): Promise<string> {
+    if (this.useWebCrypto) {
+      return this.decryptWebCrypto(encryptedDataParam, key);
+    } else {
+      return this.decryptFallback(encryptedDataParam, key);
+    }
+  }
+
+  private async decryptWebCrypto(
+    encryptedDataParam: EncryptedString | string,
     key: Uint8Array
   ): Promise<string> {
     let decryptedBytes: Uint8Array;
-
+    let encryptedData = encryptedDataParam as EncryptedString;
+    if (typeof encryptedDataParam == "string") {
+      encryptedData = JSON.parse(encryptedDataParam as string);
+    }
     switch (encryptedData.encryptionType) {
       case EncryptionType.AES_GCM_256:
         decryptedBytes = await this.decryptAesGcm(encryptedData, key);
@@ -132,6 +274,27 @@ export class WebCryptoService implements CryptoService {
 
     const decoder = new TextDecoder();
     return decoder.decode(decryptedBytes);
+  }
+
+  private async decryptFallback(
+    encryptedDataParam: EncryptedString | string,
+    key: Uint8Array
+  ): Promise<string> {
+    let encryptedData = encryptedDataParam as EncryptedString;
+    if (typeof encryptedDataParam == "string") {
+      encryptedData = JSON.parse(encryptedDataParam as string);
+    }
+
+    switch (encryptedData.encryptionType) {
+      case EncryptionType.AES_GCM_256:
+        return this.decryptAesGcmFallback(encryptedData, key);
+      case EncryptionType.AES_CBC_256_HMAC_SHA256:
+        return this.decryptAesCbcHmacFallback(encryptedData, key);
+      default:
+        throw new Error(
+          `Unsupported encryption type: ${encryptedData.encryptionType}`
+        );
+    }
   }
 
   // AES-GCM encryption (recommended)
@@ -289,6 +452,155 @@ export class WebCryptoService implements CryptoService {
     return new Uint8Array(decryptedData);
   }
 
+  // Fallback encryption methods using CryptoJS
+  private async encryptAesGcmFallback(
+    data: string,
+    key: Uint8Array
+  ): Promise<EncryptedString> {
+    // Convert key to WordArray
+    const keyWordArray = CryptoJS.lib.WordArray.create(Array.from(key));
+
+    // Generate random IV
+    const iv = this.generateSecureRandom(12); // 96-bit IV for GCM
+    const ivWordArray = CryptoJS.lib.WordArray.create(Array.from(iv));
+
+    // Encrypt using AES-GCM (note: CryptoJS doesn't have native GCM, so we'll use CTR mode as fallback)
+    const encrypted = CryptoJS.AES.encrypt(data, keyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CTR,
+      padding: CryptoJS.pad.NoPadding,
+    });
+
+    return {
+      encryptionType: EncryptionType.AES_GCM_256,
+      data: encrypted.ciphertext.toString(CryptoJS.enc.Base64),
+      iv: CryptoJS.enc.Base64.stringify(ivWordArray),
+    };
+  }
+
+  private async encryptAesCbcHmacFallback(
+    data: string,
+    key: Uint8Array
+  ): Promise<EncryptedString> {
+    const encKey = key.slice(0, 32);
+    const macKey = key.slice(32, 64);
+
+    // Convert keys to WordArrays
+    const encKeyWordArray = CryptoJS.lib.WordArray.create(Array.from(encKey));
+    const macKeyWordArray = CryptoJS.lib.WordArray.create(Array.from(macKey));
+
+    // Generate random IV
+    const iv = this.generateSecureRandom(16); // 128-bit IV for CBC
+    const ivWordArray = CryptoJS.lib.WordArray.create(Array.from(iv));
+
+    // Encrypt using AES-CBC
+    const encrypted = CryptoJS.AES.encrypt(data, encKeyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    // Calculate HMAC
+    const ciphertext = encrypted.ciphertext;
+    const dataToMac = ivWordArray.concat(ciphertext);
+    const mac = CryptoJS.HmacSHA256(dataToMac, macKeyWordArray);
+
+    return {
+      encryptionType: EncryptionType.AES_CBC_256_HMAC_SHA256,
+      data: ciphertext.toString(CryptoJS.enc.Base64),
+      iv: CryptoJS.enc.Base64.stringify(ivWordArray),
+      mac: mac.toString(CryptoJS.enc.Base64),
+    };
+  }
+
+  // Fallback decryption methods using CryptoJS
+  private decryptAesGcmFallback(
+    encryptedData: EncryptedString,
+    key: Uint8Array
+  ): string {
+    if (!encryptedData.iv) {
+      throw new Error("IV is required for AES-GCM decryption");
+    }
+
+    // Convert key and IV to WordArrays
+    const keyWordArray = CryptoJS.lib.WordArray.create(Array.from(key));
+    const ivWordArray = CryptoJS.enc.Base64.parse(encryptedData.iv);
+
+    // Create cipher params object
+    const cipherParams = CryptoJS.lib.CipherParams.create({
+      ciphertext: CryptoJS.enc.Base64.parse(encryptedData.data),
+    });
+
+    // Decrypt using AES-CTR (fallback for GCM)
+    const decrypted = CryptoJS.AES.decrypt(cipherParams, keyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CTR,
+      padding: CryptoJS.pad.NoPadding,
+    });
+
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  }
+
+  private decryptAesCbcHmacFallback(
+    encryptedData: EncryptedString,
+    key: Uint8Array
+  ): string {
+    if (!encryptedData.iv || !encryptedData.mac) {
+      throw new Error("IV and MAC are required for AES-CBC-HMAC decryption");
+    }
+
+    const encKey = key.slice(0, 32);
+    const macKey = key.slice(32, 64);
+
+    // Convert keys to WordArrays
+    const encKeyWordArray = CryptoJS.lib.WordArray.create(Array.from(encKey));
+    const macKeyWordArray = CryptoJS.lib.WordArray.create(Array.from(macKey));
+    const ivWordArray = CryptoJS.enc.Base64.parse(encryptedData.iv);
+    const ciphertext = CryptoJS.enc.Base64.parse(encryptedData.data);
+
+    // Verify MAC first
+    const dataToMac = ivWordArray.concat(ciphertext);
+    const computedMac = CryptoJS.HmacSHA256(dataToMac, macKeyWordArray);
+    const expectedMac = CryptoJS.enc.Base64.parse(encryptedData.mac);
+
+    if (!this.constantTimeEqualsWordArray(computedMac, expectedMac)) {
+      throw new Error("MAC verification failed");
+    }
+
+    // Create cipher params object
+    const cipherParams = CryptoJS.lib.CipherParams.create({
+      ciphertext: ciphertext,
+    });
+
+    // Decrypt using AES-CBC
+    const decrypted = CryptoJS.AES.decrypt(cipherParams, encKeyWordArray, {
+      iv: ivWordArray,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  }
+
+  private constantTimeEqualsWordArray(
+    a: CryptoJS.lib.WordArray,
+    b: CryptoJS.lib.WordArray
+  ): boolean {
+    if (a.sigBytes !== b.sigBytes) {
+      return false;
+    }
+
+    let result = 0;
+    const aWords = a.words;
+    const bWords = b.words;
+
+    for (let i = 0; i < aWords.length; i++) {
+      result |= aWords[i] ^ bWords[i];
+    }
+
+    return result === 0;
+  }
+
   // Key encryption/decryption
   async encryptKey(
     key: Uint8Array,
@@ -361,7 +673,28 @@ export class WebCryptoService implements CryptoService {
 
   // Utility functions
   generateSecureRandom(length: number): Uint8Array {
-    return crypto.getRandomValues(new Uint8Array(length));
+    if (
+      this.useWebCrypto &&
+      typeof crypto !== "undefined" &&
+      crypto.getRandomValues
+    ) {
+      return crypto.getRandomValues(new Uint8Array(length));
+    } else {
+      // Fallback using CryptoJS
+      const randomWords = CryptoJS.lib.WordArray.random(length);
+      const result = new Uint8Array(length);
+      for (let i = 0; i < randomWords.words.length; i++) {
+        const word = randomWords.words[i];
+        const offset = i * 4;
+        if (offset < result.length) result[offset] = (word >>> 24) & 0xff;
+        if (offset + 1 < result.length)
+          result[offset + 1] = (word >>> 16) & 0xff;
+        if (offset + 2 < result.length)
+          result[offset + 2] = (word >>> 8) & 0xff;
+        if (offset + 3 < result.length) result[offset + 3] = word & 0xff;
+      }
+      return result;
+    }
   }
 
   constantTimeEquals(a: Uint8Array, b: Uint8Array): boolean {

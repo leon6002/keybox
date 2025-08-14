@@ -32,9 +32,10 @@ export class OptimisticUpdateService {
   private config: OptimisticUpdateConfig;
   private userKeyGetter: (() => Uint8Array | null) | null = null;
   private readonly DB_NAME = "KeyboxOptimisticUpdates";
-  private readonly DB_VERSION = 1;
+  private readonly DB_VERSION = 2;
   private readonly PENDING_STORE = "pendingOperations";
   private readonly LOCAL_STORE = "localPasswords";
+  private readonly LOCAL_FOLDER = "localFolders";
 
   private constructor() {
     this.cacheService = EncryptedCacheService.getInstance();
@@ -42,7 +43,7 @@ export class OptimisticUpdateService {
       maxRetries: 3,
       retryDelay: 5000, // 5 seconds
       batchSize: 10,
-      syncInterval: 30000, // 30 seconds
+      syncInterval: 5000, // 5 seconds - fast and efficient sync
     };
   }
 
@@ -71,10 +72,15 @@ export class OptimisticUpdateService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        console.log("🔄 Upgrading optimistic update schema...");
+        const oldVersion = event.oldVersion;
+        const newVersion = event.newVersion;
+        console.log(
+          `🔄 Upgrading optimistic update schema from v${oldVersion} to v${newVersion}...`
+        );
 
         // Store for pending operations
         if (!db.objectStoreNames.contains(this.PENDING_STORE)) {
+          console.log("📦 Creating pending operations store...");
           const pendingStore = db.createObjectStore(this.PENDING_STORE, {
             keyPath: "id",
           });
@@ -85,12 +91,28 @@ export class OptimisticUpdateService {
 
         // Store for local password data (optimistic updates)
         if (!db.objectStoreNames.contains(this.LOCAL_STORE)) {
+          console.log("📦 Creating local passwords store...");
           const localStore = db.createObjectStore(this.LOCAL_STORE, {
             keyPath: "id",
           });
           localStore.createIndex("userId", "userId", { unique: false });
           localStore.createIndex("updatedAt", "updatedAt", { unique: false });
           localStore.createIndex("syncStatus", "syncStatus", { unique: false });
+        }
+
+        // Store for local folder data (optimistic updates)
+        if (!db.objectStoreNames.contains(this.LOCAL_FOLDER)) {
+          console.log("📦 Creating local folders store...");
+          const localFolderStore = db.createObjectStore(this.LOCAL_FOLDER, {
+            keyPath: "id",
+          });
+          localFolderStore.createIndex("userId", "userId", { unique: false });
+          localFolderStore.createIndex("updatedAt", "updatedAt", {
+            unique: false,
+          });
+          localFolderStore.createIndex("syncStatus", "syncStatus", {
+            unique: false,
+          });
         }
       };
     });
@@ -104,12 +126,28 @@ export class OptimisticUpdateService {
     if (!this.db) throw new Error("Optimistic update service not initialized");
 
     try {
-      // 1. Save to local IndexedDB immediately
+      // Get user key for local encryption
+      const userKey = await this.getUserKey();
+      if (!userKey) {
+        throw new Error("User key not available for local encryption");
+      }
+
+      // 1. Encrypt the entry before storing locally
+      const vaultService = SecurityServiceFactory.getVaultService();
+      const encryptedCipher = await vaultService.encryptCipher(entry, userKey);
+
+      // Store encrypted data in IndexedDB
       const localEntry = {
-        ...entry,
+        id: entry.id,
+        userId,
+        encryptedData: encryptedCipher, // Store encrypted cipher
         syncStatus: "pending" as const,
         localTimestamp: Date.now(),
-        userId,
+        // Keep some metadata unencrypted for indexing/searching
+        folderId: entry.folderId,
+        isFavorite: entry.isFavorite,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       };
 
       const transaction = this.db.transaction([this.LOCAL_STORE], "readwrite");
@@ -146,12 +184,28 @@ export class OptimisticUpdateService {
     if (!this.db) throw new Error("Optimistic update service not initialized");
 
     try {
-      // 1. Update local IndexedDB immediately
+      // Get user key for local encryption
+      const userKey = await this.getUserKey();
+      if (!userKey) {
+        throw new Error("User key not available for local encryption");
+      }
+
+      // 1. Encrypt the entry before storing locally
+      const vaultService = SecurityServiceFactory.getVaultService();
+      const encryptedCipher = await vaultService.encryptCipher(entry, userKey);
+
+      // Store encrypted data in IndexedDB
       const localEntry = {
-        ...entry,
+        id: entry.id,
+        userId,
+        encryptedData: encryptedCipher, // Store encrypted cipher
         syncStatus: "pending" as const,
         localTimestamp: Date.now(),
-        userId,
+        // Keep some metadata unencrypted for indexing/searching
+        folderId: entry.folderId,
+        isFavorite: entry.isFavorite,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       };
 
       const transaction = this.db.transaction([this.LOCAL_STORE], "readwrite");
@@ -195,7 +249,7 @@ export class OptimisticUpdateService {
       // Get the entry first
       const entry = await this.promisifyRequest(store.get(entryId));
       if (entry) {
-        // Mark as deleted instead of removing
+        // Mark as deleted instead of removing (keep encrypted data for sync)
         const deletedEntry = {
           ...entry,
           syncStatus: "deleted" as const,
@@ -227,30 +281,110 @@ export class OptimisticUpdateService {
 
   // Get local passwords (including optimistic updates)
   async getLocalPasswords(userId: string): Promise<PasswordEntry[]> {
-    if (!this.db) return [];
+    if (!this.db) {
+      console.log("📦 getLocalPasswords: No database connection");
+      return [];
+    }
 
     try {
+      // Get user key for decryption
+      const userKey = await this.getUserKey();
+      if (!userKey) {
+        console.warn(
+          "⚠️ User key not available for decryption, returning empty array"
+        );
+        return [];
+      }
+
       const transaction = this.db.transaction([this.LOCAL_STORE], "readonly");
       const store = transaction.objectStore(this.LOCAL_STORE);
       const index = store.index("userId");
 
       const entries = await this.promisifyRequest(index.getAll(userId));
+      console.log(
+        `📦 getLocalPasswords: Found ${entries.length} encrypted entries for user ${userId}`
+      );
 
-      // Filter out deleted entries and return only active ones
-      return entries
-        .filter((entry: any) => entry.syncStatus !== "deleted")
-        .map((entry: any) => {
-          // Remove local metadata before returning
-          const {
-            syncStatus,
-            localTimestamp,
-            userId: _,
-            ...cleanEntry
-          } = entry;
-          return cleanEntry as PasswordEntry;
-        });
+      // Filter out deleted entries and decrypt active ones
+      const activeEntries: PasswordEntry[] = [];
+      const vaultService = SecurityServiceFactory.getVaultService();
+
+      for (const entry of entries) {
+        if (entry.syncStatus === "deleted") {
+          console.log(`📦 Filtering out deleted entry: ${entry.id}`);
+          continue; // Skip deleted entries
+        }
+
+        try {
+          // Decrypt the stored cipher
+          const decryptedEntry = await vaultService.decryptCipher(
+            entry.encryptedData,
+            userKey
+          );
+
+          // Merge with metadata that was stored unencrypted
+          const fullEntry: PasswordEntry = {
+            ...decryptedEntry,
+            id: entry.id,
+            folderId: entry.folderId,
+            isFavorite: entry.isFavorite,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
+          };
+
+          activeEntries.push(fullEntry);
+        } catch (decryptError) {
+          console.error(
+            `❌ Failed to decrypt entry ${entry.id}:`,
+            decryptError
+          );
+          // Skip entries that can't be decrypted
+        }
+      }
+
+      console.log(
+        `📦 getLocalPasswords: Returning ${activeEntries.length} decrypted entries`
+      );
+      return activeEntries;
     } catch (error) {
       console.error("❌ Failed to get local passwords:", error);
+      return [];
+    }
+  }
+
+  // Helper method to get encrypted data from local storage
+  private async getEncryptedDataFromLocal(
+    entryId: string
+  ): Promise<any | null> {
+    if (!this.db) return null;
+
+    try {
+      const transaction = this.db.transaction([this.LOCAL_STORE], "readonly");
+      const store = transaction.objectStore(this.LOCAL_STORE);
+      const entry = await this.promisifyRequest(store.get(entryId));
+
+      return entry?.encryptedData || null;
+    } catch (error) {
+      console.error(
+        "❌ Failed to get encrypted data from local storage:",
+        error
+      );
+      return null;
+    }
+  }
+
+  async getLocalFolders(userId: string): Promise<Folder[]> {
+    if (!this.db) return [];
+    try {
+      const transaction = this.db.transaction([this.LOCAL_FOLDER], "readonly");
+      const store = transaction.objectStore(this.LOCAL_FOLDER);
+      const index = store.index("userId");
+
+      const folders = await this.promisifyRequest(index.getAll(userId));
+
+      return folders;
+    } catch (error) {
+      console.error("❌ Failed to get local folders:", error);
       return [];
     }
   }
@@ -278,8 +412,34 @@ export class OptimisticUpdateService {
     setTimeout(() => this.processPendingOperations(), 1000);
   }
 
+  // Check network connectivity
+  private async isOnline(): Promise<boolean> {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return false;
+    }
+
+    try {
+      // Try a simple fetch to check connectivity
+      const response = await fetch("/api/health", {
+        method: "HEAD",
+        cache: "no-cache",
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
   private async processPendingOperations(): Promise<void> {
     if (!this.db) return;
+
+    // Check network connectivity first
+    const online = await this.isOnline();
+    if (!online) {
+      console.log("📴 Offline, skipping sync operations");
+      return;
+    }
 
     try {
       const transaction = this.db.transaction([this.PENDING_STORE], "readonly");
@@ -358,23 +518,16 @@ export class OptimisticUpdateService {
     try {
       console.log("🔄 Starting sync create for:", operation.data.id);
 
-      // Get user key for encryption
-      const userKey = await this.getUserKey();
-      if (!userKey) {
-        console.error(
-          "❌ User key not available for encryption, will retry later"
-        );
+      // Get the encrypted data from local IndexedDB instead of re-encrypting
+      const encryptedCipher = await this.getEncryptedDataFromLocal(
+        operation.data.id
+      );
+      if (!encryptedCipher) {
+        console.error("❌ Could not find encrypted data in local storage");
         return false;
       }
 
-      console.log("🔐 Encrypting password entry for sync...");
-
-      // Encrypt the password entry
-      const vaultService = SecurityServiceFactory.getVaultService();
-      const encryptedCipher = await vaultService.encryptCipher(
-        operation.data,
-        userKey
-      );
+      console.log("📤 Using pre-encrypted data from IndexedDB for sync");
 
       console.log("📤 Sending encrypted data to API:", {
         userId: operation.userId,
@@ -384,7 +537,6 @@ export class OptimisticUpdateService {
         hasData: !!encryptedCipher?.data,
         encryptedCipherId: encryptedCipher?.id,
         isUpdate: false,
-        entryId: null,
       });
 
       // For optimistic creates, always use create mode (not update)
@@ -407,7 +559,20 @@ export class OptimisticUpdateService {
           statusText: response.statusText,
           body: errorText,
         });
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+
+        // Handle specific error cases
+        if (response.status >= 500) {
+          // Server error - retry later
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        } else if (response.status === 401 || response.status === 403) {
+          // Authentication error - don't retry
+          console.error("❌ Authentication error, marking operation as failed");
+          return false;
+        } else {
+          // Client error - don't retry
+          console.error("❌ Client error, marking operation as failed");
+          return false;
+        }
       }
 
       const result = await response.json();
@@ -437,19 +602,16 @@ export class OptimisticUpdateService {
     if (!operation.data) return false;
 
     try {
-      // Get user key for encryption
-      const userKey = await this.getUserKey();
-      if (!userKey) {
-        console.error("❌ User key not available for encryption");
+      // Get the encrypted data from local IndexedDB instead of re-encrypting
+      const encryptedCipher = await this.getEncryptedDataFromLocal(
+        operation.data.id
+      );
+      if (!encryptedCipher) {
+        console.error("❌ Could not find encrypted data in local storage");
         return false;
       }
 
-      // Encrypt the password entry
-      const vaultService = SecurityServiceFactory.getVaultService();
-      const encryptedCipher = await vaultService.encryptCipher(
-        operation.data,
-        userKey
-      );
+      console.log("📤 Using pre-encrypted data from IndexedDB for update sync");
 
       console.log("📤 Sending update data to API:", {
         userId: operation.userId,
@@ -536,15 +698,23 @@ export class OptimisticUpdateService {
 
         // If the entry doesn't exist in the database, that's actually success
         // (it means it was never synced, so deleting locally is sufficient)
-        if (response.status === 404 || errorText.includes("not found")) {
+        if (
+          response.status === 404 ||
+          errorText.includes("not found") ||
+          errorText.includes("already deleted")
+        ) {
           console.log(
-            "✅ Entry not found in database, considering delete successful"
+            "✅ Entry not found or already deleted in database, considering delete successful"
           );
         } else {
           throw new Error(`API error: ${response.status} - ${errorText}`);
         }
       } else {
-        console.log("✅ Delete API successful");
+        const result = await response.json();
+        console.log(
+          "✅ Delete API successful:",
+          result.message || "Password deleted"
+        );
       }
 
       // Remove from local storage

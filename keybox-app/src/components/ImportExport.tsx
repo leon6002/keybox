@@ -201,12 +201,24 @@ export default function ImportExport({
 
         // Clear localStorage
         StorageManager.clearAllData();
-        localStorage.clear();
-        console.log("✅ localStorage cleared");
+        try {
+          if (typeof localStorage !== "undefined") {
+            localStorage.clear();
+            console.log("✅ localStorage cleared");
+          }
+        } catch (error) {
+          console.warn("⚠️ Failed to clear localStorage:", error);
+        }
 
         // Clear sessionStorage
-        sessionStorage.clear();
-        console.log("✅ sessionStorage cleared");
+        try {
+          if (typeof sessionStorage !== "undefined") {
+            sessionStorage.clear();
+            console.log("✅ sessionStorage cleared");
+          }
+        } catch (error) {
+          console.warn("⚠️ Failed to clear sessionStorage:", error);
+        }
 
         console.log("✅ All data cleared, reloading...");
         window.location.reload();
@@ -214,8 +226,12 @@ export default function ImportExport({
         console.error("❌ Failed to clear data:", error);
         // Fallback to just clearing localStorage
         StorageManager.clearAllData();
-        localStorage.clear();
-        sessionStorage.clear();
+        try {
+          if (typeof localStorage !== "undefined") localStorage.clear();
+          if (typeof sessionStorage !== "undefined") sessionStorage.clear();
+        } catch (clearError) {
+          console.warn("⚠️ Failed to clear storage in fallback:", clearError);
+        }
         window.location.reload();
       }
     }

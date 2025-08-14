@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PasswordEntry, Category } from "@/types/password";
+import { PasswordEntry, Folder } from "@/types/password";
 import { SearchEngine } from "@/utils/search";
 import { useConfirm } from "@/hooks/useConfirm";
 
 interface PasswordCardProps {
   entry: PasswordEntry;
-  categories: Category[];
+  folders: Folder[];
   searchQuery: string;
   onDelete: (id: string) => void;
   onView: (entry: PasswordEntry) => void;
@@ -17,7 +17,7 @@ interface PasswordCardProps {
 
 export default function PasswordCard({
   entry,
-  categories,
+  folders,
   searchQuery,
   onDelete,
   onView,
@@ -30,7 +30,7 @@ export default function PasswordCard({
   const { confirm, ConfirmDialog } = useConfirm();
 
   // 获取条目对应的类目信息
-  const category = categories.find((cat) => cat.id === entry.categoryId);
+  const category = folders.find((folder) => folder.id === entry.folderId);
 
   // 从 customFields 中提取用户名和密码（如果直接属性为空）
   const getFieldValue = (fieldNames: string[]) => {

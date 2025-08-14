@@ -5,28 +5,8 @@ export interface Folder {
   icon: string;
   color: string;
   description?: string;
-  fields: FolderField[];
   createdAt: string;
   updatedAt: string;
-}
-
-// 文件夹字段定义
-export interface FolderField {
-  id: string;
-  name: string;
-  type:
-    | "text"
-    | "password"
-    | "email"
-    | "url"
-    | "textarea"
-    | "number"
-    | "date"
-    | "phone";
-  isRequired: boolean;
-  placeholder?: string;
-  defaultValue?: string;
-  options?: string[]; // 用于选择类型
 }
 
 // 自定义字段类型
@@ -63,8 +43,6 @@ export interface PasswordEntry {
   updatedAt: string;
   isFavorite: boolean;
   passwordType?: string; // Type of password entry (website, banking, credit-card, etc.)
-  // Legacy field for backward compatibility
-  categoryId?: string;
 }
 
 // 密码数据库接口
@@ -73,8 +51,6 @@ export interface PasswordDatabase {
   entries: PasswordEntry[];
   folders: Folder[];
   exportedAt: string;
-  // Legacy field for backward compatibility during migration
-  categories?: any[];
 }
 
 // 搜索结果接口
@@ -125,10 +101,6 @@ export interface AppState {
   sortBy: "title" | "createdAt" | "updatedAt";
   sortOrder: "asc" | "desc";
   viewMode: "list" | "grid" | "table";
-  // Legacy fields for backward compatibility (removed)
-  // categories?: any[];
-  // selectedCategory?: string | null;
-  // showCategoryManager?: boolean;
 }
 
 // 工具函数类型

@@ -73,7 +73,7 @@ export class KeyboxVaultService implements VaultService {
       notes: encryptedNotes,
       favorite: cipher.isFavorite,
       reprompt: false, // Could be configurable
-      folderId: cipher.folderId || cipher.categoryId, // Include folder ID for persistence
+      folderId: cipher.folderId, // Include folder ID for persistence
       createdAt: cipher.createdAt,
       updatedAt: cipher.updatedAt,
     };
@@ -83,45 +83,73 @@ export class KeyboxVaultService implements VaultService {
     encryptedCipher: EncryptedCipher,
     userKey: UserKey
   ): Promise<PasswordEntry> {
-    // Decrypt name
-    const title = await this.cryptoService.decrypt(
-      encryptedCipher.name,
-      userKey.key
-    );
-
-    // Decrypt cipher data
-    const dataJson = await this.cryptoService.decrypt(
-      encryptedCipher.data,
-      userKey.key
-    );
-    const cipherData = JSON.parse(dataJson);
-
-    // Decrypt notes if present
-    let notes = "";
-    if (encryptedCipher.notes) {
-      notes = await this.cryptoService.decrypt(
-        encryptedCipher.notes,
+    try {
+      // Decrypt name
+      const title = await this.cryptoService.decrypt(
+        encryptedCipher.name,
         userKey.key
       );
-    }
 
-    return {
-      id: encryptedCipher.id,
-      title,
-      categoryId: encryptedCipher.folderId || "default", // Use actual folder ID for backward compatibility
-      folderId: encryptedCipher.folderId || "default", // Use actual folder ID
-      username: cipherData.username || "",
-      password: cipherData.password || "",
-      website: cipherData.website || "",
-      description: "", // Legacy field
-      notes,
-      customFields: cipherData.customFields || [],
-      tags: cipherData.tags || [],
-      createdAt: encryptedCipher.createdAt,
-      updatedAt: encryptedCipher.updatedAt,
-      isFavorite: encryptedCipher.favorite,
-      passwordType: cipherData.passwordType || "website", // Restore password type
-    };
+      // Decrypt cipher data
+      const dataJson = await this.cryptoService.decrypt(
+        encryptedCipher.data,
+        userKey.key
+      );
+
+      let cipherData;
+      try {
+        cipherData = JSON.parse(dataJson);
+      } catch (parseError) {
+        console.error(
+          `Failed to parse cipher data for ${encryptedCipher.id}:`,
+          parseError
+        );
+        throw new Error(
+          `Invalid cipher data format for entry ${encryptedCipher.id}`
+        );
+      }
+
+      // Decrypt notes if present
+      let notes = "";
+      if (encryptedCipher.notes) {
+        try {
+          notes = await this.cryptoService.decrypt(
+            encryptedCipher.notes,
+            userKey.key
+          );
+        } catch (notesError) {
+          console.warn(
+            `Failed to decrypt notes for ${encryptedCipher.id}:`,
+            notesError
+          );
+          notes = ""; // Continue without notes if decryption fails
+        }
+      }
+
+      return {
+        id: encryptedCipher.id,
+        title,
+        folderId: encryptedCipher.folderId || "default", // Use actual folder ID
+        username: cipherData.username || "",
+        password: cipherData.password || "",
+        website: cipherData.website || "",
+        description: "", // Legacy field
+        notes,
+        customFields: cipherData.customFields || [],
+        tags: cipherData.tags || [],
+        createdAt: encryptedCipher.createdAt,
+        updatedAt: encryptedCipher.updatedAt,
+        isFavorite: encryptedCipher.favorite,
+        passwordType: cipherData.passwordType || "website", // Restore password type
+      };
+    } catch (error) {
+      console.error(`Failed to decrypt cipher ${encryptedCipher.id}:`, error);
+      throw new Error(
+        `Failed to decrypt password entry: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   }
 
   // Folder operations (for categories)

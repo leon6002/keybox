@@ -133,30 +133,44 @@ export class EncryptedCacheService {
     if (!this.db) return;
 
     try {
-      const transaction = this.db.transaction([this.STORE_NAME], "readwrite");
-      const store = transaction.objectStore(this.STORE_NAME);
+      // Pre-compute all hashes outside the transaction to avoid timeout
+      const cipherEntries: Array<{ key: string; entry: EncryptedCacheEntry }> =
+        [];
 
       for (const cipher of encryptedCiphers) {
         if (cipher.id) {
           const cipherKey = `cipher:${userId}:${cipher.id}`;
+          const responseHash = await this.generateHash(JSON.stringify(cipher));
+
           const cipherEntry: EncryptedCacheEntry = {
             data: cipher,
             metadata: {
               timestamp: Date.now(),
               version: "1.0.0",
               userId,
-              responseHash: await this.generateHash(JSON.stringify(cipher)),
+              responseHash,
             },
           };
 
-          await this.promisifyRequest(
-            store.put({
-              key: cipherKey,
-              ...cipherEntry,
-            })
-          );
+          cipherEntries.push({ key: cipherKey, entry: cipherEntry });
         }
       }
+
+      // Now perform all database operations in a single transaction
+      const transaction = this.db.transaction([this.STORE_NAME], "readwrite");
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      // Use Promise.all to batch all put operations
+      const putPromises = cipherEntries.map(({ key, entry }) =>
+        this.promisifyRequest(
+          store.put({
+            key,
+            ...entry,
+          })
+        )
+      );
+
+      await Promise.all(putPromises);
 
       console.log(`✅ Cached ${encryptedCiphers.length} individual ciphers`);
     } catch (error) {
