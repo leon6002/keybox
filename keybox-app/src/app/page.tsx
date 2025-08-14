@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { PasswordEntry, Category } from "@/types/password";
-import { StorageManager } from "@/utils/storage";
+import { PasswordEntry } from "@/types/password";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import UserProfile from "@/components/UserProfile";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,12 +28,6 @@ function HomePageContent() {
   const { t, ready } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
-
-  // 加载数据统计
-  useEffect(() => {
-    const loadedData = StorageManager.loadFromLocalStorage();
-    setEntries(loadedData.entries);
-  }, []);
 
   const features = [
     {

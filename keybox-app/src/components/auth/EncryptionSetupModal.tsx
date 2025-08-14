@@ -69,7 +69,9 @@ export default function EncryptionSetupModal({
       await setupEncryption(masterPassword, passwordHint || undefined);
       onClose?.();
     } catch (error) {
-      setError(error.message || "Failed to set up encryption");
+      setError(
+        error instanceof Error ? error.message : "Failed to set up encryption"
+      );
     } finally {
       setIsLoading(false);
     }

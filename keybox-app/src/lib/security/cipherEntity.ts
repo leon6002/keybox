@@ -1,14 +1,14 @@
 // Cipher entity implementation following Bitwarden's approach
 // Handles encrypted storage and retrieval of password entries with proper metadata
 
-import { 
-  EncryptedCipher, 
-  EncryptedString, 
-  UserKey, 
-  EncryptionType 
-} from './types';
-import { WebCryptoService } from './cryptoService';
-import { PasswordEntry, CustomField } from '../../types/password';
+import {
+  EncryptedCipher,
+  EncryptedString,
+  UserKey,
+  EncryptionType,
+} from "./types";
+import { WebCryptoService } from "./cryptoService";
+import { PasswordEntry, CustomField } from "../../types/password";
 
 export enum CipherType {
   PASSWORD = 0,
@@ -27,12 +27,12 @@ export interface CipherData {
   // Common fields for all cipher types
   name?: string;
   notes?: string;
-  
+
   // Password-specific fields
   username?: string;
   password?: string;
   uris?: CipherUri[];
-  
+
   // Card-specific fields
   cardholderName?: string;
   brand?: string;
@@ -40,7 +40,7 @@ export interface CipherData {
   expMonth?: string;
   expYear?: string;
   code?: string;
-  
+
   // Identity-specific fields
   title?: string;
   firstName?: string;
@@ -59,7 +59,7 @@ export interface CipherData {
   ssn?: string;
   licenseNumber?: string;
   passportNumber?: string;
-  
+
   // Custom fields
   customFields?: CustomField[];
 }
@@ -110,11 +110,17 @@ export class Cipher {
     this.organizationId = data.organizationId;
     this.folderId = data.folderId;
     this.type = data.type || CipherType.PASSWORD;
-    this.name = data.name || { encryptionType: EncryptionType.AES_GCM_256, data: '' };
+    this.name = data.name || {
+      encryptionType: EncryptionType.AES_GCM_256,
+      data: "",
+    };
     this.notes = data.notes;
     this.favorite = data.favorite || false;
     this.reprompt = data.reprompt || CipherRepromptType.NONE;
-    this.data = data.data || { encryptionType: EncryptionType.AES_GCM_256, data: '' };
+    this.data = data.data || {
+      encryptionType: EncryptionType.AES_GCM_256,
+      data: "",
+    };
     this.attachments = data.attachments;
     this.key = data.key;
     this.creationDate = data.creationDate || new Date();
@@ -125,7 +131,10 @@ export class Cipher {
   }
 
   // Create cipher from password entry
-  static async fromPasswordEntry(entry: PasswordEntry, userKey: UserKey): Promise<Cipher> {
+  static async fromPasswordEntry(
+    entry: PasswordEntry,
+    userKey: UserKey
+  ): Promise<Cipher> {
     const cipher = new Cipher({
       id: entry.id,
       type: CipherType.PASSWORD,
@@ -140,23 +149,32 @@ export class Cipher {
 
   // Convert to password entry
   async toPasswordEntry(userKey: UserKey): Promise<PasswordEntry> {
-    const decryptedName = await this.cryptoService.decrypt(this.name, userKey.key);
-    const decryptedData = await this.cryptoService.decrypt(this.data, userKey.key);
+    const decryptedName = await this.cryptoService.decrypt(
+      this.name,
+      userKey.key
+    );
+    const decryptedData = await this.cryptoService.decrypt(
+      this.data,
+      userKey.key
+    );
     const cipherData: CipherData = JSON.parse(decryptedData);
 
-    let decryptedNotes = '';
+    let decryptedNotes = "";
     if (this.notes) {
-      decryptedNotes = await this.cryptoService.decrypt(this.notes, userKey.key);
+      decryptedNotes = await this.cryptoService.decrypt(
+        this.notes,
+        userKey.key
+      );
     }
 
     return {
       id: this.id,
       title: decryptedName,
-      categoryId: this.folderId || 'default',
-      username: cipherData.username || '',
-      password: cipherData.password || '',
-      website: cipherData.uris?.[0]?.uri || '',
-      description: '', // Legacy field
+      folderId: this.folderId || "default",
+      username: cipherData.username || "",
+      password: cipherData.password || "",
+      website: cipherData.uris?.[0]?.uri || "",
+      description: "", // Legacy field
       notes: decryptedNotes,
       customFields: cipherData.customFields || [],
       tags: [], // Would need to be handled separately
@@ -167,7 +185,10 @@ export class Cipher {
   }
 
   // Encrypt cipher data from password entry
-  private async encryptFromPasswordEntry(entry: PasswordEntry, userKey: UserKey): Promise<void> {
+  private async encryptFromPasswordEntry(
+    entry: PasswordEntry,
+    userKey: UserKey
+  ): Promise<void> {
     // Encrypt name
     this.name = await this.cryptoService.encrypt(
       entry.title,
@@ -179,7 +200,9 @@ export class Cipher {
     const cipherData: CipherData = {
       username: entry.username,
       password: entry.password,
-      uris: entry.website ? [{ uri: entry.website, match: UriMatchType.DOMAIN }] : [],
+      uris: entry.website
+        ? [{ uri: entry.website, match: UriMatchType.DOMAIN }]
+        : [],
       customFields: entry.customFields,
     };
 
@@ -203,7 +226,10 @@ export class Cipher {
   }
 
   // Update cipher from password entry
-  async updateFromPasswordEntry(entry: PasswordEntry, userKey: UserKey): Promise<void> {
+  async updateFromPasswordEntry(
+    entry: PasswordEntry,
+    userKey: UserKey
+  ): Promise<void> {
     await this.encryptFromPasswordEntry(entry, userKey);
   }
 
@@ -285,7 +311,7 @@ export class Cipher {
 
   // Check if cipher has attachments
   hasAttachments(): boolean {
-    return this.attachments && Object.keys(this.attachments).length > 0;
+    return !!(this.attachments && Object.keys(this.attachments).length > 0);
   }
 
   // Validate cipher data
@@ -293,23 +319,23 @@ export class Cipher {
     const errors: string[] = [];
 
     if (!this.id) {
-      errors.push('Cipher ID is required');
+      errors.push("Cipher ID is required");
     }
 
     if (!this.name || !this.name.data) {
-      errors.push('Cipher name is required');
+      errors.push("Cipher name is required");
     }
 
     if (!this.data || !this.data.data) {
-      errors.push('Cipher data is required');
+      errors.push("Cipher data is required");
     }
 
     if (!this.creationDate) {
-      errors.push('Creation date is required');
+      errors.push("Creation date is required");
     }
 
     if (!this.revisionDate) {
-      errors.push('Revision date is required');
+      errors.push("Revision date is required");
     }
 
     return errors;
@@ -382,22 +408,22 @@ export class CipherCollection {
 
   // Get ciphers by type
   getByType(type: CipherType): Cipher[] {
-    return this.getAll().filter(cipher => cipher.type === type);
+    return this.getAll().filter((cipher) => cipher.type === type);
   }
 
   // Get favorite ciphers
   getFavorites(): Cipher[] {
-    return this.getAll().filter(cipher => cipher.favorite);
+    return this.getAll().filter((cipher) => cipher.favorite);
   }
 
   // Get deleted ciphers
   getDeleted(): Cipher[] {
-    return this.getAll().filter(cipher => cipher.isDeleted());
+    return this.getAll().filter((cipher) => cipher.isDeleted());
   }
 
   // Get active (non-deleted) ciphers
   getActive(): Cipher[] {
-    return this.getAll().filter(cipher => !cipher.isDeleted());
+    return this.getAll().filter((cipher) => !cipher.isDeleted());
   }
 
   // Clear collection

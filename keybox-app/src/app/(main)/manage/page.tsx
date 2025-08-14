@@ -686,7 +686,7 @@ function ManagePasswordsContent() {
   return (
     <>
       {/* Debug Panel - Remove this after debugging */}
-      <DebugPanel />
+      {/* <DebugPanel /> */}
 
       {/* Mobile Sidebar Toggle Button - Push Content */}
       <MobileSideBar

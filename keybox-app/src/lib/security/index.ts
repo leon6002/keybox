@@ -26,6 +26,12 @@ import { KeyboxVaultService } from "./vaultService";
 import { KeyboxAuthService } from "./authService";
 import { DataProtectionService } from "./dataProtectionService";
 import { KeyboxSecurityAuditService } from "./securityUtils";
+import {
+  SecuritySettings,
+  KdfType,
+  SECURITY_CONSTANTS,
+  EncryptionType,
+} from "./types";
 
 // Convenience factory functions
 export class SecurityServiceFactory {

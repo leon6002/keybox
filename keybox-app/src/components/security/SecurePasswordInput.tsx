@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
 // Secure password input component with enhanced security features
 // Prevents password exposure in DOM and provides secure handling
 
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { SecurityServiceFactory } from '@/lib/security';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import { Eye, EyeOff, Shield, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SecurityServiceFactory } from "@/lib/security";
 
 interface SecurePasswordInputProps {
   value?: string;
@@ -18,21 +24,21 @@ interface SecurePasswordInputProps {
   required?: boolean;
   autoComplete?: string;
   className?: string;
-  
+
   // Security features
   showStrengthIndicator?: boolean;
   preventCopy?: boolean;
   clearOnBlur?: boolean;
   maxLength?: number;
-  
+
   // Validation
   validateStrength?: boolean;
   minStrength?: number; // 0-100
-  
+
   // UI customization
   showToggle?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'secure' | 'critical';
+  size?: "sm" | "md" | "lg";
+  variant?: "default" | "secure" | "critical";
 }
 
 export interface SecurePasswordInputRef {
@@ -42,42 +48,53 @@ export interface SecurePasswordInputRef {
   getValue: () => string;
 }
 
-const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInputProps>(
-  ({
-    value = '',
-    onChange,
-    onBlur,
-    onFocus,
-    placeholder = 'Enter password',
-    disabled = false,
-    required = false,
-    autoComplete = 'current-password',
-    className,
-    showStrengthIndicator = false,
-    preventCopy = true,
-    clearOnBlur = false,
-    maxLength = 256,
-    validateStrength = false,
-    minStrength = 70,
-    showToggle = true,
-    size = 'md',
-    variant = 'default',
-  }, ref) => {
+const SecurePasswordInput = forwardRef<
+  SecurePasswordInputRef,
+  SecurePasswordInputProps
+>(
+  (
+    {
+      value = "",
+      onChange,
+      onBlur,
+      onFocus,
+      placeholder = "Enter password",
+      disabled = false,
+      required = false,
+      autoComplete = "current-password",
+      className,
+      showStrengthIndicator = false,
+      preventCopy = true,
+      clearOnBlur = false,
+      maxLength = 256,
+      validateStrength = false,
+      minStrength = 70,
+      showToggle = true,
+      size = "md",
+      variant = "default",
+    },
+    ref
+  ) => {
     const [isVisible, setIsVisible] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
-    const [strength, setStrength] = useState({ score: 0, isStrong: false, feedback: [] });
+    const [strength, setStrength] = useState({
+      score: 0,
+      isStrong: false,
+      feedback: [] as string[],
+    });
     const [hasBeenFocused, setHasBeenFocused] = useState(false);
-    
+
     const inputRef = useRef<HTMLInputElement>(null);
-    const securityAuditService = SecurityServiceFactory.getSecurityAuditService();
+    const securityAuditService =
+      SecurityServiceFactory.getSecurityAuditService();
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       focus: () => inputRef.current?.focus(),
       blur: () => inputRef.current?.blur(),
       clear: () => {
-        if (onChange) onChange('');
-        setStrength({ score: 0, isStrong: false, feedback: [] });
+        if (onChange) onChange("");
+        setStrength({ score: 0, isStrong: false, feedback: [] as string[] });
       },
       getValue: () => value,
     }));
@@ -88,7 +105,7 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
         const analysis = securityAuditService.analyzePasswordStrength(value);
         setStrength(analysis);
       } else {
-        setStrength({ score: 0, isStrong: false, feedback: [] });
+        setStrength({ score: 0, isStrong: false, feedback: [] as string[] });
       }
     }, [value, showStrengthIndicator]);
 
@@ -116,7 +133,7 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
     const handleKeyDown = (e: React.KeyboardEvent) => {
       // Prevent certain key combinations for security
       if (preventCopy) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'a')) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "a")) {
           e.preventDefault();
         }
       }
@@ -134,42 +151,47 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
 
     // Size classes
     const sizeClasses = {
-      sm: 'h-8 px-2 text-sm',
-      md: 'h-10 px-3 text-sm',
-      lg: 'h-12 px-4 text-base',
+      sm: "h-8 px-2 text-sm",
+      md: "h-10 px-3 text-sm",
+      lg: "h-12 px-4 text-base",
     };
 
     // Variant classes
     const variantClasses = {
-      default: 'border-input bg-background',
-      secure: 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950',
-      critical: 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950',
+      default: "border-input bg-background",
+      secure:
+        "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950",
+      critical: "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950",
     };
 
     // Strength indicator colors
     const getStrengthColor = (score: number) => {
-      if (score >= 80) return 'bg-green-500';
-      if (score >= 60) return 'bg-yellow-500';
-      if (score >= 40) return 'bg-orange-500';
-      return 'bg-red-500';
+      if (score >= 80) return "bg-green-500";
+      if (score >= 60) return "bg-yellow-500";
+      if (score >= 40) return "bg-orange-500";
+      return "bg-red-500";
     };
 
     const getStrengthText = (score: number) => {
-      if (score >= 80) return 'Strong';
-      if (score >= 60) return 'Good';
-      if (score >= 40) return 'Fair';
-      if (score > 0) return 'Weak';
-      return '';
+      if (score >= 80) return "Strong";
+      if (score >= 60) return "Good";
+      if (score >= 40) return "Fair";
+      if (score > 0) return "Weak";
+      return "";
     };
 
-    const isInvalid = validateStrength && hasBeenFocused && value && strength.score < minStrength;
+    const isInvalid =
+      validateStrength &&
+      hasBeenFocused &&
+      value &&
+      strength.score < minStrength;
 
     return (
       <div className="space-y-2">
         <div className="relative">
           <input
             ref={inputRef}
-            type={isVisible ? 'text' : 'password'}
+            type={isVisible ? "text" : "password"}
             value={value}
             onChange={handleChange}
             onFocus={handleFocus}
@@ -182,24 +204,24 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
             autoComplete={autoComplete}
             maxLength={maxLength}
             className={cn(
-              'flex w-full rounded-md border font-mono transition-colors',
-              'file:border-0 file:bg-transparent file:text-sm file:font-medium',
-              'placeholder:text-muted-foreground',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'disabled:cursor-not-allowed disabled:opacity-50',
+              "flex w-full rounded-md border font-mono transition-colors",
+              "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+              "placeholder:text-muted-foreground",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "disabled:cursor-not-allowed disabled:opacity-50",
               sizeClasses[size],
               variantClasses[variant],
-              isInvalid && 'border-red-500 focus-visible:ring-red-500',
-              isFocused && 'ring-2 ring-ring ring-offset-2',
+              isInvalid && "border-red-500 focus-visible:ring-red-500",
+              isFocused && "ring-2 ring-ring ring-offset-2",
               className
             )}
             style={{
               // Additional security: prevent text selection styling
-              WebkitUserSelect: preventCopy ? 'none' : 'auto',
-              userSelect: preventCopy ? 'none' : 'auto',
+              WebkitUserSelect: preventCopy ? "none" : "auto",
+              userSelect: preventCopy ? "none" : "auto",
             }}
           />
-          
+
           {/* Toggle visibility button */}
           {showToggle && (
             <button
@@ -207,11 +229,11 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
               onClick={toggleVisibility}
               disabled={disabled}
               className={cn(
-                'absolute right-2 top-1/2 -translate-y-1/2',
-                'flex h-6 w-6 items-center justify-center rounded',
-                'text-muted-foreground hover:text-foreground',
-                'transition-colors focus:outline-none focus:ring-2 focus:ring-ring',
-                'disabled:cursor-not-allowed disabled:opacity-50'
+                "absolute right-2 top-1/2 -translate-y-1/2",
+                "flex h-6 w-6 items-center justify-center rounded",
+                "text-muted-foreground hover:text-foreground",
+                "transition-colors focus:outline-none focus:ring-2 focus:ring-ring",
+                "disabled:cursor-not-allowed disabled:opacity-50"
               )}
               tabIndex={-1}
             >
@@ -222,14 +244,14 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
               )}
             </button>
           )}
-          
+
           {/* Security indicator */}
-          {variant === 'secure' && (
+          {variant === "secure" && (
             <div className="absolute left-2 top-1/2 -translate-y-1/2">
               <Shield className="h-4 w-4 text-green-600" />
             </div>
           )}
-          
+
           {/* Warning indicator */}
           {isInvalid && (
             <div className="absolute left-2 top-1/2 -translate-y-1/2">
@@ -243,28 +265,33 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Password strength</span>
-              <span className={cn(
-                'font-medium',
-                strength.score >= 80 ? 'text-green-600' :
-                strength.score >= 60 ? 'text-yellow-600' :
-                strength.score >= 40 ? 'text-orange-600' :
-                'text-red-600'
-              )}>
+              <span
+                className={cn(
+                  "font-medium",
+                  strength.score >= 80
+                    ? "text-green-600"
+                    : strength.score >= 60
+                    ? "text-yellow-600"
+                    : strength.score >= 40
+                    ? "text-orange-600"
+                    : "text-red-600"
+                )}
+              >
                 {getStrengthText(strength.score)}
               </span>
             </div>
-            
+
             {/* Strength bar */}
             <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
               <div
                 className={cn(
-                  'h-full transition-all duration-300',
+                  "h-full transition-all duration-300",
                   getStrengthColor(strength.score)
                 )}
                 style={{ width: `${strength.score}%` }}
               />
             </div>
-            
+
             {/* Feedback */}
             {strength.feedback.length > 0 && hasBeenFocused && (
               <div className="space-y-1">
@@ -303,6 +330,6 @@ const SecurePasswordInput = forwardRef<SecurePasswordInputRef, SecurePasswordInp
   }
 );
 
-SecurePasswordInput.displayName = 'SecurePasswordInput';
+SecurePasswordInput.displayName = "SecurePasswordInput";
 
 export default SecurePasswordInput;

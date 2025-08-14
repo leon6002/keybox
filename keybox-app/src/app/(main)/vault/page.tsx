@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PasswordEntry, Folder } from "@/types/password";
 import { useAuth } from "@/contexts/AuthContext";
 import { OptimisticUpdateService } from "@/lib/storage/optimisticUpdateService";
 import { OptimizedLoadService } from "@/lib/storage/optimizedLoadService";
+import { VaultGuard } from "@/components/auth/AuthGuard";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -294,7 +295,7 @@ const passwordTypeIcons: Record<string, any> = {
   default: Shield,
 };
 
-export default function PasswordsPage() {
+function PasswordsPageContent() {
   const router = useRouter();
   const { user, getUserKey } = useAuth();
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
@@ -307,6 +308,8 @@ export default function PasswordsPage() {
   );
   const [showPasswordView, setShowPasswordView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [servicesInitialized, setServicesInitialized] = useState(false);
   const [optimisticService] = useState(() =>
     OptimisticUpdateService.getInstance()
   );
@@ -320,55 +323,145 @@ export default function PasswordsPage() {
       .then(() => {
         optimisticService.setUserKeyGetter(getUserKey);
         optimizedLoadService.setUserKeyGetter(getUserKey);
+        setServicesInitialized(true);
+        console.log("✅ Vault page services initialized");
       })
       .catch((error) => {
         console.error("❌ Failed to initialize services:", error);
+        setServicesInitialized(false);
       });
   }, [optimisticService, optimizedLoadService, getUserKey]);
-  // Load passwords using optimized service
-  const loadPasswords = useCallback(async () => {
-    if (!user?.databaseUser?.id || !user?.isVaultUnlocked) {
-      console.log("📥 User not authenticated or vault locked");
-      return;
-    }
+  // Load data when vault is unlocked - using robust logic from manage page
+  useEffect(() => {
+    console.log("🔍 Vault page data loading check:", {
+      hasDatabaseUser: !!user?.databaseUser?.id,
+      databaseUserId: user?.databaseUser?.id,
+      isVaultUnlocked: user?.isVaultUnlocked,
+      hasUserKey: !!getUserKey(),
+      userKeyLength: getUserKey()?.length,
+      servicesInitialized,
+      isDataLoaded,
+    });
 
-    try {
-      setIsLoading(true);
-      console.log("⚡ Loading passwords for display page...");
-
-      // Use optimized loading service for instant results
-      const result = await optimizedLoadService.loadPasswordsOptimized(
-        user.databaseUser.id,
-        {
-          limit: 200, // Load more for display page
-          decryptionBatchSize: 30,
-        }
-      );
-
-      console.log(`✅ Loaded ${result.entries.length} passwords for display`);
-
-      // Sort by creation date (newest first)
-      const sortedEntries = [...result.entries].sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.updatedAt || 0);
-        const dateB = new Date(b.createdAt || b.updatedAt || 0);
-        return dateB.getTime() - dateA.getTime();
+    // Load data if vault is unlocked and we have a user and data is not loaded yet and services are initialized
+    if (
+      user?.databaseUser?.id &&
+      user?.isVaultUnlocked &&
+      getUserKey() &&
+      !isDataLoaded &&
+      servicesInitialized
+    ) {
+      console.log("📥 Starting password loading for vault page...");
+      console.log("📥 All requirements met for loading:", {
+        userId: user.databaseUser.id,
+        isVaultUnlocked: user.isVaultUnlocked,
+        hasUserKey: !!getUserKey(),
+        userKeyLength: getUserKey()?.length,
       });
 
-      setEntries(sortedEntries);
-      setFolders(result.folders);
-    } catch (error) {
-      console.error("❌ Failed to load passwords:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, optimizedLoadService]);
+      // Load passwords directly in useEffect to avoid dependency issues
+      const loadPasswords = async () => {
+        try {
+          setIsLoading(true);
 
-  // Load data when user is authenticated
-  useEffect(() => {
-    if (user?.databaseUser?.id && user?.isVaultUnlocked && getUserKey()) {
+          console.log(
+            "⚡ Loading passwords for vault page with optimized service..."
+          );
+          console.log("🔍 User ID for loading:", user.databaseUser?.id);
+
+          // Check if this might be a page refresh (no entries loaded yet)
+          const isPageRefresh = entries.length === 0 && !isDataLoaded;
+          console.log("🔄 Is page refresh?", isPageRefresh);
+          console.log("🔄 Current entries count:", entries.length);
+
+          // Use optimized loading service for instant results
+          const result = await optimizedLoadService.loadPasswordsOptimized(
+            user.databaseUser!.id,
+            {
+              limit: 200, // Load more for display page
+              decryptionBatchSize: 30,
+              forceRefresh: isPageRefresh, // Force refresh on page refresh
+            }
+          );
+
+          console.log(
+            `✅ Loaded ${
+              result.entries.length
+            } passwords for vault page (from ${
+              result.isFromCache ? "cache" : "API"
+            })`
+          );
+
+          // If no entries were loaded, always try force refresh
+          if (result.entries.length === 0) {
+            console.log("🔄 No entries loaded, trying force refresh...");
+            try {
+              const freshResult = await optimizedLoadService.forceRefresh(
+                user.databaseUser!.id
+              );
+              console.log(
+                `🔄 Force refresh loaded ${freshResult.entries.length} entries`
+              );
+              if (freshResult.entries.length > 0) {
+                result.entries = freshResult.entries;
+                result.folders = freshResult.folders;
+              }
+            } catch (refreshError) {
+              console.error("❌ Force refresh failed:", refreshError);
+            }
+          }
+
+          // Sort entries by creation date (newest first)
+          const sortedEntries = [...result.entries].sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.updatedAt || 0);
+            const dateB = new Date(b.createdAt || b.updatedAt || 0);
+            return dateB.getTime() - dateA.getTime();
+          });
+
+          setEntries(sortedEntries);
+          setFolders(result.folders);
+          setIsDataLoaded(true);
+        } catch (error) {
+          console.error(
+            "❌ Failed to load encrypted passwords for vault page:",
+            error
+          );
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       loadPasswords();
+    } else if (
+      !user?.databaseUser?.id ||
+      !user?.isVaultUnlocked ||
+      !getUserKey() ||
+      !servicesInitialized
+    ) {
+      console.log("📥 Skipping vault page data load - requirements not met:", {
+        hasDatabaseUser: !!user?.databaseUser?.id,
+        databaseUserId: user?.databaseUser?.id,
+        isVaultUnlocked: user?.isVaultUnlocked,
+        hasUserKey: !!getUserKey(),
+        userKeyLength: getUserKey()?.length,
+        servicesInitialized,
+      });
+      // Reset data loaded state if requirements are not met
+      if (isDataLoaded) {
+        setIsDataLoaded(false);
+        setEntries([]);
+      }
+    } else {
+      console.log("📥 Vault page data already loaded, skipping reload");
     }
-  }, [user, loadPasswords, getUserKey]);
+  }, [
+    user,
+    isDataLoaded,
+    getUserKey,
+    optimizedLoadService,
+    servicesInitialized,
+    entries.length, // Add entries.length to detect when data is cleared
+  ]);
 
   // Filter passwords based on search, folder, and password type
   const filteredEntries = entries.filter((entry) => {
@@ -708,5 +801,13 @@ export default function PasswordsPage() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+export default function PasswordsPage() {
+  return (
+    <VaultGuard>
+      <PasswordsPageContent />
+    </VaultGuard>
   );
 }

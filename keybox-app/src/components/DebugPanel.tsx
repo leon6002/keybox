@@ -81,7 +81,10 @@ export function DebugPanel() {
           } catch (transactionError) {
             setDebugInfo({
               error: "Transaction failed",
-              details: transactionError.message,
+              details:
+                transactionError instanceof Error
+                  ? transactionError.message
+                  : String(transactionError),
               dbStores: storeNames,
             });
           }
@@ -104,7 +107,9 @@ export function DebugPanel() {
       };
     } catch (error) {
       console.error("Debug check failed:", error);
-      setDebugInfo({ error: error.message });
+      setDebugInfo({
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
     setIsChecking(false);
   };

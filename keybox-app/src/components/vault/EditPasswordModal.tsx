@@ -81,6 +81,11 @@ export default function EditPasswordModal({
     setIsSubmitting(true);
 
     try {
+      if (!password || !password.id) {
+        console.error("No password or password ID to update");
+        return;
+      }
+
       const passwordData = {
         ...formData,
         strength_score: calculateStrength(formData.password),

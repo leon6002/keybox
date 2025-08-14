@@ -1,9 +1,9 @@
 // Database migration runner for KeyBox
 // Handles database schema creation and updates with proper error handling
 
-import { DatabaseConnection } from './databaseService';
-import fs from 'fs/promises';
-import path from 'path';
+import { DatabaseConnection } from "./databaseService";
+import fs from "fs/promises";
+import path from "path";
 
 export interface Migration {
   version: string;
@@ -25,7 +25,7 @@ export class DatabaseMigrationRunner {
 
   constructor(connection: DatabaseConnection, migrationsPath?: string) {
     this.connection = connection;
-    this.migrationsPath = migrationsPath || path.join(__dirname, 'migrations');
+    this.migrationsPath = migrationsPath || path.join(__dirname, "migrations");
   }
 
   // Run all pending migrations
@@ -47,15 +47,15 @@ export class DatabaseMigrationRunner {
 
       // Get applied migrations
       const appliedMigrations = await this.getAppliedMigrations();
-      const appliedVersions = new Set(appliedMigrations.map(m => m.version));
+      const appliedVersions = new Set(appliedMigrations.map((m) => m.version));
 
       // Find pending migrations
       const pendingMigrations = availableMigrations.filter(
-        m => !appliedVersions.has(m.version)
+        (m) => !appliedVersions.has(m.version)
       );
 
       if (pendingMigrations.length === 0) {
-        console.log('No pending migrations found.');
+        console.log("No pending migrations found.");
         return result;
       }
 
@@ -64,22 +64,29 @@ export class DatabaseMigrationRunner {
       // Apply each pending migration
       for (const migration of pendingMigrations) {
         try {
-          console.log(`Applying migration: ${migration.version} - ${migration.description}`);
+          console.log(
+            `Applying migration: ${migration.version} - ${migration.description}`
+          );
           await this.applyMigration(migration);
           result.migrationsApplied.push(migration.version);
           console.log(`✓ Migration ${migration.version} applied successfully`);
         } catch (error) {
-          const errorMsg = `Failed to apply migration ${migration.version}: ${error.message}`;
+          const errorMsg = `Failed to apply migration ${migration.version}: ${
+            error instanceof Error ? error.message : String(error)
+          }`;
           console.error(`✗ ${errorMsg}`);
           result.errors.push(errorMsg);
           result.success = false;
           break; // Stop on first error
         }
       }
-
     } catch (error) {
       result.success = false;
-      result.errors.push(`Migration runner error: ${error.message}`);
+      result.errors.push(
+        `Migration runner error: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
 
     return result;
@@ -87,9 +94,14 @@ export class DatabaseMigrationRunner {
 
   // Create a new migration file
   async createMigration(description: string): Promise<string> {
-    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
-    const version = timestamp.substring(0, 8) + '_' + timestamp.substring(8);
-    const filename = `${version}_${description.toLowerCase().replace(/\s+/g, '_')}.sql`;
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .split(".")[0];
+    const version = timestamp.substring(0, 8) + "_" + timestamp.substring(8);
+    const filename = `${version}_${description
+      .toLowerCase()
+      .replace(/\s+/g, "_")}.sql`;
     const filepath = path.join(this.migrationsPath, filename);
 
     const template = `-- Migration: ${description}
@@ -112,7 +124,7 @@ INSERT OR IGNORE INTO migrations (version, description, appliedAt)
 VALUES ('${version}', '${description}', datetime('now'));
 `;
 
-    await fs.writeFile(filepath, template, 'utf8');
+    await fs.writeFile(filepath, template, "utf8");
     console.log(`Created migration file: ${filename}`);
     return filename;
   }
@@ -124,12 +136,12 @@ VALUES ('${version}', '${description}', datetime('now'));
     total: number;
   }> {
     await this.ensureMigrationsTable();
-    
+
     const available = await this.getAvailableMigrations();
     const applied = await this.getAppliedMigrations();
-    const appliedVersions = new Set(applied.map(m => m.version));
-    
-    const pending = available.filter(m => !appliedVersions.has(m.version));
+    const appliedVersions = new Set(applied.map((m) => m.version));
+
+    const pending = available.filter((m) => !appliedVersions.has(m.version));
 
     return {
       applied,
@@ -143,20 +155,20 @@ VALUES ('${version}', '${description}', datetime('now'));
     try {
       const applied = await this.getAppliedMigrations();
       if (applied.length === 0) {
-        console.log('No migrations to rollback.');
+        console.log("No migrations to rollback.");
         return true;
       }
 
       const lastMigration = applied[applied.length - 1];
       const rollbackFile = path.join(
-        this.migrationsPath, 
-        'rollbacks', 
+        this.migrationsPath,
+        "rollbacks",
         `${lastMigration.version}_rollback.sql`
       );
 
       try {
-        const rollbackSql = await fs.readFile(rollbackFile, 'utf8');
-        
+        const rollbackSql = await fs.readFile(rollbackFile, "utf8");
+
         await this.connection.transaction(async (tx) => {
           // Execute rollback SQL
           const statements = this.splitSqlStatements(rollbackSql);
@@ -165,12 +177,11 @@ VALUES ('${version}', '${description}', datetime('now'));
               await tx.execute(statement);
             }
           }
-          
+
           // Remove migration record
-          await tx.execute(
-            'DELETE FROM migrations WHERE version = ?',
-            [lastMigration.version]
-          );
+          await tx.execute("DELETE FROM migrations WHERE version = ?", [
+            lastMigration.version,
+          ]);
         });
 
         console.log(`✓ Rolled back migration: ${lastMigration.version}`);
@@ -180,7 +191,11 @@ VALUES ('${version}', '${description}', datetime('now'));
         return false;
       }
     } catch (error) {
-      console.error(`Rollback failed: ${error.message}`);
+      console.error(
+        `Rollback failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
       return false;
     }
   }
@@ -203,16 +218,16 @@ VALUES ('${version}', '${description}', datetime('now'));
     try {
       const files = await fs.readdir(this.migrationsPath);
       const sqlFiles = files
-        .filter(file => file.endsWith('.sql') && !file.includes('rollback'))
+        .filter((file) => file.endsWith(".sql") && !file.includes("rollback"))
         .sort();
 
-      return sqlFiles.map(filename => {
-        const version = filename.split('_')[0];
+      return sqlFiles.map((filename) => {
+        const version = filename.split("_")[0];
         const description = filename
-          .replace(/^\d+_/, '')
-          .replace(/\.sql$/, '')
-          .replace(/_/g, ' ');
-        
+          .replace(/^\d+_/, "")
+          .replace(/\.sql$/, "")
+          .replace(/_/g, " ");
+
         return {
           version,
           description,
@@ -220,7 +235,11 @@ VALUES ('${version}', '${description}', datetime('now'));
         };
       });
     } catch (error) {
-      console.error(`Error reading migrations directory: ${error.message}`);
+      console.error(
+        `Error reading migrations directory: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
       return [];
     }
   }
@@ -228,7 +247,7 @@ VALUES ('${version}', '${description}', datetime('now'));
   private async getAppliedMigrations(): Promise<Migration[]> {
     try {
       const results = await this.connection.query<Migration>(
-        'SELECT version, description, appliedAt FROM migrations ORDER BY appliedAt ASC'
+        "SELECT version, description, appliedAt FROM migrations ORDER BY appliedAt ASC"
       );
       return results;
     } catch (error) {
@@ -239,14 +258,14 @@ VALUES ('${version}', '${description}', datetime('now'));
 
   private async applyMigration(migration: Migration): Promise<void> {
     const filepath = path.join(this.migrationsPath, migration.filename);
-    const sql = await fs.readFile(filepath, 'utf8');
+    const sql = await fs.readFile(filepath, "utf8");
 
     await this.connection.transaction(async (tx) => {
       const statements = this.splitSqlStatements(sql);
-      
+
       for (const statement of statements) {
         const trimmed = statement.trim();
-        if (trimmed && !trimmed.startsWith('--')) {
+        if (trimmed && !trimmed.startsWith("--")) {
           await tx.execute(trimmed);
         }
       }
@@ -257,14 +276,16 @@ VALUES ('${version}', '${description}', datetime('now'));
     // Simple SQL statement splitter
     // Note: This is basic and may not handle all edge cases
     return sql
-      .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+      .split(";")
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0 && !stmt.startsWith("--"));
   }
 
   // Utility methods for database setup
 
-  static async initializeDatabase(connection: DatabaseConnection): Promise<MigrationResult> {
+  static async initializeDatabase(
+    connection: DatabaseConnection
+  ): Promise<MigrationResult> {
     const runner = new DatabaseMigrationRunner(connection);
     return await runner.runMigrations();
   }
@@ -278,7 +299,7 @@ VALUES ('${version}', '${description}', datetime('now'));
     }
 
     // Create rollbacks directory
-    const rollbacksPath = path.join(migrationsPath, 'rollbacks');
+    const rollbacksPath = path.join(migrationsPath, "rollbacks");
     try {
       await fs.access(rollbacksPath);
     } catch {
@@ -302,15 +323,21 @@ VALUES ('${version}', '${description}', datetime('now'));
     try {
       // Check if all required tables exist
       const requiredTables = [
-        'users', 'ciphers', 'folders', 'collections', 
-        'organizations', 'devices', 'securityEvents', 'backups'
+        "users",
+        "ciphers",
+        "folders",
+        "collections",
+        "organizations",
+        "devices",
+        "securityEvents",
+        "backups",
       ];
 
       const tables = await this.connection.query<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
       );
-      
-      const existingTables = new Set(tables.map(t => t.name));
+
+      const existingTables = new Set(tables.map((t) => t.name));
       tableCount = existingTables.size;
 
       for (const table of requiredTables) {
@@ -326,12 +353,15 @@ VALUES ('${version}', '${description}', datetime('now'));
       indexCount = indexes.length;
 
       // Check migrations table
-      if (!existingTables.has('migrations')) {
-        issues.push('Missing migrations table');
+      if (!existingTables.has("migrations")) {
+        issues.push("Missing migrations table");
       }
-
     } catch (error) {
-      issues.push(`Database health check failed: ${error.message}`);
+      issues.push(
+        `Database health check failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
 
     return {

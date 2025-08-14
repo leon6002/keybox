@@ -1,21 +1,21 @@
 // Enhanced backup service with proper encryption
 // Implements secure backup creation, export, and import with Bitwarden-style encryption
 
-import { 
-  SecurityServiceFactory, 
-  UserKey, 
-  EncryptedString, 
+import {
+  SecurityServiceFactory,
+  UserKey,
+  EncryptedString,
   KdfType,
-  SECURITY_CONSTANTS 
-} from './index';
-import { PasswordEntry, Category } from '../../types/password';
-import { Cipher, CipherType } from './cipherEntity';
+  SECURITY_CONSTANTS,
+} from "./index";
+import { PasswordEntry } from "../../types/password";
+import { Cipher, CipherType } from "./cipherEntity";
 
 export interface SecureBackupData {
   version: string;
   createdAt: string;
   application: string;
-  
+
   // Encryption metadata
   encryptionType: string;
   kdfType: KdfType;
@@ -23,15 +23,15 @@ export interface SecureBackupData {
   kdfMemory?: number;
   kdfParallelism?: number;
   kdfSalt: string; // Base64 encoded
-  
+
   // Encrypted data
   encryptedData: EncryptedString;
-  
+
   // Metadata (not encrypted)
   metadata: {
     totalEntries: number;
     totalCategories: number;
-    backupType: 'auto' | 'manual';
+    backupType: "auto" | "manual";
     versionName?: string;
     dataHash: string; // For integrity verification
   };
@@ -42,11 +42,11 @@ export interface BackupOptions {
   includeAttachments?: boolean;
   password?: string; // For additional password protection
   compressionLevel?: number;
-  encryptionType?: 'user_key' | 'password' | 'both';
+  encryptionType?: "user_key" | "password" | "both";
 }
 
 export interface ImportOptions {
-  mergeStrategy: 'replace' | 'merge' | 'skip_existing';
+  mergeStrategy: "replace" | "merge" | "skip_existing";
   validateIntegrity?: boolean;
   password?: string;
 }
@@ -55,7 +55,8 @@ export class EncryptedBackupService {
   private static instance: EncryptedBackupService;
   private cryptoService = SecurityServiceFactory.getCryptoService();
   private vaultService = SecurityServiceFactory.getVaultService();
-  private keyManagementService = SecurityServiceFactory.getKeyManagementService();
+  private keyManagementService =
+    SecurityServiceFactory.getKeyManagementService();
 
   public static getInstance(): EncryptedBackupService {
     if (!EncryptedBackupService.instance) {
@@ -69,18 +70,17 @@ export class EncryptedBackupService {
   // Create secure backup
   async createSecureBackup(
     entries: PasswordEntry[],
-    categories: Category[],
     userKey: UserKey,
     options: BackupOptions = {}
   ): Promise<SecureBackupData> {
     const {
       includeDeleted = false,
       password,
-      encryptionType = 'user_key',
+      encryptionType = "user_key",
     } = options;
 
     // Filter entries if needed
-    const filteredEntries = includeDeleted ? entries : entries.filter(e => !e.deletedAt);
+    const filteredEntries = entries; // All entries are included since deletedAt is not part of PasswordEntry
 
     // Convert to cipher format for consistent encryption
     const ciphers: Cipher[] = [];
@@ -89,14 +89,13 @@ export class EncryptedBackupService {
       ciphers.push(cipher);
     }
 
-    // Encrypt categories
-    const encryptedCategories = await this.vaultService.encryptFolders(categories, userKey);
+    // Categories are no longer supported
 
     // Prepare backup data
     const backupData = {
-      version: '2.0', // New version with enhanced security
-      ciphers: ciphers.map(c => c.toJSON()),
-      categories: encryptedCategories,
+      version: "2.0", // New version with enhanced security
+      ciphers: ciphers.map((c) => c.toJSON()),
+      // categories: removed in favor of folders
       exportedAt: new Date().toISOString(),
     };
 
@@ -107,7 +106,7 @@ export class EncryptedBackupService {
     let encryptionKey: Uint8Array;
     let kdfConfig: any = null;
 
-    if (encryptionType === 'password' && password) {
+    if (encryptionType === "password" && password) {
       // Use password-based encryption
       const salt = this.cryptoService.generateSalt();
       kdfConfig = {
@@ -115,32 +114,40 @@ export class EncryptedBackupService {
         iterations: SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
         salt,
       };
-      encryptionKey = await this.cryptoService.deriveKeyFromPassword(password, salt, kdfConfig);
+      encryptionKey = await this.cryptoService.deriveKeyFromPassword(
+        password,
+        salt,
+        kdfConfig
+      );
     } else {
       // Use user key
       encryptionKey = userKey.key;
     }
 
     // Encrypt the backup data
-    const encryptedData = await this.cryptoService.encrypt(dataJson, encryptionKey);
+    const encryptedData = await this.cryptoService.encrypt(
+      dataJson,
+      encryptionKey
+    );
 
     // Create secure backup structure
     const secureBackup: SecureBackupData = {
-      version: '2.0',
+      version: "2.0",
       createdAt: new Date().toISOString(),
-      application: 'KeyBox Password Manager',
+      application: "KeyBox Password Manager",
       encryptionType: encryptionType,
       kdfType: kdfConfig?.type || KdfType.PBKDF2_SHA256,
-      kdfIterations: kdfConfig?.iterations || SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
+      kdfIterations:
+        kdfConfig?.iterations || SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
       kdfMemory: kdfConfig?.memory,
       kdfParallelism: kdfConfig?.parallelism,
-      kdfSalt: kdfConfig ? this.arrayBufferToBase64(kdfConfig.salt.buffer) : '',
+      kdfSalt: kdfConfig ? this.arrayBufferToBase64(kdfConfig.salt.buffer) : "",
       encryptedData,
       metadata: {
         totalEntries: filteredEntries.length,
-        totalCategories: categories.length,
-        backupType: options.backupType || 'manual',
-        versionName: options.versionName,
+        totalCategories: 0, // Categories removed
+        backupType: "manual" as const,
+        versionName: undefined,
         dataHash,
       },
     };
@@ -152,8 +159,8 @@ export class EncryptedBackupService {
   async importSecureBackup(
     backupData: SecureBackupData,
     userKey: UserKey,
-    options: ImportOptions = { mergeStrategy: 'merge' }
-  ): Promise<{ entries: PasswordEntry[]; categories: Category[] }> {
+    options: ImportOptions = { mergeStrategy: "merge" }
+  ): Promise<{ entries: PasswordEntry[] }> {
     const { password, validateIntegrity = true } = options;
 
     // Validate backup version
@@ -164,7 +171,7 @@ export class EncryptedBackupService {
     // Choose decryption key
     let decryptionKey: Uint8Array;
 
-    if (backupData.encryptionType === 'password' && password) {
+    if (backupData.encryptionType === "password" && password) {
       // Use password-based decryption
       const salt = this.base64ToArrayBuffer(backupData.kdfSalt);
       const kdfConfig = {
@@ -174,20 +181,29 @@ export class EncryptedBackupService {
         parallelism: backupData.kdfParallelism,
         salt: new Uint8Array(salt),
       };
-      decryptionKey = await this.cryptoService.deriveKeyFromPassword(password, new Uint8Array(salt), kdfConfig);
+      decryptionKey = await this.cryptoService.deriveKeyFromPassword(
+        password,
+        new Uint8Array(salt),
+        kdfConfig
+      );
     } else {
       // Use user key
       decryptionKey = userKey.key;
     }
 
     // Decrypt backup data
-    const decryptedJson = await this.cryptoService.decrypt(backupData.encryptedData, decryptionKey);
-    
+    const decryptedJson = await this.cryptoService.decrypt(
+      backupData.encryptedData,
+      decryptionKey
+    );
+
     // Validate data integrity
     if (validateIntegrity) {
-      const computedHash = await this.cryptoService.generateFileHash(decryptedJson);
+      const computedHash = await this.cryptoService.generateFileHash(
+        decryptedJson
+      );
       if (computedHash !== backupData.metadata.dataHash) {
-        throw new Error('Backup data integrity check failed');
+        throw new Error("Backup data integrity check failed");
       }
     }
 
@@ -203,31 +219,27 @@ export class EncryptedBackupService {
       }
     }
 
-    // Decrypt categories
-    const categories: Category[] = [];
-    if (decryptedData.categories) {
-      for (const encryptedCategory of decryptedData.categories) {
-        const category = await this.vaultService.decryptFolder(encryptedCategory, userKey);
-        categories.push(category);
-      }
-    }
+    // Categories are no longer supported
 
-    return { entries, categories };
+    return { entries };
   }
 
   // Export to encrypted file
   async exportToEncryptedFile(
     entries: PasswordEntry[],
-    categories: Category[],
     userKey: UserKey,
     options: BackupOptions = {}
   ): Promise<{ filename: string; data: string; size: number }> {
-    const secureBackup = await this.createSecureBackup(entries, categories, userKey, options);
+    const secureBackup = await this.createSecureBackup(
+      entries,
+      userKey,
+      options
+    );
     const backupJson = JSON.stringify(secureBackup, null, 2);
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `keybox-backup-${timestamp}.kbx`;
-    
+
     return {
       filename,
       data: backupJson,
@@ -239,13 +251,17 @@ export class EncryptedBackupService {
   async importFromEncryptedFile(
     fileContent: string,
     userKey: UserKey,
-    options: ImportOptions = { mergeStrategy: 'merge' }
-  ): Promise<{ entries: PasswordEntry[]; categories: Category[] }> {
+    options: ImportOptions = { mergeStrategy: "merge" }
+  ): Promise<{ entries: PasswordEntry[] }> {
     try {
       const backupData: SecureBackupData = JSON.parse(fileContent);
       return await this.importSecureBackup(backupData, userKey, options);
     } catch (error) {
-      throw new Error(`Failed to import backup file: ${error.message}`);
+      throw new Error(
+        `Failed to import backup file: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -253,25 +269,24 @@ export class EncryptedBackupService {
   async importLegacyBackup(
     legacyData: any,
     userKey: UserKey
-  ): Promise<{ entries: PasswordEntry[]; categories: Category[] }> {
-    console.warn('Importing legacy backup format. Consider upgrading to the new format.');
-    
+  ): Promise<{ entries: PasswordEntry[] }> {
+    console.warn(
+      "Importing legacy backup format. Consider upgrading to the new format."
+    );
+
     // Handle legacy format
     const entries: PasswordEntry[] = legacyData.entries || [];
-    const categories: Category[] = legacyData.categories || [];
-    
+    // Categories are no longer supported
+
     // Validate and sanitize legacy data
-    const validatedEntries = entries.filter(entry => 
-      entry.id && entry.title && typeof entry.title === 'string'
+    const validatedEntries = entries.filter(
+      (entry) => entry.id && entry.title && typeof entry.title === "string"
     );
-    
-    const validatedCategories = categories.filter(category =>
-      category.id && category.name && typeof category.name === 'string'
-    );
-    
+
+    // Categories are no longer supported
+
     return {
       entries: validatedEntries,
-      categories: validatedCategories,
     };
   }
 
@@ -291,26 +306,26 @@ export class EncryptedBackupService {
 
     // Check required fields
     if (!backupData.encryptedData) {
-      errors.push('Missing encrypted data');
+      errors.push("Missing encrypted data");
     }
 
     if (!backupData.metadata) {
-      errors.push('Missing metadata');
+      errors.push("Missing metadata");
     }
 
     // Check encryption parameters
-    if (backupData.encryptionType === 'password' && !backupData.kdfSalt) {
-      errors.push('Missing KDF salt for password-based encryption');
+    if (backupData.encryptionType === "password" && !backupData.kdfSalt) {
+      errors.push("Missing KDF salt for password-based encryption");
     }
 
     // Check metadata
     if (backupData.metadata) {
-      if (typeof backupData.metadata.totalEntries !== 'number') {
-        warnings.push('Invalid total entries count in metadata');
+      if (typeof backupData.metadata.totalEntries !== "number") {
+        warnings.push("Invalid total entries count in metadata");
       }
-      
+
       if (!backupData.metadata.dataHash) {
-        warnings.push('Missing data integrity hash');
+        warnings.push("Missing data integrity hash");
       }
     }
 
@@ -323,13 +338,13 @@ export class EncryptedBackupService {
 
   // Utility methods
   private isVersionSupported(version: string): boolean {
-    const supportedVersions = ['1.0', '2.0'];
+    const supportedVersions = ["1.0", "2.0"];
     return supportedVersions.includes(version);
   }
 
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
-    let binary = '';
+    let binary = "";
     for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }

@@ -58,14 +58,14 @@ export default function UserProfile() {
         className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
       >
         <UserAvatar
-          src={user.picture}
-          alt={user.name}
+          src={user.googleUser.picture}
+          alt={user.googleUser.name}
           size="md"
           showPremium={isPremium}
         />
         <div className="hidden sm:block text-left">
           <div className="text-sm font-medium text-gray-900 dark:text-white">
-            {user.given_name || user.name}
+            {user.googleUser.given_name || user.googleUser.name}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {isPremium ? t("user.premium") : t("user.free")}
@@ -81,17 +81,17 @@ export default function UserProfile() {
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <UserAvatar
-                src={user.picture}
-                alt={user.name}
+                src={user.googleUser.picture}
+                alt={user.googleUser.name}
                 size="lg"
                 showPremium={isPremium}
               />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {user.name}
+                  {user.googleUser.name}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user.email}
+                  {user.googleUser.email}
                 </div>
                 <div className="text-xs text-blue-600 dark:text-blue-400">
                   {isPremium ? t("user.premium") : t("user.free")}

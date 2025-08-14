@@ -6,7 +6,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { SignInGuard } from "@/components/auth/AuthGuard";
-import AuthGuard from "@/components/auth/AuthGuard";
+
 import EncryptionSetupModal from "@/components/auth/EncryptionSetupModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -220,7 +220,9 @@ function SecurityTestContent() {
         updateTest(
           "Security Services",
           "error",
-          `Security initialization failed: ${error.message}`
+          `Security initialization failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
         setOverallStatus("error");
         return;
@@ -243,7 +245,9 @@ function SecurityTestContent() {
         updateTest(
           "Database Service",
           "error",
-          `Database service failed: ${error.message}`
+          `Database service failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
         setOverallStatus("error");
         return;
@@ -433,7 +437,7 @@ function SecurityTestContent() {
 
         {/* Test Results */}
         <div className="grid gap-4">
-          {tests.map((test, index) => (
+          {tests.map((test) => (
             <Card key={test.name} className="transition-all duration-200">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

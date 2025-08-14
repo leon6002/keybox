@@ -10,7 +10,7 @@ import {
   EncryptionType,
 } from "./types";
 import { WebCryptoService } from "./cryptoService";
-import { PasswordEntry, Category } from "../../types/password";
+import { Folder, PasswordEntry } from "../../types/password";
 
 export class KeyboxVaultService implements VaultService {
   private static instance: KeyboxVaultService;
@@ -154,7 +154,7 @@ export class KeyboxVaultService implements VaultService {
 
   // Folder operations (for categories)
   async encryptFolder(
-    folder: Category,
+    folder: Folder,
     userKey: UserKey
   ): Promise<EncryptedFolder> {
     const encryptedName = await this.cryptoService.encrypt(
@@ -174,7 +174,7 @@ export class KeyboxVaultService implements VaultService {
   async decryptFolder(
     encryptedFolder: EncryptedFolder,
     userKey: UserKey
-  ): Promise<Category> {
+  ): Promise<Folder> {
     const name = await this.cryptoService.decrypt(
       encryptedFolder.name,
       userKey.key
@@ -188,7 +188,6 @@ export class KeyboxVaultService implements VaultService {
       icon: "folder", // Default icon
       color: "#6366f1", // Default color
       description: "",
-      fields: [], // Would need to be encrypted/decrypted separately
       createdAt: encryptedFolder.createdAt,
       updatedAt: encryptedFolder.updatedAt,
     };

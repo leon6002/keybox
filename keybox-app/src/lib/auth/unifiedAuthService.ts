@@ -336,29 +336,32 @@ export class UnifiedAuthService {
         console.log("🔐 Initializing database with master key...");
         await initializeDatabaseWithMasterKey(userKey.key);
         console.log("✅ Database initialized with master key successfully");
+
+        // Update state
+        this.currentState = {
+          ...this.currentState,
+          user: {
+            ...this.currentState.user,
+            databaseUser,
+            hasEncryptionSetup: true,
+            isVaultUnlocked: true,
+            userKey: userKey.key,
+          },
+          needsEncryptionSetup: false,
+          isVaultLocked: false,
+        };
       } catch (sessionError) {
         console.error("❌ Session creation failed:", sessionError);
         console.error("Error details:", {
-          name: sessionError.name,
-          message: sessionError.message,
-          stack: sessionError.stack,
+          name: sessionError instanceof Error ? sessionError.name : "Unknown",
+          message:
+            sessionError instanceof Error
+              ? sessionError.message
+              : String(sessionError),
+          stack: sessionError instanceof Error ? sessionError.stack : undefined,
         });
         throw sessionError;
       }
-
-      // Update state
-      this.currentState = {
-        ...this.currentState,
-        user: {
-          ...this.currentState.user,
-          databaseUser,
-          hasEncryptionSetup: true,
-          isVaultUnlocked: true,
-          userKey: userKey.key,
-        },
-        needsEncryptionSetup: false,
-        isVaultLocked: false,
-      };
 
       this.notifyListeners();
     } catch (error) {
@@ -443,9 +446,7 @@ export class UnifiedAuthService {
         } else if (userKey.key instanceof Uint8Array) {
           userKeyBytes = userKey.key;
         } else {
-          throw new Error(
-            `Unexpected user key type: ${userKey.key?.constructor.name}`
-          );
+          throw new Error(`Unexpected user key type: ${typeof userKey.key}`);
         }
 
         if (!userKeyBytes || userKeyBytes.length === 0) {

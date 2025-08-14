@@ -323,7 +323,7 @@ export class WebCryptoService implements CryptoService {
     return {
       encryptionType: EncryptionType.AES_GCM_256,
       data: this.arrayBufferToBase64(encryptedData),
-      iv: this.arrayBufferToBase64(iv),
+      iv: this.arrayBufferToBase64(iv.buffer),
     };
   }
 
@@ -396,7 +396,7 @@ export class WebCryptoService implements CryptoService {
     return {
       encryptionType: EncryptionType.AES_CBC_256_HMAC_SHA256,
       data: this.arrayBufferToBase64(encryptedData),
-      iv: this.arrayBufferToBase64(iv),
+      iv: this.arrayBufferToBase64(iv.buffer),
       mac: this.arrayBufferToBase64(mac),
     };
   }
@@ -606,7 +606,10 @@ export class WebCryptoService implements CryptoService {
     key: Uint8Array,
     encryptionKey: Uint8Array
   ): Promise<EncryptedString> {
-    return this.encrypt(this.arrayBufferToBase64(key), encryptionKey);
+    return this.encrypt(
+      this.arrayBufferToBase64(key.buffer as ArrayBuffer),
+      encryptionKey
+    );
   }
 
   async decryptKey(
@@ -625,9 +628,9 @@ export class WebCryptoService implements CryptoService {
       console.log("✅ Decrypted key as base64, length:", keyBase64.length);
 
       const result = this.base64ToArrayBuffer(keyBase64);
-      console.log("✅ Converted to ArrayBuffer, length:", result.length);
+      console.log("✅ Converted to ArrayBuffer, length:", result.byteLength);
 
-      return result;
+      return new Uint8Array(result);
     } catch (error) {
       console.error("❌ DecryptKey failed:", error);
       throw error;

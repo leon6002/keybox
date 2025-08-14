@@ -1,26 +1,35 @@
-'use client';
+"use client";
 
 // Vault Unlock Modal
 // Prompts users to enter their master password to unlock their encrypted vault
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock, Unlock, AlertTriangle, Shield } from 'lucide-react';
-import SecurePasswordInput from '../security/SecurePasswordInput';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lock, Unlock, AlertTriangle, Shield } from "lucide-react";
+import SecurePasswordInput from "../security/SecurePasswordInput";
 
 interface VaultUnlockModalProps {
   isOpen: boolean;
   onClose?: () => void;
 }
 
-export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalProps) {
+export default function VaultUnlockModal({
+  isOpen,
+  onClose,
+}: VaultUnlockModalProps) {
   const { unlockVault, getGoogleUser, getDatabaseUser } = useAuth();
-  const [masterPassword, setMasterPassword] = useState('');
+  const [masterPassword, setMasterPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const googleUser = getGoogleUser();
   const databaseUser = getDatabaseUser();
@@ -30,10 +39,10 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
   }
 
   const handleUnlockVault = async () => {
-    setError('');
+    setError("");
 
     if (!masterPassword) {
-      setError('Master password is required');
+      setError("Master password is required");
       return;
     }
 
@@ -41,17 +50,17 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
 
     try {
       await unlockVault(masterPassword);
-      setMasterPassword(''); // Clear password from memory
+      setMasterPassword(""); // Clear password from memory
       onClose?.();
     } catch (error) {
-      setError('Incorrect master password. Please try again.');
+      setError("Incorrect master password. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && masterPassword && !isLoading) {
+    if (e.key === "Enter" && masterPassword && !isLoading) {
       handleUnlockVault();
     }
   };
@@ -72,14 +81,16 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
         <CardContent className="space-y-4">
           {/* User Info */}
           <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            <img 
-              src={googleUser.picture} 
+            <img
+              src={googleUser.picture}
               alt={googleUser.name}
               className="w-10 h-10 rounded-full"
             />
             <div>
               <p className="font-medium">{googleUser.name}</p>
-              <p className="text-sm text-muted-foreground">{googleUser.email}</p>
+              <p className="text-sm text-muted-foreground">
+                {googleUser.email}
+              </p>
             </div>
           </div>
 
@@ -90,7 +101,7 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
           </div>
 
           {/* Master Password Input */}
-          <div className="space-y-2">
+          <div className="space-y-2" onKeyDown={handleKeyPress}>
             <label className="text-sm font-medium">Master Password</label>
             <SecurePasswordInput
               value={masterPassword}
@@ -99,8 +110,6 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
               showToggle={true}
               showStrengthIndicator={false}
               preventCopy={true}
-              onKeyPress={handleKeyPress}
-              autoFocus={true}
             />
           </div>
 
@@ -172,9 +181,10 @@ export default function VaultUnlockModal({ isOpen, onClose }: VaultUnlockModalPr
               </summary>
               <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                 <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  Unfortunately, we cannot recover your master password due to our zero-knowledge security model. 
-                  You'll need to clear your encrypted data and set up encryption again. 
-                  This will delete all your encrypted passwords.
+                  Unfortunately, we cannot recover your master password due to
+                  our zero-knowledge security model. You&apos;ll need to clear
+                  your encrypted data and set up encryption again. This will
+                  delete all your encrypted passwords.
                 </p>
               </div>
             </details>

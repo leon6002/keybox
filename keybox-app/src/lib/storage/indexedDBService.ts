@@ -1,7 +1,7 @@
 // IndexedDB service for optimized password storage
 // Provides efficient storage and retrieval for large password datasets
 
-import { PasswordEntry, Folder, Category } from "@/types/password";
+import { PasswordEntry, Folder } from "@/types/password";
 
 export interface IndexedDBConfig {
   dbName: string;
@@ -43,7 +43,7 @@ export class IndexedDBStorageService {
       version: 1,
       stores: {
         passwords: "passwords",
-        folders: "folders", 
+        folders: "folders",
         metadata: "metadata",
         searchIndex: "searchIndex",
       },
@@ -79,14 +79,23 @@ export class IndexedDBStorageService {
 
         // Create passwords store
         if (!db.objectStoreNames.contains(this.config.stores.passwords)) {
-          const passwordStore = db.createObjectStore(this.config.stores.passwords, {
-            keyPath: "id",
-          });
+          const passwordStore = db.createObjectStore(
+            this.config.stores.passwords,
+            {
+              keyPath: "id",
+            }
+          );
           passwordStore.createIndex("folderId", "folderId", { unique: false });
           passwordStore.createIndex("title", "title", { unique: false });
-          passwordStore.createIndex("createdAt", "createdAt", { unique: false });
-          passwordStore.createIndex("updatedAt", "updatedAt", { unique: false });
-          passwordStore.createIndex("isFavorite", "isFavorite", { unique: false });
+          passwordStore.createIndex("createdAt", "createdAt", {
+            unique: false,
+          });
+          passwordStore.createIndex("updatedAt", "updatedAt", {
+            unique: false,
+          });
+          passwordStore.createIndex("isFavorite", "isFavorite", {
+            unique: false,
+          });
         }
 
         // Create folders store
@@ -106,12 +115,19 @@ export class IndexedDBStorageService {
 
         // Create search index store
         if (!db.objectStoreNames.contains(this.config.stores.searchIndex)) {
-          const searchStore = db.createObjectStore(this.config.stores.searchIndex, {
-            keyPath: "id",
+          const searchStore = db.createObjectStore(
+            this.config.stores.searchIndex,
+            {
+              keyPath: "id",
+            }
+          );
+          searchStore.createIndex("searchText", "searchText", {
+            unique: false,
           });
-          searchStore.createIndex("searchText", "searchText", { unique: false });
           searchStore.createIndex("folderId", "folderId", { unique: false });
-          searchStore.createIndex("lastModified", "lastModified", { unique: false });
+          searchStore.createIndex("lastModified", "lastModified", {
+            unique: false,
+          });
         }
       };
     });
@@ -121,15 +137,20 @@ export class IndexedDBStorageService {
   async savePassword(entry: PasswordEntry): Promise<void> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([
-      this.config.stores.passwords,
-      this.config.stores.searchIndex,
-      this.config.stores.metadata,
-    ], "readwrite");
+    const transaction = this.db.transaction(
+      [
+        this.config.stores.passwords,
+        this.config.stores.searchIndex,
+        this.config.stores.metadata,
+      ],
+      "readwrite"
+    );
 
     try {
       // Save password entry
-      const passwordStore = transaction.objectStore(this.config.stores.passwords);
+      const passwordStore = transaction.objectStore(
+        this.config.stores.passwords
+      );
       await this.promisifyRequest(passwordStore.put(entry));
 
       // Update search index
@@ -143,8 +164,10 @@ export class IndexedDBStorageService {
         searchText: this.createSearchText(entry),
         lastModified: Date.now(),
       };
-      
-      const searchStore = transaction.objectStore(this.config.stores.searchIndex);
+
+      const searchStore = transaction.objectStore(
+        this.config.stores.searchIndex
+      );
       await this.promisifyRequest(searchStore.put(searchEntry));
 
       // Update metadata
@@ -160,9 +183,12 @@ export class IndexedDBStorageService {
   async getPassword(id: string): Promise<PasswordEntry | null> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([this.config.stores.passwords], "readonly");
+    const transaction = this.db.transaction(
+      [this.config.stores.passwords],
+      "readonly"
+    );
     const store = transaction.objectStore(this.config.stores.passwords);
-    
+
     try {
       const result = await this.promisifyRequest(store.get(id));
       return result || null;
@@ -181,12 +207,15 @@ export class IndexedDBStorageService {
   }): Promise<PasswordEntry[]> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([this.config.stores.passwords], "readonly");
+    const transaction = this.db.transaction(
+      [this.config.stores.passwords],
+      "readonly"
+    );
     const store = transaction.objectStore(this.config.stores.passwords);
 
     try {
       let cursor: IDBRequest<IDBCursorWithValue | null>;
-      
+
       if (options?.folderId) {
         const index = store.index("folderId");
         cursor = index.openCursor(IDBKeyRange.only(options.folderId));
@@ -230,19 +259,26 @@ export class IndexedDBStorageService {
   async deletePassword(id: string): Promise<void> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([
-      this.config.stores.passwords,
-      this.config.stores.searchIndex,
-      this.config.stores.metadata,
-    ], "readwrite");
+    const transaction = this.db.transaction(
+      [
+        this.config.stores.passwords,
+        this.config.stores.searchIndex,
+        this.config.stores.metadata,
+      ],
+      "readwrite"
+    );
 
     try {
       // Delete password
-      const passwordStore = transaction.objectStore(this.config.stores.passwords);
+      const passwordStore = transaction.objectStore(
+        this.config.stores.passwords
+      );
       await this.promisifyRequest(passwordStore.delete(id));
 
       // Delete from search index
-      const searchStore = transaction.objectStore(this.config.stores.searchIndex);
+      const searchStore = transaction.objectStore(
+        this.config.stores.searchIndex
+      );
       await this.promisifyRequest(searchStore.delete(id));
 
       // Update metadata
@@ -256,21 +292,28 @@ export class IndexedDBStorageService {
   }
 
   // Search operations
-  async searchPasswords(query: string, options?: {
-    limit?: number;
-    folderId?: string;
-  }): Promise<PasswordEntry[]> {
+  async searchPasswords(
+    query: string,
+    options?: {
+      limit?: number;
+      folderId?: string;
+    }
+  ): Promise<PasswordEntry[]> {
     if (!this.db || !query.trim()) return [];
 
-    const transaction = this.db.transaction([
-      this.config.stores.searchIndex,
-      this.config.stores.passwords,
-    ], "readonly");
+    const transaction = this.db.transaction(
+      [this.config.stores.searchIndex, this.config.stores.passwords],
+      "readonly"
+    );
 
     try {
-      const searchStore = transaction.objectStore(this.config.stores.searchIndex);
-      const passwordStore = transaction.objectStore(this.config.stores.passwords);
-      
+      const searchStore = transaction.objectStore(
+        this.config.stores.searchIndex
+      );
+      const passwordStore = transaction.objectStore(
+        this.config.stores.passwords
+      );
+
       const searchResults: SearchIndexEntry[] = [];
       const cursor = searchStore.openCursor();
 
@@ -282,7 +325,7 @@ export class IndexedDBStorageService {
             const entry = cursorResult.value as SearchIndexEntry;
             const searchText = entry.searchText.toLowerCase();
             const queryLower = query.toLowerCase();
-            
+
             if (searchText.includes(queryLower)) {
               if (!options?.folderId || entry.folderId === options.folderId) {
                 searchResults.push(entry);
@@ -299,7 +342,7 @@ export class IndexedDBStorageService {
       // Get full password entries
       const passwords: PasswordEntry[] = [];
       const limit = options?.limit || 50;
-      
+
       for (let i = 0; i < Math.min(searchResults.length, limit); i++) {
         const searchEntry = searchResults[i];
         const passwordRequest = passwordStore.get(searchEntry.id);
@@ -320,9 +363,12 @@ export class IndexedDBStorageService {
   async saveFolder(folder: Folder): Promise<void> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([this.config.stores.folders], "readwrite");
+    const transaction = this.db.transaction(
+      [this.config.stores.folders],
+      "readwrite"
+    );
     const store = transaction.objectStore(this.config.stores.folders);
-    
+
     try {
       await this.promisifyRequest(store.put(folder));
       console.log("✅ Folder saved to IndexedDB:", folder.id);
@@ -335,9 +381,12 @@ export class IndexedDBStorageService {
   async getAllFolders(): Promise<Folder[]> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([this.config.stores.folders], "readonly");
+    const transaction = this.db.transaction(
+      [this.config.stores.folders],
+      "readonly"
+    );
     const store = transaction.objectStore(this.config.stores.folders);
-    
+
     try {
       const result = await this.promisifyRequest(store.getAll());
       return result || [];
@@ -356,25 +405,32 @@ export class IndexedDBStorageService {
       entry.description || "",
       entry.notes || "",
       ...entry.tags,
-      ...entry.customFields.map(f => `${f.name} ${f.value}`),
+      ...entry.customFields.map((f) => `${f.name} ${f.value}`),
     ];
-    
+
     return searchableFields.join(" ").toLowerCase();
   }
 
   private async updateMetadata(): Promise<void> {
     if (!this.db) return;
 
-    const transaction = this.db.transaction([
-      this.config.stores.passwords,
-      this.config.stores.folders,
-      this.config.stores.metadata,
-    ], "readwrite");
+    const transaction = this.db.transaction(
+      [
+        this.config.stores.passwords,
+        this.config.stores.folders,
+        this.config.stores.metadata,
+      ],
+      "readwrite"
+    );
 
     try {
-      const passwordStore = transaction.objectStore(this.config.stores.passwords);
+      const passwordStore = transaction.objectStore(
+        this.config.stores.passwords
+      );
       const folderStore = transaction.objectStore(this.config.stores.folders);
-      const metadataStore = transaction.objectStore(this.config.stores.metadata);
+      const metadataStore = transaction.objectStore(
+        this.config.stores.metadata
+      );
 
       const passwordCount = await this.promisifyRequest(passwordStore.count());
       const folderCount = await this.promisifyRequest(folderStore.count());
@@ -386,7 +442,9 @@ export class IndexedDBStorageService {
         totalFolders: folderCount,
       };
 
-      await this.promisifyRequest(metadataStore.put({ key: "main", ...metadata }));
+      await this.promisifyRequest(
+        metadataStore.put({ key: "main", ...metadata })
+      );
     } catch (error) {
       console.error("❌ Failed to update metadata:", error);
     }
@@ -403,19 +461,30 @@ export class IndexedDBStorageService {
   async clearAllData(): Promise<void> {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
-    const transaction = this.db.transaction([
-      this.config.stores.passwords,
-      this.config.stores.folders,
-      this.config.stores.metadata,
-      this.config.stores.searchIndex,
-    ], "readwrite");
+    const transaction = this.db.transaction(
+      [
+        this.config.stores.passwords,
+        this.config.stores.folders,
+        this.config.stores.metadata,
+        this.config.stores.searchIndex,
+      ],
+      "readwrite"
+    );
 
     try {
       await Promise.all([
-        this.promisifyRequest(transaction.objectStore(this.config.stores.passwords).clear()),
-        this.promisifyRequest(transaction.objectStore(this.config.stores.folders).clear()),
-        this.promisifyRequest(transaction.objectStore(this.config.stores.metadata).clear()),
-        this.promisifyRequest(transaction.objectStore(this.config.stores.searchIndex).clear()),
+        this.promisifyRequest(
+          transaction.objectStore(this.config.stores.passwords).clear()
+        ),
+        this.promisifyRequest(
+          transaction.objectStore(this.config.stores.folders).clear()
+        ),
+        this.promisifyRequest(
+          transaction.objectStore(this.config.stores.metadata).clear()
+        ),
+        this.promisifyRequest(
+          transaction.objectStore(this.config.stores.searchIndex).clear()
+        ),
       ]);
 
       console.log("✅ All IndexedDB data cleared");
@@ -434,7 +503,10 @@ export class IndexedDBStorageService {
     if (!this.db) throw new Error("IndexedDB not initialized");
 
     try {
-      const transaction = this.db.transaction([this.config.stores.metadata], "readonly");
+      const transaction = this.db.transaction(
+        [this.config.stores.metadata],
+        "readonly"
+      );
       const store = transaction.objectStore(this.config.stores.metadata);
       const metadata = await this.promisifyRequest(store.get("main"));
 

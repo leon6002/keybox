@@ -6,20 +6,9 @@ import Link from "next/link";
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentPageName?: string;
 }
 
-export default function Layout({ children, currentPageName }: LayoutProps) {
-  const isLandingPage = currentPageName === "Home";
-
-  if (isLandingPage) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        {children}
-      </div>
-    );
-  }
-
+export default function Layout({ children }: LayoutProps) {
   const navigationItems = [
     { name: "Vault", url: "/vault", icon: Shield },
     { name: "Generator", url: "/generator", icon: Plus },

@@ -8,10 +8,10 @@ import {
   SecuritySettings,
   KdfType,
   SECURITY_CONSTANTS,
-} from './types';
-import { WebCryptoService } from './cryptoService';
-import { KeyboxKeyManagementService } from './keyManagementService';
-import { KeyboxSecurityAuditService } from './securityUtils';
+} from "./types";
+import { WebCryptoService } from "./cryptoService";
+import { KeyboxKeyManagementService } from "./keyManagementService";
+import { KeyboxSecurityAuditService } from "./securityUtils";
 
 export interface AuthUser {
   id: string;
@@ -76,24 +76,35 @@ export class KeyboxAuthService {
   // User registration
   async register(request: RegisterRequest): Promise<AuthUser> {
     // Validate password strength
-    const passwordStrength = this.securityAuditService.analyzePasswordStrength(request.masterPassword);
+    const passwordStrength = this.securityAuditService.analyzePasswordStrength(
+      request.masterPassword
+    );
     if (!passwordStrength.isStrong) {
-      throw new Error(`Password is too weak: ${passwordStrength.feedback.join(', ')}`);
+      throw new Error(
+        `Password is too weak: ${passwordStrength.feedback.join(", ")}`
+      );
     }
 
     // Create master key with KDF
-    const masterKey = await this.keyManagementService.createMasterKey(request.masterPassword, {
-      type: request.kdfType || KdfType.PBKDF2_SHA256,
-      iterations: request.kdfIterations || SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
-      memory: request.kdfMemory,
-      parallelism: request.kdfParallelism,
-    });
+    const masterKey = await this.keyManagementService.createMasterKey(
+      request.masterPassword,
+      {
+        type: request.kdfType || KdfType.PBKDF2_SHA256,
+        iterations:
+          request.kdfIterations || SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
+        memory: request.kdfMemory,
+        parallelism: request.kdfParallelism,
+      }
+    );
 
     // Generate user key
     const userKey = await this.keyManagementService.generateUserKey();
-    
+
     // Encrypt user key with master key
-    const encryptedUserKey = await this.keyManagementService.encryptUserKey(userKey, masterKey);
+    const encryptedUserKey = await this.keyManagementService.encryptUserKey(
+      userKey,
+      masterKey
+    );
 
     // Create user object
     const user: AuthUser = {
@@ -104,7 +115,9 @@ export class KeyboxAuthService {
       kdfIterations: masterKey.kdfConfig.iterations,
       kdfMemory: masterKey.kdfConfig.memory,
       kdfParallelism: masterKey.kdfConfig.parallelism,
-      kdfSalt: this.cryptoService.arrayBufferToBase64(masterKey.kdfConfig.salt.buffer),
+      kdfSalt: this.cryptoService.arrayBufferToBase64(
+        masterKey.kdfConfig.salt.buffer as ArrayBuffer
+      ),
       masterPasswordHash: masterKey.hash,
       userKeyEncrypted: JSON.stringify(encryptedUserKey),
       securitySettings: this.getDefaultSecuritySettings(),
@@ -114,10 +127,10 @@ export class KeyboxAuthService {
 
     // Log security event
     this.securityAuditService.logSecurityEvent({
-      type: 'login',
+      type: "login",
       timestamp: new Date(),
       userId: user.id,
-      details: { action: 'register' },
+      details: { action: "register" },
     });
 
     // Clean up sensitive data
@@ -127,12 +140,14 @@ export class KeyboxAuthService {
   }
 
   // User login
-  async login(request: LoginRequest): Promise<{ user: AuthUser; session: SecureSession }> {
+  async login(
+    request: LoginRequest
+  ): Promise<{ user: AuthUser; session: SecureSession }> {
     try {
       // In a real app, you'd fetch the user from your database
       const user = await this.getUserByEmail(request.email);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       // Reconstruct KDF config
@@ -153,14 +168,17 @@ export class KeyboxAuthService {
 
       // Decrypt user key
       const encryptedUserKey = JSON.parse(user.userKeyEncrypted);
-      const userKey = await this.keyManagementService.decryptUserKey(encryptedUserKey, masterKey);
+      const userKey = await this.keyManagementService.decryptUserKey(
+        encryptedUserKey,
+        masterKey
+      );
 
       // Create secure session
       const session = await this.createSession(user, userKey, masterKey.hash);
 
       // Log successful login
       this.securityAuditService.logSecurityEvent({
-        type: 'login',
+        type: "login",
         timestamp: new Date(),
         userId: user.id,
         details: { success: true },
@@ -173,9 +191,12 @@ export class KeyboxAuthService {
     } catch (error) {
       // Log failed login attempt
       this.securityAuditService.logSecurityEvent({
-        type: 'failed_auth',
+        type: "failed_auth",
         timestamp: new Date(),
-        details: { email: request.email, error: error.message },
+        details: {
+          email: request.email,
+          error: error instanceof Error ? error.message : String(error),
+        },
       });
 
       throw error;
@@ -185,19 +206,23 @@ export class KeyboxAuthService {
   // Change master password
   async changePassword(request: ChangePasswordRequest): Promise<void> {
     if (!this.currentSession) {
-      throw new Error('No active session');
+      throw new Error("No active session");
     }
 
     // Validate new password strength
-    const passwordStrength = this.securityAuditService.analyzePasswordStrength(request.newPassword);
+    const passwordStrength = this.securityAuditService.analyzePasswordStrength(
+      request.newPassword
+    );
     if (!passwordStrength.isStrong) {
-      throw new Error(`New password is too weak: ${passwordStrength.feedback.join(', ')}`);
+      throw new Error(
+        `New password is too weak: ${passwordStrength.feedback.join(", ")}`
+      );
     }
 
     // Get current user
     const user = await this.getCurrentUser();
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Verify current password
@@ -209,14 +234,17 @@ export class KeyboxAuthService {
       salt: this.base64ToUint8Array(user.kdfSalt),
     };
 
-    const currentMasterKey = await this.keyManagementService.unlockWithMasterKey(
-      request.currentPassword,
-      user.masterPasswordHash,
-      currentKdfConfig
-    );
+    const currentMasterKey =
+      await this.keyManagementService.unlockWithMasterKey(
+        request.currentPassword,
+        user.masterPasswordHash,
+        currentKdfConfig
+      );
 
     // Create new master key
-    const newMasterKey = await this.keyManagementService.createMasterKey(request.newPassword);
+    const newMasterKey = await this.keyManagementService.createMasterKey(
+      request.newPassword
+    );
 
     // Rotate user key
     const newUserKey = await this.keyManagementService.rotateUserKey(
@@ -229,7 +257,9 @@ export class KeyboxAuthService {
     user.kdfIterations = newMasterKey.kdfConfig.iterations;
     user.kdfMemory = newMasterKey.kdfConfig.memory;
     user.kdfParallelism = newMasterKey.kdfConfig.parallelism;
-    user.kdfSalt = this.cryptoService.arrayBufferToBase64(newMasterKey.kdfConfig.salt.buffer);
+    user.kdfSalt = this.cryptoService.arrayBufferToBase64(
+      newMasterKey.kdfConfig.salt.buffer as ArrayBuffer
+    );
     user.masterPasswordHash = newMasterKey.hash;
     user.userKeyEncrypted = JSON.stringify(newUserKey.encryptedKey);
     user.updatedAt = new Date().toISOString();
@@ -240,10 +270,10 @@ export class KeyboxAuthService {
 
     // Log password change
     this.securityAuditService.logSecurityEvent({
-      type: 'key_rotation',
+      type: "key_rotation",
       timestamp: new Date(),
       userId: user.id,
-      details: { action: 'password_change' },
+      details: { action: "password_change" },
     });
 
     // Clean up old keys
@@ -255,9 +285,15 @@ export class KeyboxAuthService {
   }
 
   // Session management
-  private async createSession(user: AuthUser, userKey: UserKey, masterKeyHash: string): Promise<SecureSession> {
+  private async createSession(
+    user: AuthUser,
+    userKey: UserKey,
+    masterKeyHash: string
+  ): Promise<SecureSession> {
     const sessionId = this.generateSessionId();
-    const expiresAt = new Date(Date.now() + user.securitySettings.sessionTimeout * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + user.securitySettings.sessionTimeout * 60 * 1000
+    );
 
     const session: SecureSession = {
       userKey,
@@ -300,13 +336,16 @@ export class KeyboxAuthService {
     if (this.currentSession) {
       // Log logout event
       this.securityAuditService.logSecurityEvent({
-        type: 'login',
+        type: "login",
         timestamp: new Date(),
-        details: { action: 'logout' },
+        details: { action: "logout" },
       });
 
       // Clean up session
-      this.keyManagementService.secureCleanup(undefined, this.currentSession.userKey);
+      this.keyManagementService.secureCleanup(
+        undefined,
+        this.currentSession.userKey
+      );
       this.currentSession = null;
     }
 
@@ -323,7 +362,9 @@ export class KeyboxAuthService {
 
   private generateSessionId(): string {
     const randomBytes = crypto.getRandomValues(new Uint8Array(32));
-    return Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(randomBytes, (byte) =>
+      byte.toString(16).padStart(2, "0")
+    ).join("");
   }
 
   private base64ToUint8Array(base64: string): Uint8Array {
