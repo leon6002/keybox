@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { Webhooks } from "@polar-sh/nextjs";
 import { subscriptionService } from "@/lib/services/subscriptionService";
 import { supabase } from "@/lib/supabase";
-import crypto from "crypto";
 
 // Helper function to determine plan type from product ID
 function determinePlanType(productId?: string): "pro" | "enterprise" {
@@ -75,354 +74,153 @@ async function findUserForPayment(payloadData: any): Promise<string | null> {
   return userId;
 }
 
-// Verify webhook signature (Svix format used by Polar)
-function verifyWebhookSignature(
-  payload: string,
-  signature: string,
-  timestamp: string,
-  secret: string
-): boolean {
-  try {
-    // Polar uses Svix format: "v1,<base64_signature>"
-    // The signature can be a single "v1,signature" or multiple signatures separated by spaces
-    const signatureParts = signature.split(" ");
+export const POST = Webhooks({
+  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
 
-    for (const sig of signatureParts) {
-      const [version, encodedSignature] = sig.split(",");
-
-      if (version !== "v1") continue;
-
-      // Create the signed payload: timestamp.payload
-      const signedPayload = `${timestamp}.${payload}`;
-
-      // Create expected signature
-      // Try both string secret and base64-decoded secret
-      let expectedSignature: string;
-
-      try {
-        // First try: use secret as base64-decoded bytes (Svix standard)
-        expectedSignature = crypto
-          .createHmac("sha256", Buffer.from(secret, "base64"))
-          .update(signedPayload, "utf8")
-          .digest("base64");
-      } catch (error) {
-        // Fallback: use secret as plain string
-        expectedSignature = crypto
-          .createHmac("sha256", secret)
-          .update(signedPayload, "utf8")
-          .digest("base64");
-      }
-
-      console.log("🔐 Debug signature verification:", {
-        signedPayload: signedPayload.substring(0, 100) + "...",
-        expectedSignature,
-        receivedSignature: encodedSignature,
-        secretLength: secret.length,
-      });
-
-      // Compare signatures - try both approaches
-      try {
-        if (
-          crypto.timingSafeEqual(
-            Buffer.from(expectedSignature, "base64"),
-            Buffer.from(encodedSignature, "base64")
-          )
-        ) {
-          return true;
-        }
-      } catch (lengthError) {
-        console.log(
-          "🔄 Signature length mismatch, trying string secret approach"
-        );
-
-        // Try with string secret instead
-        const expectedSignatureString = crypto
-          .createHmac("sha256", secret)
-          .update(signedPayload, "utf8")
-          .digest("base64");
-
-        console.log("🔐 String secret approach:", {
-          expectedSignatureString,
-          receivedSignature: encodedSignature,
-        });
-
-        try {
-          if (
-            crypto.timingSafeEqual(
-              Buffer.from(expectedSignatureString, "base64"),
-              Buffer.from(encodedSignature, "base64")
-            )
-          ) {
-            return true;
-          }
-        } catch (error2) {
-          console.log("❌ Both signature approaches failed:", error2);
-        }
-      }
-    }
-
-    return false;
-  } catch (error) {
-    console.error("Signature verification error:", error);
-    return false;
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    // Get raw body and signature
-    const body = await request.text();
-
-    // Get signature and timestamp headers (Svix format)
-    const signature = request.headers.get("webhook-signature");
-    const timestamp = request.headers.get("webhook-timestamp");
-
-    // Log all headers for debugging
-    console.log(
-      "📋 Webhook headers:",
-      Object.fromEntries(request.headers.entries())
-    );
-
-    // Check if we have a webhook secret configured
-    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
-
-    // If we have a webhook secret, verify signature
-    if (webhookSecret && signature && timestamp) {
-      console.log("🔐 Verifying signature:", {
-        signature,
-        timestamp,
-        secretPrefix: webhookSecret.substring(0, 10) + "...",
-        secretLength: webhookSecret.length,
-      });
-
-      if (!verifyWebhookSignature(body, signature, timestamp, webhookSecret)) {
-        console.error("❌ Invalid webhook signature");
-        return NextResponse.json(
-          { error: "Invalid signature" },
-          { status: 401 }
-        );
-      }
-      console.log("✅ Webhook signature verified");
-    } else if (webhookSecret && (!signature || !timestamp)) {
-      console.error(
-        "Missing webhook signature or timestamp - headers:",
-        Object.fromEntries(request.headers.entries())
-      );
-
-      // Temporary: Allow webhook without signature for debugging
-      // TODO: Remove this after fixing the signature issue
-      console.warn(
-        "🚨 TEMPORARILY ALLOWING WEBHOOK WITHOUT SIGNATURE FOR DEBUGGING"
-      );
-    } else {
-      console.warn(
-        "⚠️ Webhook signature verification skipped (no secret configured)"
-      );
-    }
-
-    // Parse the webhook payload
-    const payload = JSON.parse(body);
-    console.log("✅ Polar webhook received:", payload.type, payload.data?.id);
+  // Catch-all handler for any webhook event
+  onPayload: async (payload) => {
+    console.log("✅ Polar webhook received:", payload.type);
 
     // Log all events for audit trail
     try {
       await subscriptionService.logPaymentEvent({
         eventType: payload.type || "unknown",
-        polarEventId: payload.data?.id || undefined,
+        polarEventId:
+          (payload as any).data?.id || (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
       console.error("Failed to log payment event:", error);
     }
+  },
 
-    // Process the webhook based on event type
-    await processWebhookEvent(payload);
+  // Checkout events
+  onCheckoutCreated: async (payload) => {
+    console.log("Checkout created:", (payload as any).data?.id);
+  },
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Webhook processing error:", error);
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 }
-    );
-  }
-}
+  onCheckoutUpdated: async (payload) => {
+    console.log("Checkout updated:", (payload as any).data?.id);
 
-async function processWebhookEvent(payload: any) {
-  const eventType = payload.type;
-  const data = payload.data;
+    try {
+      const data = (payload as any).data;
 
-  switch (eventType) {
-    case "checkout.created":
-      await handleCheckoutCreated(data);
-      break;
-    case "checkout.updated":
-      await handleCheckoutUpdated(data);
-      break;
-    case "order.created":
-      await handleOrderCreated(data);
-      break;
-    case "order.paid":
-      await handleOrderPaid(data);
-      break;
-    case "subscription.created":
-      await handleSubscriptionCreated(data);
-      break;
-    case "subscription.active":
-      await handleSubscriptionActive(data);
-      break;
-    default:
-      console.log(`ℹ️ Unhandled webhook event: ${eventType}`);
-  }
-}
+      // Only process if checkout is confirmed (payment successful)
+      if (data?.status === "confirmed") {
+        console.log("Processing confirmed checkout:", data.id);
 
-// Handler functions
-async function handleCheckoutCreated(data: any) {
-  console.log("Checkout created:", data.id);
-  // Just log the event - no action needed
-}
+        // Find user using the helper function
+        const userId = await findUserForPayment(data);
 
-async function handleCheckoutUpdated(data: any) {
-  console.log("Checkout updated:", data.id);
+        if (userId) {
+          // Determine plan type from product ID
+          const planType = determinePlanType(data.product_id);
 
-  try {
-    // Log the event
-    const event = await subscriptionService.logPaymentEvent({
-      eventType: "checkout_updated",
-      polarEventId: data.id || undefined,
-      eventData: { type: "checkout.updated", data },
-    });
+          // Calculate subscription end date (30 days from now for monthly)
+          const currentPeriodEnd = new Date();
+          currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
 
-    // Only process if checkout is confirmed (payment successful)
-    if (data.status === "confirmed") {
-      console.log("Processing confirmed checkout:", data.id);
+          // Activate premium subscription
+          await subscriptionService.activatePremiumSubscription(
+            userId,
+            {
+              customerId: data.customer_id,
+              productId: data.product_id,
+            },
+            planType,
+            currentPeriodEnd
+          );
+
+          console.log(
+            `✅ Premium features activated for user ${userId} via checkout`
+          );
+        } else {
+          console.log(`❌ User not found for checkout: ${data.id}`);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to process checkout updated event:", error);
+    }
+  },
+
+  // Order events
+  onOrderCreated: async (payload) => {
+    console.log("Order created:", (payload as any).data?.id);
+  },
+
+  onOrderPaid: async (payload) => {
+    console.log("Order paid:", (payload as any).data?.id);
+
+    try {
+      const data = (payload as any).data;
 
       // Find user using the helper function
       const userId = await findUserForPayment(data);
 
       if (userId) {
         // Determine plan type from product ID
-        const planType = determinePlanType(data.product_id);
-
-        // Calculate subscription end date (30 days from now for monthly)
-        const currentPeriodEnd = new Date();
-        currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+        const planType = determinePlanType(data.product?.id);
 
         // Activate premium subscription
         await subscriptionService.activatePremiumSubscription(
           userId,
           {
-            customerId: data.customer_id,
-            productId: data.product_id,
+            customerId: data.customer?.id,
+            productId: data.product?.id,
           },
           planType,
-          currentPeriodEnd
+          data.subscription?.current_period_end
+            ? new Date(data.subscription.current_period_end)
+            : undefined
         );
 
         console.log(
-          `✅ Premium features activated for user ${userId} via checkout`
+          `✅ Premium features activated for user ${userId} via order`
         );
       } else {
-        console.log(`❌ User not found for checkout: ${data.id}`);
+        console.log(`❌ User not found for order: ${data.id}`);
       }
+    } catch (error) {
+      console.error("Failed to process order paid event:", error);
     }
+  },
 
-    // Mark event as processed
-    await subscriptionService.markEventProcessed(event.id);
-  } catch (error) {
-    console.error("Failed to process checkout updated event:", error);
-  }
-}
+  // Subscription events
+  onSubscriptionCreated: async (payload) => {
+    console.log("Subscription created:", (payload as any).data?.id);
+  },
 
-async function handleOrderCreated(data: any) {
-  console.log("Order created:", data.id);
-  // Just log the event - no action needed
-}
+  onSubscriptionActive: async (payload) => {
+    console.log("Subscription active:", (payload as any).data?.id);
 
-async function handleOrderPaid(data: any) {
-  console.log("Order paid:", data.id);
+    try {
+      const data = (payload as any).data;
 
-  try {
-    // Log the event
-    const event = await subscriptionService.logPaymentEvent({
-      eventType: "order_paid",
-      polarEventId: data.id || undefined,
-      eventData: { type: "order.paid", data },
-    });
+      // Find user using the helper function
+      const userId = await findUserForPayment(data);
 
-    // Find user using the helper function
-    const userId = await findUserForPayment(data);
+      if (userId) {
+        const planType = determinePlanType(data.product?.id);
 
-    if (userId) {
-      // Determine plan type from product ID
-      const planType = determinePlanType(data.product?.id);
+        await subscriptionService.activatePremiumSubscription(
+          userId,
+          {
+            customerId: data.customer?.id,
+            subscriptionId: data.id || undefined,
+            productId: data.product?.id,
+          },
+          planType,
+          data.current_period_end
+            ? new Date(data.current_period_end)
+            : undefined
+        );
 
-      // Activate premium subscription
-      await subscriptionService.activatePremiumSubscription(
-        userId,
-        {
-          customerId: data.customer?.id,
-          productId: data.product?.id,
-        },
-        planType,
-        data.subscription?.current_period_end
-          ? new Date(data.subscription.current_period_end)
-          : undefined
-      );
-
-      console.log(`✅ Premium features activated for user ${userId} via order`);
-    } else {
-      console.log(`❌ User not found for order: ${data.id}`);
+        console.log(`✅ Subscription activated for user ${userId}`);
+      } else {
+        console.log(`❌ User not found for subscription: ${data.id}`);
+      }
+    } catch (error) {
+      console.error("Failed to process subscription active event:", error);
     }
-
-    // Mark event as processed
-    await subscriptionService.markEventProcessed(event.id);
-  } catch (error) {
-    console.error("Failed to process order paid event:", error);
-  }
-}
-
-async function handleSubscriptionCreated(data: any) {
-  console.log("Subscription created:", data.id);
-  // Just log the event - actual activation happens on subscription.active
-}
-
-async function handleSubscriptionActive(data: any) {
-  console.log("Subscription active:", data.id);
-
-  try {
-    // Log the event
-    const event = await subscriptionService.logPaymentEvent({
-      eventType: "subscription_active",
-      polarEventId: data.id || undefined,
-      eventData: { type: "subscription.active", data },
-    });
-
-    // Find user using the helper function
-    const userId = await findUserForPayment(data);
-
-    if (userId) {
-      const planType = determinePlanType(data.product?.id);
-
-      await subscriptionService.activatePremiumSubscription(
-        userId,
-        {
-          customerId: data.customer?.id,
-          subscriptionId: data.id || undefined,
-          productId: data.product?.id,
-        },
-        planType,
-        data.current_period_end ? new Date(data.current_period_end) : undefined
-      );
-
-      console.log(`✅ Subscription activated for user ${userId}`);
-    } else {
-      console.log(`❌ User not found for subscription: ${data.id}`);
-    }
-
-    // Mark event as processed
-    await subscriptionService.markEventProcessed(event.id);
-  } catch (error) {
-    console.error("Failed to process subscription active event:", error);
-  }
-}
+  },
+});
