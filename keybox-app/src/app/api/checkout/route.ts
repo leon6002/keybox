@@ -18,19 +18,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Prepare checkout data
+    // Prepare checkout data - use products array format for Polar API
     const checkoutData: any = {
-      product_id: products,
+      products: [products], // Polar expects an array of product IDs
       success_url:
         process.env.SUCCESS_URL ||
         "https://www.pandakeybox.com/payment/success?checkout_id={CHECKOUT_ID}",
     };
 
-    // Add customer information if provided
-    if (customerEmail) {
+    // Add customer information if provided and valid
+    if (customerEmail && customerEmail !== "user@example.com") {
+      // Only add customer email if it's not the placeholder
       checkoutData.customer_email = customerEmail;
     }
-    if (customerName) {
+    if (customerName && customerName !== "User") {
+      // Only add customer name if it's not the placeholder
       checkoutData.customer_name = customerName;
     }
     if (customerExternalId) {

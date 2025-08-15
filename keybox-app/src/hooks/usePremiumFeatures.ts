@@ -122,8 +122,6 @@ export function usePremiumFeatures() {
   // Get upgrade URL for a specific plan
   const getUpgradeUrl = useCallback(
     (planType: "pro" | "enterprise" = "pro") => {
-      if (!user?.googleUser) return null;
-
       const productId =
         planType === "pro"
           ? process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID_PRO
@@ -131,14 +129,19 @@ export function usePremiumFeatures() {
 
       if (!productId) return null;
 
-      const params = new URLSearchParams({
-        products: productId,
-        customerEmail: user.googleUser.email,
-        customerName: user.googleUser.name,
-        customerExternalId: user.googleUser.id,
-      });
+      // If user is authenticated, include their info
+      if (user?.googleUser) {
+        const params = new URLSearchParams({
+          products: productId,
+          customerEmail: user.googleUser.email,
+          customerName: user.googleUser.name,
+          customerExternalId: user.googleUser.id,
+        });
+        return `/api/checkout?${params.toString()}`;
+      }
 
-      return `/api/checkout?${params.toString()}`;
+      // If no user, just redirect to checkout without customer info
+      return `/api/checkout?products=${productId}`;
     },
     [user?.googleUser]
   );

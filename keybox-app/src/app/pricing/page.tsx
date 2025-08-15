@@ -16,11 +16,11 @@ export default function PricingPage() {
     setIsLoading(productId);
     try {
       // Get user info from Google auth if available
-      const userEmail = "user@example.com"; // TODO: Get from auth context
-      const userName = "User"; // TODO: Get from auth context
+      // For now, we'll let the user enter their email on Polar's checkout page
+      // In production, you should get this from your auth context
 
-      // Redirect to Polar checkout
-      const checkoutUrl = `/api/checkout?products=${productId}&customerEmail=${userEmail}&customerName=${userName}`;
+      // Redirect to Polar checkout without customer info (let Polar collect it)
+      const checkoutUrl = `/api/checkout?products=${productId}`;
       window.location.href = checkoutUrl;
     } catch (error) {
       console.error("Payment error:", error);
