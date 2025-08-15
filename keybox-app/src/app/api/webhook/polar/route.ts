@@ -75,25 +75,44 @@ async function findUserForPayment(payloadData: any): Promise<string | null> {
   return userId;
 }
 
-// Verify webhook signature
+// Verify webhook signature (Svix format used by Polar)
 function verifyWebhookSignature(
   payload: string,
   signature: string,
+  timestamp: string,
   secret: string
 ): boolean {
   try {
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex");
+    // Polar uses Svix format: "v1,<base64_signature>"
+    // The signature can be a single "v1,signature" or multiple signatures separated by spaces
+    const signatureParts = signature.split(" ");
 
-    // Polar sends signature as "sha256=<hash>"
-    const receivedSignature = signature.replace("sha256=", "");
+    for (const sig of signatureParts) {
+      const [version, encodedSignature] = sig.split(",");
 
-    return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature),
-      Buffer.from(receivedSignature)
-    );
+      if (version !== "v1") continue;
+
+      // Create the signed payload: timestamp.payload
+      const signedPayload = `${timestamp}.${payload}`;
+
+      // Create expected signature
+      const expectedSignature = crypto
+        .createHmac("sha256", Buffer.from(secret, "base64"))
+        .update(signedPayload, "utf8")
+        .digest("base64");
+
+      // Compare signatures
+      if (
+        crypto.timingSafeEqual(
+          Buffer.from(expectedSignature, "base64"),
+          Buffer.from(encodedSignature, "base64")
+        )
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   } catch (error) {
     console.error("Signature verification error:", error);
     return false;
@@ -105,12 +124,9 @@ export async function POST(request: NextRequest) {
     // Get raw body and signature
     const body = await request.text();
 
-    // Try different possible signature header names
-    const signature =
-      request.headers.get("x-polar-webhook-signature") ||
-      request.headers.get("x-webhook-signature") ||
-      request.headers.get("webhook-signature") ||
-      request.headers.get("signature");
+    // Get signature and timestamp headers (Svix format)
+    const signature = request.headers.get("webhook-signature");
+    const timestamp = request.headers.get("webhook-timestamp");
 
     // Log all headers for debugging
     console.log(
@@ -122,18 +138,20 @@ export async function POST(request: NextRequest) {
     const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
 
     // If we have a webhook secret, verify signature
-    if (webhookSecret && signature) {
-      if (!verifyWebhookSignature(body, signature, webhookSecret)) {
-        console.error("Invalid webhook signature");
+    if (webhookSecret && signature && timestamp) {
+      console.log("🔐 Verifying signature:", { signature, timestamp });
+
+      if (!verifyWebhookSignature(body, signature, timestamp, webhookSecret)) {
+        console.error("❌ Invalid webhook signature");
         return NextResponse.json(
           { error: "Invalid signature" },
           { status: 401 }
         );
       }
       console.log("✅ Webhook signature verified");
-    } else if (webhookSecret && !signature) {
+    } else if (webhookSecret && (!signature || !timestamp)) {
       console.error(
-        "Missing webhook signature - headers:",
+        "Missing webhook signature or timestamp - headers:",
         Object.fromEntries(request.headers.entries())
       );
 
