@@ -44,7 +44,7 @@ export function usePremiumFeatures() {
   });
 
   const loadPremiumStatus = useCallback(async () => {
-    if (!user?.googleUser?.id) {
+    if (!user?.googleUser?.email) {
       setStatus((prev) => ({
         ...prev,
         isLoading: false,
@@ -57,19 +57,19 @@ export function usePremiumFeatures() {
     try {
       setStatus((prev) => ({ ...prev, isLoading: true, error: null }));
 
-      // Get user's subscription
+      // Get user's subscription using email (which will be mapped to KeyBox user ID)
       const subscription = await subscriptionService.getUserSubscription(
-        user.googleUser.id
+        user.googleUser.email
       );
 
       // Get premium features
       const features = await subscriptionService.getUserPremiumFeatures(
-        user.googleUser.id
+        user.googleUser.email
       );
 
       // Check if user has premium
       const isPremium = await subscriptionService.hasPremiumFeatures(
-        user.googleUser.id
+        user.googleUser.email
       );
 
       setStatus({
@@ -91,7 +91,7 @@ export function usePremiumFeatures() {
             : "Failed to load premium status",
       }));
     }
-  }, [user?.googleUser?.id]);
+  }, [user?.googleUser?.email]);
 
   // Load premium status when user changes
   useEffect(() => {

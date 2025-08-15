@@ -80,6 +80,7 @@ async function findUserForPayment(payloadData: any): Promise<string | null> {
     const emailMappings: Record<string, string> = {
       "3891294311@qq.com": "a9343d11-e59a-4ee5-84d9-22fb7a3992c3", // Your account
       "389129431@qq.com": "a9343d11-e59a-4ee5-84d9-22fb7a3992c3", // Alternative email
+      "uomleon@163.com": "ba53b4c9-fefd-48b4-97ef-a8c0112fb30f", // uomleon account
     };
 
     userId = emailMappings[payloadData.customer_email];

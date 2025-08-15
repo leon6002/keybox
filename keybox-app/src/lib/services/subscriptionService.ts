@@ -2,7 +2,7 @@
  * Subscription Service for managing user subscriptions and premium features
  */
 
-import { supabase, supabaseAdmin } from "../supabase";
+import { supabaseAdmin } from "../supabase";
 
 export interface Subscription {
   id: string;
@@ -46,23 +46,24 @@ export interface PremiumFeatures {
 
 export class SubscriptionService {
   /**
-   * Get user's subscription
+   * Get user's subscription via backend API
    */
-  async getUserSubscription(userId: string): Promise<Subscription | null> {
-    const { data, error } = await supabase
-      .from("keybox_subscriptions")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+  async getUserSubscription(userEmail: string): Promise<Subscription | null> {
+    try {
+      const response = await fetch(
+        `/api/subscriptions?email=${encodeURIComponent(userEmail)}`
+      );
 
-    if (error) {
-      if (error.code === "PGRST116") {
-        return null; // No subscription found
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      throw new Error(`Failed to get subscription: ${error.message}`);
-    }
 
-    return this.mapSupabaseToSubscription(data);
+      const data = await response.json();
+      return data.subscription;
+    } catch (error) {
+      console.error("Failed to get user subscription:", error);
+      return null;
+    }
   }
 
   /**
@@ -148,30 +149,59 @@ export class SubscriptionService {
   }
 
   /**
-   * Check if user has premium features
+   * Check if user has premium features via backend API
    */
-  async hasPremiumFeatures(userId: string): Promise<boolean> {
-    const subscription = await this.getUserSubscription(userId);
-    return (
-      subscription?.status === "active" && subscription.planType !== "free"
-    );
+  async hasPremiumFeatures(userEmail: string): Promise<boolean> {
+    try {
+      const response = await fetch(
+        `/api/subscriptions?email=${encodeURIComponent(userEmail)}`
+      );
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      return data.isPremium || false;
+    } catch (error) {
+      console.error("Failed to check premium features:", error);
+      return false;
+    }
   }
 
   /**
-   * Get user's premium features
+   * Get user's premium features via backend API
    */
-  async getUserPremiumFeatures(userId: string): Promise<PremiumFeatures> {
-    const subscription = await this.getUserSubscription(userId);
+  async getUserPremiumFeatures(userEmail: string): Promise<PremiumFeatures> {
+    try {
+      const response = await fetch(
+        `/api/subscriptions?email=${encodeURIComponent(userEmail)}`
+      );
 
-    if (
-      !subscription ||
-      subscription.status !== "active" ||
-      subscription.planType === "free"
-    ) {
-      return this.getFreePlanFeatures();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.features || this.getDefaultFeatures();
+    } catch (error) {
+      console.error("Failed to get premium features:", error);
+      return this.getDefaultFeatures();
     }
+  }
 
-    return subscription.premiumFeatures as PremiumFeatures;
+  /**
+   * Get default (free) features
+   */
+  private getDefaultFeatures(): PremiumFeatures {
+    return {
+      unlimitedPasswords: false,
+      cloudSync: false,
+      prioritySupport: false,
+      advancedSecurity: false,
+      customCategories: false,
+      exportImport: false,
+    };
   }
 
   /**

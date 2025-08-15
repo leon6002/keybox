@@ -11,7 +11,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasPremiumFeatures } from "@/utils/payment";
+import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 import UserAvatar from "@/components/UserAvatar";
 import { useRouter } from "next/navigation";
 
@@ -20,12 +20,8 @@ export default function UserProfile() {
   const { t } = useTranslation();
   const { user, isAuthenticated, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const { isPremium, planType } = usePremiumFeatures();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsPremium(hasPremiumFeatures());
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -68,7 +64,11 @@ export default function UserProfile() {
             {user.googleUser.given_name || user.googleUser.name}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {isPremium ? t("user.premium") : t("user.free")}
+            {isPremium
+              ? planType === "pro"
+                ? "Pro User"
+                : "Premium User"
+              : t("user.free")}
           </div>
         </div>
         <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -94,7 +94,11 @@ export default function UserProfile() {
                   {user.googleUser.email}
                 </div>
                 <div className="text-xs text-blue-600 dark:text-blue-400">
-                  {isPremium ? t("user.premium") : t("user.free")}
+                  {isPremium
+                    ? planType === "pro"
+                      ? "Pro User"
+                      : "Premium User"
+                    : t("user.free")}
                 </div>
               </div>
             </div>

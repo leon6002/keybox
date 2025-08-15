@@ -12,7 +12,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasPremiumFeatures, getPremiumActivationDate } from "@/utils/payment";
+import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
+import { getPremiumActivationDate } from "@/utils/payment";
 import UserAvatar from "@/components/UserAvatar";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,10 @@ export default function AccountPage() {
   const { t } = useTranslation();
   const { user, isAuthenticated, signOut, getGoogleUser } = useAuth();
   const googleUser = getGoogleUser();
+  const { isPremium, planType } = usePremiumFeatures();
   const [activeTab, setActiveTab] = useState<"subscription" | "team">(
     "subscription"
   );
-  const [isPremium, setIsPremium] = useState(false);
   const [activationDate, setActivationDate] = useState<Date | null>(null);
   const [passwordCount, setPasswordCount] = useState(0);
 
@@ -35,7 +36,6 @@ export default function AccountPage() {
       return;
     }
 
-    setIsPremium(hasPremiumFeatures());
     setActivationDate(getPremiumActivationDate());
 
     // Get password count from localStorage
@@ -63,62 +63,6 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Brand */}
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                PandaKeyBox
-              </span>
-              {isPremium ? (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
-                  <Crown className="w-3 h-3 mr-1" />
-                  {t("user.premium")}
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                  {t("pricing.free.name")}
-                </span>
-              )}
-            </div>
-
-            {/* User Info and Actions */}
-            <div className="flex items-center space-x-4">
-              <LanguageSwitcher />
-              <div className="flex items-center space-x-3">
-                <UserAvatar
-                  src={googleUser?.picture || ""}
-                  alt={googleUser?.name || "User"}
-                  size="sm"
-                  showPremium={isPremium}
-                />
-                <div className="hidden sm:block">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {googleUser?.name || "User"}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {googleUser?.email || ""}
-                  </div>
-                </div>
-              </div>
-              <Button
-                onClick={signOut}
-                variant="outline"
-                size="sm"
-                className="text-gray-600 dark:text-gray-300"
-              >
-                {t("auth.signOut")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tabs */}
