@@ -96,19 +96,68 @@ function verifyWebhookSignature(
       const signedPayload = `${timestamp}.${payload}`;
 
       // Create expected signature
-      const expectedSignature = crypto
-        .createHmac("sha256", Buffer.from(secret, "base64"))
-        .update(signedPayload, "utf8")
-        .digest("base64");
+      // Try both string secret and base64-decoded secret
+      let expectedSignature: string;
 
-      // Compare signatures
-      if (
-        crypto.timingSafeEqual(
-          Buffer.from(expectedSignature, "base64"),
-          Buffer.from(encodedSignature, "base64")
-        )
-      ) {
-        return true;
+      try {
+        // First try: use secret as base64-decoded bytes (Svix standard)
+        expectedSignature = crypto
+          .createHmac("sha256", Buffer.from(secret, "base64"))
+          .update(signedPayload, "utf8")
+          .digest("base64");
+      } catch (error) {
+        // Fallback: use secret as plain string
+        expectedSignature = crypto
+          .createHmac("sha256", secret)
+          .update(signedPayload, "utf8")
+          .digest("base64");
+      }
+
+      console.log("🔐 Debug signature verification:", {
+        signedPayload: signedPayload.substring(0, 100) + "...",
+        expectedSignature,
+        receivedSignature: encodedSignature,
+        secretLength: secret.length,
+      });
+
+      // Compare signatures - try both approaches
+      try {
+        if (
+          crypto.timingSafeEqual(
+            Buffer.from(expectedSignature, "base64"),
+            Buffer.from(encodedSignature, "base64")
+          )
+        ) {
+          return true;
+        }
+      } catch (lengthError) {
+        console.log(
+          "🔄 Signature length mismatch, trying string secret approach"
+        );
+
+        // Try with string secret instead
+        const expectedSignatureString = crypto
+          .createHmac("sha256", secret)
+          .update(signedPayload, "utf8")
+          .digest("base64");
+
+        console.log("🔐 String secret approach:", {
+          expectedSignatureString,
+          receivedSignature: encodedSignature,
+        });
+
+        try {
+          if (
+            crypto.timingSafeEqual(
+              Buffer.from(expectedSignatureString, "base64"),
+              Buffer.from(encodedSignature, "base64")
+            )
+          ) {
+            return true;
+          }
+        } catch (error2) {
+          console.log("❌ Both signature approaches failed:", error2);
+        }
       }
     }
 
@@ -139,7 +188,12 @@ export async function POST(request: NextRequest) {
 
     // If we have a webhook secret, verify signature
     if (webhookSecret && signature && timestamp) {
-      console.log("🔐 Verifying signature:", { signature, timestamp });
+      console.log("🔐 Verifying signature:", {
+        signature,
+        timestamp,
+        secretPrefix: webhookSecret.substring(0, 10) + "...",
+        secretLength: webhookSecret.length,
+      });
 
       if (!verifyWebhookSignature(body, signature, timestamp, webhookSecret)) {
         console.error("❌ Invalid webhook signature");
