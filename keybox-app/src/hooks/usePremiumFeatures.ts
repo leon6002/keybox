@@ -136,6 +136,9 @@ export function usePremiumFeatures() {
           customerEmail: user.googleUser.email,
           customerName: user.googleUser.name,
           customerExternalId: user.googleUser.id,
+          // Include app user info for webhook processing
+          appUserEmail: user.googleUser.email,
+          appUserId: user.googleUser.id,
         });
         return `/api/checkout?${params.toString()}`;
       }

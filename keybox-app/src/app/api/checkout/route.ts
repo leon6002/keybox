@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
     const customerExternalId = searchParams.get("customerExternalId");
     const metadata = searchParams.get("metadata");
 
+    // App user information (the logged-in user who initiated the purchase)
+    const appUserEmail = searchParams.get("appUserEmail");
+    const appUserId = searchParams.get("appUserId");
+
     if (!products) {
       return NextResponse.json(
         { error: "Products parameter is required" },
@@ -38,12 +42,30 @@ export async function GET(request: NextRequest) {
     if (customerExternalId) {
       checkoutData.customer_external_id = customerExternalId;
     }
+    // Prepare metadata with app user information
+    const checkoutMetadata: any = {};
+
+    // Include app user information for webhook processing
+    if (appUserId) {
+      checkoutMetadata.app_user_id = appUserId;
+    }
+    if (appUserEmail) {
+      checkoutMetadata.app_user_email = appUserEmail;
+    }
+
+    // Include any additional metadata passed in
     if (metadata) {
       try {
-        checkoutData.metadata = JSON.parse(decodeURIComponent(metadata));
+        const additionalMetadata = JSON.parse(decodeURIComponent(metadata));
+        Object.assign(checkoutMetadata, additionalMetadata);
       } catch (e) {
         console.warn("Failed to parse metadata:", e);
       }
+    }
+
+    // Only add metadata if we have some
+    if (Object.keys(checkoutMetadata).length > 0) {
+      checkoutData.metadata = checkoutMetadata;
     }
 
     // Determine API base URL
