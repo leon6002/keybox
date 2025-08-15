@@ -6,22 +6,27 @@ import { useTranslation } from "react-i18next";
 import { Check, Star, Zap, Shield, Cloud, HeadphonesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { usePremiumFeatures } from "@/hooks/usePremiumFeatures";
 
 export default function PricingPage() {
   const router = useRouter();
   const { t, ready } = useTranslation();
+  const { getUpgradeUrl } = usePremiumFeatures();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handlePurchase = async (productId: string) => {
-    setIsLoading(productId);
+  const handlePurchase = async (planType: "pro" | "enterprise") => {
+    setIsLoading(planType);
     try {
-      // Get user info from Google auth if available
-      // For now, we'll let the user enter their email on Polar's checkout page
-      // In production, you should get this from your auth context
+      // Use the proper upgrade URL that includes user metadata
+      const upgradeUrl = getUpgradeUrl(planType);
 
-      // Redirect to Polar checkout without customer info (let Polar collect it)
-      const checkoutUrl = `/api/checkout?products=${productId}`;
-      window.location.href = checkoutUrl;
+      if (upgradeUrl) {
+        window.location.href = upgradeUrl;
+      } else {
+        console.error("No upgrade URL available for plan:", planType);
+        alert("Payment configuration error. Please try again later.");
+        setIsLoading(null);
+      }
     } catch (error) {
       console.error("Payment error:", error);
       setIsLoading(null);
@@ -162,8 +167,10 @@ export default function PricingPage() {
 
               <Button
                 onClick={() => {
-                  if (plan.productId) {
-                    handlePurchase(plan.productId);
+                  if (plan.id === "pro") {
+                    handlePurchase("pro");
+                  } else if (plan.id === "enterprise") {
+                    handlePurchase("enterprise");
                   } else if (plan.id === "free") {
                     router.push("/");
                   } else {
@@ -177,9 +184,9 @@ export default function PricingPage() {
                     ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                     : ""
                 }`}
-                disabled={isLoading === plan.productId}
+                disabled={isLoading === plan.id}
               >
-                {isLoading === plan.productId ? (
+                {isLoading === plan.id ? (
                   <div className="flex items-center">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                     {ready ? t("common.loading") : "处理中..."}

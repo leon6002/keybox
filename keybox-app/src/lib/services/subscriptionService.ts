@@ -2,7 +2,7 @@
  * Subscription Service for managing user subscriptions and premium features
  */
 
-import { supabase } from "../supabase";
+import { supabase, supabaseAdmin } from "../supabase";
 
 export interface Subscription {
   id: string;
@@ -10,8 +10,8 @@ export interface Subscription {
   polarCustomerId?: string;
   polarSubscriptionId?: string;
   polarProductId?: string;
-  status: 'active' | 'inactive' | 'canceled' | 'past_due';
-  planType: 'free' | 'pro' | 'enterprise';
+  status: "active" | "inactive" | "canceled" | "past_due";
+  planType: "free" | "pro" | "enterprise";
   currentPeriodStart?: Date;
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
@@ -50,13 +50,13 @@ export class SubscriptionService {
    */
   async getUserSubscription(userId: string): Promise<Subscription | null> {
     const { data, error } = await supabase
-      .from('keybox_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
+      .from("keybox_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      if (error.code === "PGRST116") {
         return null; // No subscription found
       }
       throw new Error(`Failed to get subscription: ${error.message}`);
@@ -68,23 +68,27 @@ export class SubscriptionService {
   /**
    * Create or update user subscription
    */
-  async upsertSubscription(subscription: Partial<Subscription> & { userId: string }): Promise<Subscription> {
+  async upsertSubscription(
+    subscription: Partial<Subscription> & { userId: string }
+  ): Promise<Subscription> {
     const subscriptionData = {
       user_id: subscription.userId,
       polar_customer_id: subscription.polarCustomerId,
       polar_subscription_id: subscription.polarSubscriptionId,
       polar_product_id: subscription.polarProductId,
-      status: subscription.status || 'inactive',
-      plan_type: subscription.planType || 'free',
+      status: subscription.status || "inactive",
+      plan_type: subscription.planType || "free",
       current_period_start: subscription.currentPeriodStart?.toISOString(),
       current_period_end: subscription.currentPeriodEnd?.toISOString(),
       cancel_at_period_end: subscription.cancelAtPeriodEnd || false,
       premium_features: subscription.premiumFeatures || {},
     };
 
-    const { data, error } = await supabase
-      .from('keybox_subscriptions')
-      .upsert(subscriptionData, { onConflict: 'user_id' })
+    // Use admin client for webhook operations to bypass RLS
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
+      .from("keybox_subscriptions")
+      .upsert(subscriptionData, { onConflict: "user_id" })
       .select()
       .single();
 
@@ -105,17 +109,17 @@ export class SubscriptionService {
       subscriptionId?: string;
       productId?: string;
     },
-    planType: 'pro' | 'enterprise' = 'pro',
+    planType: "pro" | "enterprise" = "pro",
     periodEnd?: Date
   ): Promise<Subscription> {
     const premiumFeatures = this.getPremiumFeatures(planType);
-    
+
     return this.upsertSubscription({
       userId,
       polarCustomerId: polarData.customerId,
       polarSubscriptionId: polarData.subscriptionId,
       polarProductId: polarData.productId,
-      status: 'active',
+      status: "active",
       planType,
       currentPeriodStart: new Date(),
       currentPeriodEnd: periodEnd,
@@ -127,15 +131,18 @@ export class SubscriptionService {
   /**
    * Cancel subscription
    */
-  async cancelSubscription(userId: string, cancelAtPeriodEnd: boolean = true): Promise<Subscription> {
+  async cancelSubscription(
+    userId: string,
+    cancelAtPeriodEnd: boolean = true
+  ): Promise<Subscription> {
     const subscription = await this.getUserSubscription(userId);
     if (!subscription) {
-      throw new Error('No subscription found');
+      throw new Error("No subscription found");
     }
 
     return this.upsertSubscription({
       ...subscription,
-      status: cancelAtPeriodEnd ? 'active' : 'canceled',
+      status: cancelAtPeriodEnd ? "active" : "canceled",
       cancelAtPeriodEnd,
     });
   }
@@ -145,7 +152,9 @@ export class SubscriptionService {
    */
   async hasPremiumFeatures(userId: string): Promise<boolean> {
     const subscription = await this.getUserSubscription(userId);
-    return subscription?.status === 'active' && subscription.planType !== 'free';
+    return (
+      subscription?.status === "active" && subscription.planType !== "free"
+    );
   }
 
   /**
@@ -153,8 +162,12 @@ export class SubscriptionService {
    */
   async getUserPremiumFeatures(userId: string): Promise<PremiumFeatures> {
     const subscription = await this.getUserSubscription(userId);
-    
-    if (!subscription || subscription.status !== 'active' || subscription.planType === 'free') {
+
+    if (
+      !subscription ||
+      subscription.status !== "active" ||
+      subscription.planType === "free"
+    ) {
       return this.getFreePlanFeatures();
     }
 
@@ -164,9 +177,13 @@ export class SubscriptionService {
   /**
    * Log payment event
    */
-  async logPaymentEvent(event: Omit<PaymentEvent, 'id' | 'createdAt' | 'processed'>): Promise<PaymentEvent> {
-    const { data, error } = await supabase
-      .from('keybox_payment_events')
+  async logPaymentEvent(
+    event: Omit<PaymentEvent, "id" | "createdAt" | "processed">
+  ): Promise<PaymentEvent> {
+    // Use admin client for webhook operations to bypass RLS
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
+      .from("keybox_payment_events")
       .insert({
         user_id: event.userId,
         subscription_id: event.subscriptionId,
@@ -189,10 +206,12 @@ export class SubscriptionService {
    * Mark payment event as processed
    */
   async markEventProcessed(eventId: string): Promise<void> {
-    const { error } = await supabase
-      .from('keybox_payment_events')
+    // Use admin client for webhook operations to bypass RLS
+    const client = supabaseAdmin || supabase;
+    const { error } = await client
+      .from("keybox_payment_events")
       .update({ processed: true })
-      .eq('id', eventId);
+      .eq("id", eventId);
 
     if (error) {
       throw new Error(`Failed to mark event as processed: ${error.message}`);
@@ -202,7 +221,7 @@ export class SubscriptionService {
   /**
    * Get premium features for plan type
    */
-  private getPremiumFeatures(planType: 'pro' | 'enterprise'): PremiumFeatures {
+  private getPremiumFeatures(planType: "pro" | "enterprise"): PremiumFeatures {
     const baseFeatures: PremiumFeatures = {
       unlimitedPasswords: true,
       advancedEncryption: true,
@@ -216,7 +235,7 @@ export class SubscriptionService {
       twoFactorAuth: true,
     };
 
-    if (planType === 'enterprise') {
+    if (planType === "enterprise") {
       return {
         ...baseFeatures,
         secureSharing: true,
@@ -257,8 +276,12 @@ export class SubscriptionService {
       polarProductId: data.polar_product_id,
       status: data.status,
       planType: data.plan_type,
-      currentPeriodStart: data.current_period_start ? new Date(data.current_period_start) : undefined,
-      currentPeriodEnd: data.current_period_end ? new Date(data.current_period_end) : undefined,
+      currentPeriodStart: data.current_period_start
+        ? new Date(data.current_period_start)
+        : undefined,
+      currentPeriodEnd: data.current_period_end
+        ? new Date(data.current_period_end)
+        : undefined,
       cancelAtPeriodEnd: data.cancel_at_period_end,
       premiumFeatures: data.premium_features,
       createdAt: new Date(data.created_at),
