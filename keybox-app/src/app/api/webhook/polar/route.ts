@@ -30,7 +30,7 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: payload.type || "unknown",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
@@ -45,7 +45,7 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "order_created",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
@@ -60,18 +60,19 @@ export const POST = Webhooks({
       // Log the event
       const event = await subscriptionService.logPaymentEvent({
         eventType: "order_paid",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
 
       // Find user by customer email or external ID
       let userId: string | null = null;
+      const payloadAny = payload as any;
 
-      if (payload.customer?.email) {
+      if (payloadAny.customer?.email) {
         const { data: user } = await supabase
           .from("keybox_users")
           .select("id")
-          .eq("email", payload.customer.email)
+          .eq("email", payloadAny.customer.email)
           .single();
 
         userId = user?.id;
@@ -79,18 +80,18 @@ export const POST = Webhooks({
 
       if (userId) {
         // Determine plan type from product ID
-        const planType = determinePlanType(payload.product?.id);
+        const planType = determinePlanType(payloadAny.product?.id);
 
         // Activate premium subscription
         await subscriptionService.activatePremiumSubscription(
           userId,
           {
-            customerId: payload.customer?.id,
-            productId: payload.product?.id,
+            customerId: payloadAny.customer?.id,
+            productId: payloadAny.product?.id,
           },
           planType,
-          payload.subscription?.current_period_end
-            ? new Date(payload.subscription.current_period_end)
+          payloadAny.subscription?.current_period_end
+            ? new Date(payloadAny.subscription.current_period_end)
             : undefined
         );
 
@@ -110,16 +111,17 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "order_refunded",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
 
       // Handle refund - cancel subscription if needed
-      if (payload.customer?.email) {
+      const payloadAny = payload as any;
+      if (payloadAny.customer?.email) {
         const { data: user } = await supabase
           .from("keybox_users")
           .select("id")
-          .eq("email", payload.customer.email)
+          .eq("email", payloadAny.customer.email)
           .single();
 
         if (user?.id) {
@@ -141,7 +143,7 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "subscription_created",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
@@ -155,31 +157,32 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "subscription_active",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
 
       // Find user by customer email
-      if (payload.customer?.email) {
+      const payloadAny = payload as any;
+      if (payloadAny.customer?.email) {
         const { data: user } = await supabase
           .from("keybox_users")
           .select("id")
-          .eq("email", payload.customer.email)
+          .eq("email", payloadAny.customer.email)
           .single();
 
         if (user?.id) {
-          const planType = determinePlanType(payload.product?.id);
+          const planType = determinePlanType(payloadAny.product?.id);
 
           await subscriptionService.activatePremiumSubscription(
             user.id,
             {
-              customerId: payload.customer?.id,
-              subscriptionId: payload.id,
-              productId: payload.product?.id,
+              customerId: payloadAny.customer?.id,
+              subscriptionId: payloadAny.id || undefined,
+              productId: payloadAny.product?.id,
             },
             planType,
-            payload.current_period_end
-              ? new Date(payload.current_period_end)
+            payloadAny.current_period_end
+              ? new Date(payloadAny.current_period_end)
               : undefined
           );
 
@@ -197,16 +200,17 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "subscription_canceled",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
 
       // Find user and cancel subscription
-      if (payload.customer?.email) {
+      const payloadAny = payload as any;
+      if (payloadAny.customer?.email) {
         const { data: user } = await supabase
           .from("keybox_users")
           .select("id")
-          .eq("email", payload.customer.email)
+          .eq("email", payloadAny.customer.email)
           .single();
 
         if (user?.id) {
@@ -225,16 +229,17 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "subscription_revoked",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
 
       // Find user and immediately cancel subscription
-      if (payload.customer?.email) {
+      const payloadAny = payload as any;
+      if (payloadAny.customer?.email) {
         const { data: user } = await supabase
           .from("keybox_users")
           .select("id")
-          .eq("email", payload.customer.email)
+          .eq("email", payloadAny.customer.email)
           .single();
 
         if (user?.id) {
@@ -254,7 +259,7 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "customer_created",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
@@ -268,7 +273,7 @@ export const POST = Webhooks({
     try {
       await subscriptionService.logPaymentEvent({
         eventType: "customer_updated",
-        polarEventId: payload.id,
+        polarEventId: (payload as any).id || undefined,
         eventData: payload,
       });
     } catch (error) {
