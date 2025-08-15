@@ -7,7 +7,6 @@ import {
   EncryptedFolder,
   UserKey,
   EncryptedString,
-  EncryptionType,
 } from "./types";
 import { WebCryptoService } from "./cryptoService";
 import { Folder, PasswordEntry } from "../../types/password";
@@ -32,11 +31,11 @@ export class KeyboxVaultService implements VaultService {
     cipher: PasswordEntry,
     userKey: UserKey
   ): Promise<EncryptedCipher> {
-    // Encrypt sensitive fields
+    // Encrypt sensitive fields using the default encryption type (XChaCha20-Poly1305)
     const encryptedName = await this.cryptoService.encrypt(
       cipher.title,
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
 
     // Prepare cipher data for encryption
@@ -51,8 +50,8 @@ export class KeyboxVaultService implements VaultService {
 
     const encryptedData = await this.cryptoService.encrypt(
       JSON.stringify(cipherData),
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
 
     // Encrypt notes if present
@@ -60,8 +59,8 @@ export class KeyboxVaultService implements VaultService {
     if (cipher.notes) {
       encryptedNotes = await this.cryptoService.encrypt(
         cipher.notes,
-        userKey.key,
-        EncryptionType.AES_GCM_256
+        userKey.key
+        // Using default encryption type (XChaCha20-Poly1305)
       );
     }
 
@@ -159,8 +158,8 @@ export class KeyboxVaultService implements VaultService {
   ): Promise<EncryptedFolder> {
     const encryptedName = await this.cryptoService.encrypt(
       folder.name,
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
 
     return {
@@ -250,8 +249,8 @@ export class KeyboxVaultService implements VaultService {
       // Encrypt the data with the individual key
       const encryptedData = await this.cryptoService.encrypt(
         data,
-        individualKey,
-        EncryptionType.AES_GCM_256
+        individualKey
+        // Using default encryption type (XChaCha20-Poly1305)
       );
 
       // Encrypt the individual key with the user key
@@ -268,8 +267,8 @@ export class KeyboxVaultService implements VaultService {
       // Use the user key directly
       const encryptedData = await this.cryptoService.encrypt(
         data,
-        userKey.key,
-        EncryptionType.AES_GCM_256
+        userKey.key
+        // Using default encryption type (XChaCha20-Poly1305)
       );
 
       return { encryptedData };
@@ -411,8 +410,8 @@ export class KeyboxVaultService implements VaultService {
   ): Promise<EncryptedString> {
     return await this.cryptoService.encrypt(
       plaintext,
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
   }
 

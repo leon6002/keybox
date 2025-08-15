@@ -18,18 +18,15 @@ export async function POST(request: NextRequest) {
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     console.log("🔍 Checking encryption setup for:", email);
 
-    // Query user by email using admin client to bypass RLS
+    // Query user by email and check encryption fields
     const { data, error } = await supabaseAdmin
       .from("keybox_users")
-      .select("id")
+      .select("id, master_password_hash, kdf_salt, user_key")
       .eq("email", email)
       .maybeSingle();
 
@@ -43,15 +40,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return whether user has encryption setup
-    const hasEncryption = !!data;
-    console.log(`✅ User ${email} has encryption setup: ${hasEncryption}`);
+    if (!data) {
+      console.log(`❌ User ${email} not found`);
+      return NextResponse.json({
+        hasEncryption: false,
+        userId: null,
+      });
+    }
+
+    // Check if user has proper encryption setup (not temporary email auth data)
+    const hasProperEncryption = !!(
+      data.master_password_hash &&
+      data.kdf_salt &&
+      data.user_key &&
+      // Make sure it's not temporary email auth data
+      !data.master_password_hash.startsWith("temp_email_password:") &&
+      !data.kdf_salt.startsWith("verification_code:") &&
+      !data.user_key.startsWith("expires:")
+    );
+
+    console.log(
+      `✅ User ${email} has proper encryption setup: ${hasProperEncryption}`
+    );
 
     return NextResponse.json({
-      hasEncryption,
+      hasEncryption: hasProperEncryption,
       userId: data?.id || null,
     });
-
   } catch (error) {
     console.error("❌ Check encryption failed:", error);
     return NextResponse.json(

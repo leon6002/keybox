@@ -7,15 +7,16 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Lock, Key, AlertTriangle } from "lucide-react";
-import SecurePasswordInput from "../security/SecurePasswordInput";
+  Shield,
+  Lock,
+  Key,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  RefreshCw,
+} from "lucide-react";
+import UserAvatar from "@/components/UserAvatar";
+import PasswordGeneratorModal from "@/components/PasswordGeneratorModal";
 
 interface EncryptionSetupModalProps {
   isOpen: boolean;
@@ -29,11 +30,51 @@ export default function EncryptionSetupModal({
   const { setupEncryption, getGoogleUser } = useAuth();
   const [masterPassword, setMasterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordHint, setPasswordHint] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);
 
   const googleUser = getGoogleUser();
+
+  // Handle password generation
+  const handlePasswordGenerated = (password: string) => {
+    setMasterPassword(password);
+    setConfirmPassword(password);
+    setShowPasswordGenerator(false);
+  };
+
+  // Password strength calculation
+  const getPasswordStrength = (password: string) => {
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    // Cap the score to maximum array index (5)
+    return Math.min(score, 5);
+  };
+
+  const passwordStrength = getPasswordStrength(masterPassword);
+  const strengthLabels = [
+    "Very Weak",
+    "Weak",
+    "Fair",
+    "Good",
+    "Strong",
+    "Very Strong",
+  ];
+  const strengthColors = [
+    "bg-red-500",
+    "bg-red-400",
+    "bg-yellow-500",
+    "bg-yellow-400",
+    "bg-green-500",
+    "bg-green-400",
+  ];
 
   console.log("🔐 EncryptionSetupModal render:", {
     isOpen,
@@ -66,7 +107,7 @@ export default function EncryptionSetupModal({
     setIsLoading(true);
 
     try {
-      await setupEncryption(masterPassword, passwordHint || undefined);
+      await setupEncryption(masterPassword);
       onClose?.();
     } catch (error) {
       setError(
@@ -78,138 +119,242 @@ export default function EncryptionSetupModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
-            <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <CardTitle className="text-xl">Set Up Encryption</CardTitle>
-          <CardDescription>
-            Create a master password to encrypt your passwords securely
-          </CardDescription>
-        </CardHeader>
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center z-50">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-500/5 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "2s" }}
+        />
+      </div>
 
-        <CardContent className="space-y-4">
-          {/* User Info */}
-          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-            <img
-              src={googleUser.picture}
-              alt={googleUser.name}
-              className="w-10 h-10 rounded-full"
-            />
-            <div>
-              <p className="font-medium">{googleUser.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {googleUser.email}
-              </p>
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
+        <div className="flex items-center justify-center min-h-screen py-12">
+          <div className="w-full max-w-md">
+            {/* Main Card */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <Key className="w-10 h-10 text-white" />
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  Set Up Master Password
+                </h1>
+                <p className="text-slate-400">
+                  Create a master password to encrypt your passwords securely
+                </p>
+              </div>
+
+              {/* User Info */}
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl mb-6 border border-white/10">
+                <div className="flex items-center space-x-3">
+                  <UserAvatar
+                    src={googleUser.picture}
+                    alt={googleUser.name}
+                    size="md"
+                  />
+                  <div>
+                    <div className="text-white font-medium">
+                      {googleUser.name}
+                    </div>
+                    <div className="text-slate-400 text-sm">
+                      {googleUser.email}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Notice */}
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-6">
+                <div className="flex items-start space-x-3">
+                  <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-amber-200 text-sm">
+                    <p className="font-medium mb-1">
+                      Important Security Notice
+                    </p>
+                    <p>
+                      Your master password encrypts all your data. We cannot
+                      recover it if you forget it, so choose something memorable
+                      but secure.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-6">
+                {/* Master Password */}
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">
+                    Master Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={masterPassword}
+                      onChange={(e) => setMasterPassword(e.target.value)}
+                      placeholder="Create a strong master password"
+                      className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400/50 transition-all backdrop-blur-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                  {/* Password Strength Indicator */}
+                  {masterPassword && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-slate-400">
+                          Password Strength
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${passwordStrength >= 4 ? "text-green-400" : passwordStrength >= 2 ? "text-yellow-400" : "text-red-400"}`}
+                        >
+                          {strengthLabels[passwordStrength]}
+                        </span>
+                      </div>
+                      <div className="flex space-x-1">
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-colors ${
+                              i < passwordStrength
+                                ? strengthColors[passwordStrength]
+                                : "bg-white/20"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Password Generator Button */}
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowPasswordGenerator(true)}
+                      className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Generate Strong Password
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-white text-sm font-medium mb-3">
+                    Confirm Master Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your master password"
+                      className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400/50 transition-all backdrop-blur-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                  {/* Password Match Indicator */}
+                  {confirmPassword && (
+                    <div className="mt-3">
+                      <div
+                        className={`text-xs flex items-center space-x-2 ${
+                          masterPassword === confirmPassword
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {masterPassword === confirmPassword ? (
+                          <>
+                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span>Passwords match</span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                            <span>Passwords do not match</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="flex items-center space-x-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <div className="pt-2">
+                  <Button
+                    onClick={handleSetupEncryption}
+                    disabled={isLoading || !masterPassword || !confirmPassword}
+                    className="w-full py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Setting up encryption...
+                      </>
+                    ) : (
+                      <>
+                        <Key className="w-5 h-5 mr-2" />
+                        Set Up Master Password
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Security Badge */}
+              <div className="mt-6 flex items-center justify-center space-x-2 text-slate-400 text-sm">
+                <Shield className="w-4 h-4" />
+                <span>Zero-knowledge encryption • Your data stays private</span>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Security Notice */}
-          <Alert>
-            <Lock className="h-4 w-4" />
-            <AlertDescription>
-              Your master password encrypts all your data. We cannot recover it
-              if you forget it.
-            </AlertDescription>
-          </Alert>
-
-          {/* Master Password */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Master Password</label>
-            <SecurePasswordInput
-              value={masterPassword}
-              onChange={setMasterPassword}
-              placeholder="Create a strong master password"
-              showStrengthIndicator={true}
-              validateStrength={true}
-              minStrength={70}
-              variant="secure"
-            />
-          </div>
-
-          {/* Confirm Password */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Confirm Master Password
-            </label>
-            <SecurePasswordInput
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              placeholder="Confirm your master password"
-              showToggle={false}
-              preventCopy={false}
-            />
-          </div>
-
-          {/* Password Hint (Optional) */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Password Hint (Optional)
-            </label>
-            <input
-              type="text"
-              value={passwordHint}
-              onChange={(e) => setPasswordHint(e.target.value)}
-              placeholder="A hint to help you remember (not secure)"
-              className="w-full px-3 py-2 border rounded-md text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              This hint is stored unencrypted and visible to anyone with access
-              to your account
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSetupEncryption}
-              disabled={isLoading || !masterPassword || !confirmPassword}
-              className="flex-1"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  Setting Up...
-                </>
-              ) : (
-                <>
-                  <Key className="w-4 h-4 mr-2" />
-                  Set Up Encryption
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Security Info */}
-          <div className="pt-4 border-t">
-            <h4 className="font-medium text-sm mb-2">🔐 How This Works:</h4>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Your master password encrypts all your data locally</li>
-              <li>• We never see or store your master password</li>
-              <li>• Even we cannot access your encrypted passwords</li>
-              <li>• This provides zero-knowledge security</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Password Generator Modal */}
+      <PasswordGeneratorModal
+        isOpen={showPasswordGenerator}
+        onClose={() => setShowPasswordGenerator(false)}
+        onPasswordGenerated={handlePasswordGenerated}
+      />
     </div>
   );
 }

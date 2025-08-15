@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Shield, Lock, Cloud, Zap } from "lucide-react";
 import GoogleSignInSimple from "@/components/GoogleSignInSimple";
+import EmailAuth from "@/components/EmailAuth";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,7 +21,7 @@ interface GoogleUser {
 export default function SignInPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signInWithGoogle, isAuthenticated } = useAuth();
+  const { signInWithGoogle, signInWithEmail, isAuthenticated } = useAuth();
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -44,6 +45,24 @@ export default function SignInPage() {
 
   const handleGoogleError = (error: any) => {
     console.error("Google Sign-In failed:", error);
+    // You could show a toast notification here
+  };
+
+  const handleEmailSuccess = async (user: any) => {
+    try {
+      await signInWithEmail(user);
+      // Redirect to the page user was trying to access or home
+      const returnUrl =
+        new URLSearchParams(window.location.search).get("returnUrl") || "/";
+      router.push(returnUrl);
+    } catch (error) {
+      console.error("Email sign-in failed:", error);
+      // You could show a toast notification here
+    }
+  };
+
+  const handleEmailError = (error: string) => {
+    console.error("Email authentication failed:", error);
     // You could show a toast notification here
   };
 
@@ -122,20 +141,16 @@ export default function SignInPage() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    {t("auth.signin.orContinue")}
+                    or sign in with email
                   </span>
                 </div>
               </div>
 
-              {/* Guest Access */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => router.push("/")}
-                  className="text-sm w-[300px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                >
-                  {t("auth.signin.guestAccess")}
-                </button>
-              </div>
+              {/* Email Authentication */}
+              <EmailAuth
+                onSuccess={handleEmailSuccess}
+                onError={handleEmailError}
+              />
 
               {/* Privacy Notice */}
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">

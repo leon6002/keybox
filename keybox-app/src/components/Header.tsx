@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import UserProfile from "@/components/UserProfile";
 
 interface PasswordNavHeaderProps {
   currentPage: "vault" | "manage";
@@ -16,6 +18,7 @@ interface PasswordNavHeaderProps {
 export default function PasswordNavHeader({
   currentPage,
 }: PasswordNavHeaderProps) {
+  const { isAuthenticated } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProduction, setIsProduction] = useState(false);
 
@@ -90,32 +93,49 @@ export default function PasswordNavHeader({
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="mobile-menu-button p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Right side - User Profile and Mobile Menu */}
+          <div className="flex items-center space-x-3">
+            {/* User Profile - Desktop */}
+            {isAuthenticated && (
+              <div className="hidden md:block">
+                <UserProfile />
+              </div>
+            )}
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="mobile-menu-button p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Mobile Menu Dropdown - Overlay Style */}
         {isMobileMenuOpen && (
           <div className="mobile-menu absolute top-full left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            {/* User Profile - Mobile */}
+            {isAuthenticated && (
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <UserProfile />
+              </div>
+            )}
+
             <div className="px-4 py-3 space-y-1">
               <Link
                 href="/"

@@ -4,6 +4,7 @@
 // Automatically handles the authentication flow and shows appropriate modals
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import EncryptionSetupModal from "./EncryptionSetupModal";
 import VaultUnlockModal from "./VaultUnlockModal";
@@ -19,6 +20,7 @@ export default function AuthGuard({
   requiresVaultUnlock = false,
   fallback,
 }: AuthGuardProps) {
+  const router = useRouter();
   const {
     isAuthenticated,
     isLoading,
@@ -40,7 +42,17 @@ export default function AuthGuard({
       user: user?.googleUser?.email,
     });
 
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        // Not signed in - redirect to sign in page
+        console.log("❌ Not authenticated, redirecting to sign in");
+        router.push(
+          "/auth/signin?returnUrl=" +
+            encodeURIComponent(window.location.pathname)
+        );
+        return;
+      }
+
       // User is signed in with Google
       if (needsEncryptionSetup) {
         // Show encryption setup modal
@@ -58,11 +70,6 @@ export default function AuthGuard({
         setShowEncryptionSetup(false);
         setShowVaultUnlock(false);
       }
-    } else {
-      // Not authenticated, hide modals
-      console.log("❌ Not authenticated, hiding modals");
-      setShowEncryptionSetup(false);
-      setShowVaultUnlock(false);
     }
   }, [
     isLoading,
@@ -71,6 +78,7 @@ export default function AuthGuard({
     isVaultLocked,
     requiresVaultUnlock,
     user,
+    router,
   ]);
 
   // Show loading state
@@ -85,35 +93,16 @@ export default function AuthGuard({
     );
   }
 
-  // Show fallback if not authenticated
+  // If not authenticated, the useEffect will handle the redirect
+  // So we just show loading state while the redirect happens
   if (!isAuthenticated) {
     return (
-      fallback || (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4 max-w-md mx-auto p-6">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
-              <svg
-                className="w-8 h-8 text-blue-600 dark:text-blue-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold">Sign In Required</h2>
-            <p className="text-muted-foreground">
-              Please sign in with Google to access your encrypted password
-              vault.
-            </p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Redirecting to sign in...</p>
         </div>
-      )
+      </div>
     );
   }
 
@@ -197,7 +186,23 @@ export function SignInGuard({
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
+  const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    router.push(
+      "/auth/signin?returnUrl=" + encodeURIComponent(window.location.pathname)
+    );
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Redirecting to sign in...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state
   if (isLoading) {
@@ -208,37 +213,6 @@ export function SignInGuard({
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    );
-  }
-
-  // Show fallback if not authenticated
-  if (!isAuthenticated) {
-    return (
-      fallback || (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4 max-w-md mx-auto p-6">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
-              <svg
-                className="w-8 h-8 text-blue-600 dark:text-blue-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold">Sign In Required</h2>
-            <p className="text-muted-foreground">
-              Please sign in with Google to access this page.
-            </p>
-          </div>
-        </div>
-      )
     );
   }
 

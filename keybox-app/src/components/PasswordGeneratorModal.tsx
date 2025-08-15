@@ -62,7 +62,7 @@ export default function PasswordGeneratorModal({
       const strength = PasswordGeneratorUtil.evaluatePasswordStrength(password);
       setPasswordStrength(strength);
     } catch (error) {
-      console.error("密码生成失败:", error);
+      console.error("Password generation failed:", error);
       setGeneratedPassword("");
       setPasswordStrength(null);
     }
@@ -82,7 +82,7 @@ export default function PasswordGeneratorModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("复制失败:", error);
+      console.error("Copy failed:", error);
     }
   };
 
@@ -125,7 +125,7 @@ export default function PasswordGeneratorModal({
       case "weak":
         return "text-red-600 bg-red-100";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-slate-300 bg-slate-700";
     }
   };
 
@@ -133,33 +133,36 @@ export default function PasswordGeneratorModal({
   const getStrengthText = (level: string) => {
     switch (level) {
       case "very-strong":
-        return "非常强";
+        return "Very Strong";
       case "strong":
-        return "强";
+        return "Strong";
       case "good":
-        return "良好";
+        return "Good";
       case "fair":
-        return "一般";
+        return "Fair";
       case "weak":
-        return "弱";
+        return "Weak";
       default:
-        return "未知";
+        return "Unknown";
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              密码生成器
+            <h2 className="text-xl font-semibold text-white">
+              Password Generator
             </h2>
             <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">
-                {options.isMemorableFriendly ? "易记忆" : "标准"}
+              <Badge
+                variant="outline"
+                className="text-xs border-slate-500 text-slate-300"
+              >
+                {options.isMemorableFriendly ? "Memorable" : "Standard"}
               </Badge>
               <Button variant="ghost" size="sm" onClick={onClose}>
                 ×
@@ -168,11 +171,11 @@ export default function PasswordGeneratorModal({
           </div>
 
           {/* 生成的密码显示 */}
-          <Card className="mb-6">
+          <Card className="mb-6 bg-slate-700 border-slate-600 text-slate-100">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Shield className="w-5 h-5" />
-                <span>生成的密码</span>
+                <span>Password Generated</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -212,7 +215,7 @@ export default function PasswordGeneratorModal({
                 </div>
                 <Button onClick={generatePassword} size="sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  重新生成
+                  Regenerate
                 </Button>
               </div>
 
@@ -220,8 +223,8 @@ export default function PasswordGeneratorModal({
               {passwordStrength && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      密码强度
+                    <span className="text-sm text-slate-300">
+                      Password Strength
                     </span>
                     <Badge
                       className={getStrengthColor(passwordStrength.level)}
@@ -231,24 +234,24 @@ export default function PasswordGeneratorModal({
                       {passwordStrength.score}/100)
                     </Badge>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-slate-600 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
                         passwordStrength.score >= 80
                           ? "bg-green-500"
                           : passwordStrength.score >= 60
-                          ? "bg-blue-500"
-                          : passwordStrength.score >= 40
-                          ? "bg-yellow-500"
-                          : passwordStrength.score >= 20
-                          ? "bg-orange-500"
-                          : "bg-red-500"
+                            ? "bg-blue-500"
+                            : passwordStrength.score >= 40
+                              ? "bg-yellow-500"
+                              : passwordStrength.score >= 20
+                                ? "bg-orange-500"
+                                : "bg-red-500"
                       }`}
                       style={{ width: `${passwordStrength.score}%` }}
                     />
                   </div>
                   {passwordStrength.feedback.length > 0 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-slate-400">
                       <div className="flex items-start space-x-1">
                         <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                         <div>
@@ -275,24 +278,24 @@ export default function PasswordGeneratorModal({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="standard" className="cursor-pointer">
                 <Zap className="w-4 h-4 mr-2" />
-                标准密码
+                Standard
               </TabsTrigger>
               <TabsTrigger value="memorable" className="cursor-pointer">
                 <Shield className="w-4 h-4 mr-2" />
-                易记忆密码
+                Memorable
               </TabsTrigger>
             </TabsList>
 
             {/* 标准密码选项 */}
             <TabsContent value="standard" className="space-y-4">
-              <Card>
+              <Card className="bg-slate-700 border-slate-600 text-slate-100">
                 <CardHeader>
-                  <CardTitle>密码设置</CardTitle>
+                  <CardTitle>Settings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* 密码长度 */}
                   <div className="space-y-2">
-                    <Label>密码长度: {options.length}</Label>
+                    <Label>Length: {options.length}</Label>
                     <Slider
                       value={[options.length]}
                       onValueChange={(value) =>
@@ -303,7 +306,7 @@ export default function PasswordGeneratorModal({
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex justify-between text-xs text-slate-400">
                       <span>4</span>
                       <span>128</span>
                     </div>
@@ -318,7 +321,7 @@ export default function PasswordGeneratorModal({
                           updateOptions("includeUppercase", checked)
                         }
                       />
-                      <Label>大写字母 (A-Z)</Label>
+                      <Label>Uppercase (A-Z)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -327,7 +330,7 @@ export default function PasswordGeneratorModal({
                           updateOptions("includeLowercase", checked)
                         }
                       />
-                      <Label>小写字母 (a-z)</Label>
+                      <Label>Lowercase (a-z)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -336,7 +339,7 @@ export default function PasswordGeneratorModal({
                           updateOptions("includeNumbers", checked)
                         }
                       />
-                      <Label>数字 (0-9)</Label>
+                      <Label>Numbers (0-9)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -345,7 +348,7 @@ export default function PasswordGeneratorModal({
                           updateOptions("includeSymbols", checked)
                         }
                       />
-                      <Label>特殊符号 (!@#$...)</Label>
+                      <Label>Symbols (!@#$...)</Label>
                     </div>
                   </div>
 
@@ -357,7 +360,7 @@ export default function PasswordGeneratorModal({
                         updateOptions("excludeSimilar", checked)
                       }
                     />
-                    <Label>排除相似字符 (il1Lo0O)</Label>
+                    <Label>Exclude Similar Characters (il1Lo0O)</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -365,18 +368,19 @@ export default function PasswordGeneratorModal({
 
             {/* 易记忆密码选项 */}
             <TabsContent value="memorable" className="space-y-4">
-              <Card>
+              <Card className="bg-slate-700 border-slate-600 text-slate-100">
                 <CardHeader>
-                  <CardTitle>易记忆密码设置</CardTitle>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    生成由单词组成的密码，更容易记忆和手动输入
+                  <CardTitle>Memorable Password Settings</CardTitle>
+                  <p className="text-sm text-slate-300">
+                    Generate a password made up of words, easier to remember and
+                    manually input
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* 单词数量 */}
                   <div className="space-y-2">
                     <Label>
-                      单词数量: {options.memorableOptions?.wordCount}
+                      Word Count: {options.memorableOptions?.wordCount}
                     </Label>
                     <Slider
                       value={[options.memorableOptions?.wordCount || 4]}
@@ -388,7 +392,7 @@ export default function PasswordGeneratorModal({
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex justify-between text-xs text-slate-400">
                       <span>2</span>
                       <span>8</span>
                     </div>
@@ -396,7 +400,7 @@ export default function PasswordGeneratorModal({
 
                   {/* 分隔符选择 */}
                   <div className="space-y-2">
-                    <Label>分隔符</Label>
+                    <Label>Separator</Label>
                     <Select
                       value={
                         options.memorableOptions?.separator === ""
@@ -411,11 +415,11 @@ export default function PasswordGeneratorModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="-">连字符 (-)</SelectItem>
-                        <SelectItem value="_">下划线 (_)</SelectItem>
-                        <SelectItem value=".">点号 (.)</SelectItem>
-                        <SelectItem value=" ">空格 ( )</SelectItem>
-                        <SelectItem value="none">无分隔符</SelectItem>
+                        <SelectItem value="-">Hyphen (-)</SelectItem>
+                        <SelectItem value="_">Underscore (_)</SelectItem>
+                        <SelectItem value=".">Period (.)</SelectItem>
+                        <SelectItem value=" ">Space ( )</SelectItem>
+                        <SelectItem value="none">No Separator</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -431,7 +435,7 @@ export default function PasswordGeneratorModal({
                           updateMemorableOptions("includeNumbers", checked)
                         }
                       />
-                      <Label>包含数字</Label>
+                      <Label>Include Numbers</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
@@ -442,20 +446,21 @@ export default function PasswordGeneratorModal({
                           updateMemorableOptions("capitalizeWords", checked)
                         }
                       />
-                      <Label>首字母大写</Label>
+                      <Label>Capitalize Words</Label>
                     </div>
                   </div>
 
                   {/* 示例说明 */}
-                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      <strong>示例:</strong>
+                  <div className="bg-blue-900/30 p-3 rounded-lg">
+                    <p className="text-sm text-blue-200">
+                      <strong>Example:</strong>
                       {options.memorableOptions?.capitalizeWords
                         ? "Apple-Brave-Cloud-42"
                         : "apple-brave-cloud-42"}
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                      易记忆密码更适合需要手动输入的场景，但强度可能较低
+                    <p className="text-xs text-blue-300 mt-1">
+                      Memorable passwords are better for scenarios that require
+                      manual input, but the strength may be lower
                     </p>
                   </div>
                 </CardContent>
@@ -466,7 +471,7 @@ export default function PasswordGeneratorModal({
           {/* 操作按钮 */}
           <div className="flex items-center justify-end space-x-4 mt-6">
             <Button variant="outline" onClick={onClose}>
-              取消
+              Cancel
             </Button>
             <Button
               onClick={() => {
@@ -475,7 +480,7 @@ export default function PasswordGeneratorModal({
               }}
               disabled={!generatedPassword}
             >
-              使用此密码
+              Use this password
             </Button>
           </div>
         </div>

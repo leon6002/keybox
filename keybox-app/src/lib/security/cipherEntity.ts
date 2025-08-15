@@ -111,14 +111,14 @@ export class Cipher {
     this.folderId = data.folderId;
     this.type = data.type || CipherType.PASSWORD;
     this.name = data.name || {
-      encryptionType: EncryptionType.AES_GCM_256,
+      encryptionType: EncryptionType.XCHACHA20_POLY1305,
       data: "",
     };
     this.notes = data.notes;
     this.favorite = data.favorite || false;
     this.reprompt = data.reprompt || CipherRepromptType.NONE;
     this.data = data.data || {
-      encryptionType: EncryptionType.AES_GCM_256,
+      encryptionType: EncryptionType.XCHACHA20_POLY1305,
       data: "",
     };
     this.attachments = data.attachments;
@@ -189,11 +189,11 @@ export class Cipher {
     entry: PasswordEntry,
     userKey: UserKey
   ): Promise<void> {
-    // Encrypt name
+    // Encrypt name using default encryption type (XChaCha20-Poly1305)
     this.name = await this.cryptoService.encrypt(
       entry.title,
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
 
     // Prepare cipher data
@@ -206,19 +206,19 @@ export class Cipher {
       customFields: entry.customFields,
     };
 
-    // Encrypt cipher data
+    // Encrypt cipher data using default encryption type (XChaCha20-Poly1305)
     this.data = await this.cryptoService.encrypt(
       JSON.stringify(cipherData),
-      userKey.key,
-      EncryptionType.AES_GCM_256
+      userKey.key
+      // Using default encryption type (XChaCha20-Poly1305)
     );
 
     // Encrypt notes if present
     if (entry.notes) {
       this.notes = await this.cryptoService.encrypt(
         entry.notes,
-        userKey.key,
-        EncryptionType.AES_GCM_256
+        userKey.key
+        // Using default encryption type (XChaCha20-Poly1305)
       );
     }
 

@@ -25,6 +25,7 @@ export interface EncryptedString {
   encryptionType: EncryptionType;
   data: string; // Base64 encoded encrypted data
   iv?: string; // Base64 encoded IV (for AES)
+  nonce?: string; // Base64 encoded nonce (for XChaCha20)
   mac?: string; // Base64 encoded MAC (for authenticated encryption)
 }
 
@@ -272,6 +273,7 @@ export const SECURITY_CONSTANTS = {
   CIPHER_KEY_SIZE: 32, // 256 bits
   SALT_SIZE: 16, // 128 bits
   IV_SIZE: 12, // 96 bits for GCM
+  XCHACHA20_NONCE_SIZE: 24, // 192 bits for XChaCha20
 
   // Session
   DEFAULT_SESSION_TIMEOUT: 60, // minutes

@@ -214,7 +214,7 @@ export class SecurityConfig {
     return {
       kdfType: KdfType.PBKDF2_SHA256,
       kdfIterations: SECURITY_CONSTANTS.PBKDF2_DEFAULT_ITERATIONS,
-      encryptionType: EncryptionType.AES_GCM_256,
+      encryptionType: EncryptionType.XCHACHA20_POLY1305, // Updated to XChaCha20-Poly1305
       requireMasterPasswordReprompt: false,
       sessionTimeout: SECURITY_CONSTANTS.DEFAULT_SESSION_TIMEOUT,
       lockOnIdle: true,
@@ -227,7 +227,7 @@ export class SecurityConfig {
     return {
       kdfType: KdfType.PBKDF2_SHA256,
       kdfIterations: 1000000, // Higher iterations
-      encryptionType: EncryptionType.AES_GCM_256,
+      encryptionType: EncryptionType.XCHACHA20_POLY1305, // Updated to XChaCha20-Poly1305
       requireMasterPasswordReprompt: true,
       sessionTimeout: 15, // Shorter session
       lockOnIdle: true,

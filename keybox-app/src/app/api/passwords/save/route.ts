@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
       userId,
       isUpdate,
       entryId,
+      encryptedCipherId: encryptedCipher.id,
       hasEncryptedData: !!encryptedCipher.data,
     });
 
@@ -54,6 +55,8 @@ export async function POST(request: NextRequest) {
       key: null, // Individual cipher key (optional)
       attachments: null,
       deleted_at: null,
+      // Include the ID for new entries to preserve client-generated UUIDs
+      ...(encryptedCipher.id && !isUpdate ? { id: encryptedCipher.id } : {}),
     };
 
     if (isUpdate && entryId) {
@@ -82,6 +85,12 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Create new cipher
+      console.log("🆕 Creating new cipher with data:", {
+        providedId: encryptedCipher.id,
+        willUseProvidedId: !!encryptedCipher.id,
+        cipherDataHasId: "id" in cipherData,
+      });
+
       const { data, error } = await supabaseAdmin
         .from("keybox_ciphers")
         .insert(cipherData)

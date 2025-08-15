@@ -11,6 +11,7 @@ import {
   SECURITY_CONSTANTS,
 } from "./types";
 import CryptoJS from "crypto-js";
+import { xchacha20poly1305 } from "@noble/ciphers/chacha";
 
 export class WebCryptoService implements CryptoService {
   private static instance: WebCryptoService;
@@ -197,8 +198,17 @@ export class WebCryptoService implements CryptoService {
   async encrypt(
     data: string,
     key: Uint8Array,
-    type: EncryptionType = EncryptionType.AES_GCM_256
+    type: EncryptionType = EncryptionType.XCHACHA20_POLY1305
   ): Promise<EncryptedString> {
+    console.log(
+      "🔐 CryptoService.encrypt called with type:",
+      type,
+      type === EncryptionType.XCHACHA20_POLY1305
+        ? "(XChaCha20-Poly1305)"
+        : type === EncryptionType.AES_GCM_256
+        ? "(AES-GCM-256)"
+        : "(Other)"
+    );
     if (this.useWebCrypto) {
       return this.encryptWebCrypto(data, key, type);
     } else {
@@ -219,6 +229,8 @@ export class WebCryptoService implements CryptoService {
         return this.encryptAesGcm(dataBytes, key);
       case EncryptionType.AES_CBC_256_HMAC_SHA256:
         return this.encryptAesCbcHmac(dataBytes, key);
+      case EncryptionType.XCHACHA20_POLY1305:
+        return this.encryptXChaCha20(dataBytes, key);
       default:
         throw new Error(`Unsupported encryption type: ${type}`);
     }
@@ -234,6 +246,8 @@ export class WebCryptoService implements CryptoService {
         return this.encryptAesGcmFallback(data, key);
       case EncryptionType.AES_CBC_256_HMAC_SHA256:
         return this.encryptAesCbcHmacFallback(data, key);
+      case EncryptionType.XCHACHA20_POLY1305:
+        return this.encryptXChaCha20Fallback(data, key);
       default:
         throw new Error(`Unsupported encryption type: ${type}`);
     }
@@ -266,6 +280,9 @@ export class WebCryptoService implements CryptoService {
       case EncryptionType.AES_CBC_256_HMAC_SHA256:
         decryptedBytes = await this.decryptAesCbcHmac(encryptedData, key);
         break;
+      case EncryptionType.XCHACHA20_POLY1305:
+        decryptedBytes = await this.decryptXChaCha20(encryptedData, key);
+        break;
       default:
         throw new Error(
           `Unsupported encryption type: ${encryptedData.encryptionType}`
@@ -290,10 +307,76 @@ export class WebCryptoService implements CryptoService {
         return this.decryptAesGcmFallback(encryptedData, key);
       case EncryptionType.AES_CBC_256_HMAC_SHA256:
         return this.decryptAesCbcHmacFallback(encryptedData, key);
+      case EncryptionType.XCHACHA20_POLY1305:
+        return this.decryptXChaCha20Fallback(encryptedData, key);
       default:
         throw new Error(
           `Unsupported encryption type: ${encryptedData.encryptionType}`
         );
+    }
+  }
+
+  // XChaCha20-Poly1305 encryption (recommended for new implementations)
+  private async encryptXChaCha20(
+    data: Uint8Array,
+    key: Uint8Array
+  ): Promise<EncryptedString> {
+    // Generate 192-bit (24-byte) nonce for XChaCha20
+    const nonce = crypto.getRandomValues(
+      new Uint8Array(SECURITY_CONSTANTS.XCHACHA20_NONCE_SIZE)
+    );
+
+    // Create XChaCha20-Poly1305 cipher instance
+    const cipher = xchacha20poly1305(key, nonce);
+
+    // Encrypt the data (includes authentication tag)
+    const encryptedData = cipher.encrypt(data);
+
+    console.log("✅ XChaCha20-Poly1305 encryption successful", {
+      dataLength: data.length,
+      nonceLength: nonce.length,
+      encryptedLength: encryptedData.length,
+    });
+
+    return {
+      encryptionType: EncryptionType.XCHACHA20_POLY1305,
+      data: this.uint8ArrayToBase64(encryptedData),
+      nonce: this.uint8ArrayToBase64(nonce),
+    };
+  }
+
+  // XChaCha20-Poly1305 decryption
+  private async decryptXChaCha20(
+    encryptedData: EncryptedString,
+    key: Uint8Array
+  ): Promise<Uint8Array> {
+    if (!encryptedData.nonce) {
+      throw new Error("Nonce is required for XChaCha20-Poly1305 decryption");
+    }
+
+    // Convert base64 back to bytes
+    const nonce = this.base64ToArrayBuffer(encryptedData.nonce);
+    const ciphertext = this.base64ToArrayBuffer(encryptedData.data);
+
+    // Create XChaCha20-Poly1305 cipher instance
+    const cipher = xchacha20poly1305(key, new Uint8Array(nonce));
+
+    // Decrypt and verify authentication tag
+    try {
+      const decryptedData = cipher.decrypt(new Uint8Array(ciphertext));
+
+      console.log("✅ XChaCha20-Poly1305 decryption successful", {
+        nonceLength: nonce.byteLength,
+        ciphertextLength: ciphertext.byteLength,
+        decryptedLength: decryptedData.length,
+      });
+
+      return decryptedData;
+    } catch (error) {
+      console.error("❌ XChaCha20-Poly1305 decryption failed:", error);
+      throw new Error(
+        "XChaCha20-Poly1305 decryption failed: authentication tag verification failed"
+      );
     }
   }
 
@@ -601,6 +684,73 @@ export class WebCryptoService implements CryptoService {
     return result === 0;
   }
 
+  // XChaCha20-Poly1305 fallback methods for environments without Web Crypto API
+  private async encryptXChaCha20Fallback(
+    data: string,
+    key: Uint8Array
+  ): Promise<EncryptedString> {
+    // Generate 192-bit nonce using fallback random generation
+    const nonce = this.generateSecureRandom(
+      SECURITY_CONSTANTS.XCHACHA20_NONCE_SIZE
+    );
+
+    // Create XChaCha20-Poly1305 cipher instance
+    const cipher = xchacha20poly1305(key, nonce);
+
+    // Convert string to bytes and encrypt
+    const encoder = new TextEncoder();
+    const dataBytes = encoder.encode(data);
+    const encryptedData = cipher.encrypt(dataBytes);
+
+    console.log("✅ XChaCha20-Poly1305 fallback encryption successful", {
+      dataLength: dataBytes.length,
+      nonceLength: nonce.length,
+      encryptedLength: encryptedData.length,
+    });
+
+    return {
+      encryptionType: EncryptionType.XCHACHA20_POLY1305,
+      data: this.uint8ArrayToBase64(encryptedData),
+      nonce: this.uint8ArrayToBase64(nonce),
+    };
+  }
+
+  private decryptXChaCha20Fallback(
+    encryptedData: EncryptedString,
+    key: Uint8Array
+  ): string {
+    if (!encryptedData.nonce) {
+      throw new Error("Nonce is required for XChaCha20-Poly1305 decryption");
+    }
+
+    // Convert base64 back to bytes
+    const nonce = this.base64ToArrayBuffer(encryptedData.nonce);
+    const ciphertext = this.base64ToArrayBuffer(encryptedData.data);
+
+    // Create XChaCha20-Poly1305 cipher instance
+    const cipher = xchacha20poly1305(key, new Uint8Array(nonce));
+
+    // Decrypt and verify authentication tag
+    try {
+      const decryptedBytes = cipher.decrypt(new Uint8Array(ciphertext));
+      const decoder = new TextDecoder();
+      const result = decoder.decode(decryptedBytes);
+
+      console.log("✅ XChaCha20-Poly1305 fallback decryption successful", {
+        nonceLength: nonce.byteLength,
+        ciphertextLength: ciphertext.byteLength,
+        decryptedLength: decryptedBytes.length,
+      });
+
+      return result;
+    } catch (error) {
+      console.error("❌ XChaCha20-Poly1305 fallback decryption failed:", error);
+      throw new Error(
+        "XChaCha20-Poly1305 decryption failed: authentication tag verification failed"
+      );
+    }
+  }
+
   // Key encryption/decryption
   async encryptKey(
     key: Uint8Array,
@@ -724,6 +874,14 @@ export class WebCryptoService implements CryptoService {
   // Helper methods
   arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  uint8ArrayToBase64(bytes: Uint8Array): string {
     let binary = "";
     for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);

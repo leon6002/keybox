@@ -19,6 +19,9 @@ interface AuthContextType extends AuthState {
   signInWithGoogle: (user: GoogleUser) => Promise<void>;
   signOut: () => Promise<void>;
 
+  // Email authentication methods
+  signInWithEmail: (user: any) => Promise<void>;
+
   // Encryption setup methods
   setupEncryption: (masterPassword: string, hint?: string) => Promise<void>;
   unlockVault: (masterPassword: string) => Promise<void>;
@@ -80,6 +83,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await unifiedAuthService.signInWithGoogle(userData);
   };
 
+  const signInWithEmail = async (userData: any): Promise<void> => {
+    // Convert email user data to GoogleUser format for compatibility
+    const googleUserFormat: GoogleUser = {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      picture: userData.picture,
+      given_name: userData.given_name,
+      family_name: userData.family_name,
+    };
+    await unifiedAuthService.signInWithGoogle(googleUserFormat);
+  };
+
   const signOut = async (): Promise<void> => {
     await unifiedAuthService.signOut();
 
@@ -119,6 +135,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     ...authState,
     signInWithGoogle,
+    signInWithEmail,
     signOut,
     setupEncryption,
     unlockVault,
