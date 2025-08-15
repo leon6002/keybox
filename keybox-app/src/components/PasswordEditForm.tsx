@@ -727,7 +727,7 @@ export default function PasswordEditForm({
             </div>
 
             {/* Check for orphaned folder reference */}
-            {formData.folderId &&
+            {/* {formData.folderId &&
               formData.folderId.trim() !== "" &&
               !folders.find((f) => f.id === formData.folderId) && (
                 <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -739,7 +739,7 @@ export default function PasswordEditForm({
                     </span>
                   </div>
                 </div>
-              )}
+              )} */}
 
             <FolderSelector
               folders={folders}

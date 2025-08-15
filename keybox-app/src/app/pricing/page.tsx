@@ -15,8 +15,12 @@ export default function PricingPage() {
   const handlePurchase = async (productId: string) => {
     setIsLoading(productId);
     try {
+      // Get user info from Google auth if available
+      const userEmail = "user@example.com"; // TODO: Get from auth context
+      const userName = "User"; // TODO: Get from auth context
+
       // Redirect to Polar checkout
-      const checkoutUrl = `/api/checkout?products=${productId}&customerEmail=user@example.com&customerName=User`;
+      const checkoutUrl = `/api/checkout?products=${productId}&customerEmail=${userEmail}&customerName=${userName}`;
       window.location.href = checkoutUrl;
     } catch (error) {
       console.error("Payment error:", error);
@@ -56,7 +60,7 @@ export default function PricingPage() {
       buttonText: ready ? t("pricing.pro.button") : "立即升级",
       buttonVariant: "default" as const,
       popular: true,
-      productId: "your_polar_product_id_here", // Replace with actual Polar product ID
+      productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID_PRO,
     },
     {
       id: "enterprise",
@@ -76,7 +80,7 @@ export default function PricingPage() {
       buttonText: ready ? t("pricing.enterprise.button") : "联系销售",
       buttonVariant: "outline" as const,
       popular: false,
-      productId: "your_polar_enterprise_product_id_here", // Replace with actual Polar product ID
+      productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID_ENTERPRISE,
     },
   ];
 

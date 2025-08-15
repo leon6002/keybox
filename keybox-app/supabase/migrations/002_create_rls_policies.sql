@@ -290,6 +290,33 @@ SELECT
     (SELECT MAX(revision_date) FROM keybox_ciphers c WHERE c.user_id = u.id) as last_password_update
 FROM keybox_users u;
 
+-- Subscriptions table policies
+-- Users can view and manage their own subscription
+CREATE POLICY "Users can view own subscription" ON keybox_subscriptions
+    FOR SELECT USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Users can insert own subscription" ON keybox_subscriptions
+    FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Users can update own subscription" ON keybox_subscriptions
+    FOR UPDATE USING (auth.uid()::text = user_id::text);
+
+-- System can manage subscriptions for webhook processing
+CREATE POLICY "System can manage subscriptions" ON keybox_subscriptions
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- Payment events table policies
+-- Users can view their own payment events (read-only)
+CREATE POLICY "Users can view own payment events" ON keybox_payment_events
+    FOR SELECT USING (auth.uid()::text = user_id::text);
+
+-- System can insert payment events for webhook processing
+CREATE POLICY "System can insert payment events" ON keybox_payment_events
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "System can manage payment events" ON keybox_payment_events
+    FOR ALL USING (auth.role() = 'service_role');
+
 -- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;

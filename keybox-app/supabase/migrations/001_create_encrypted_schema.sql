@@ -254,6 +254,71 @@ CREATE TRIGGER update_keybox_devices_updated_at
     BEFORE UPDATE ON keybox_devices 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- Subscriptions table for payment management
+CREATE TABLE IF NOT EXISTS keybox_subscriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES keybox_users(id) ON DELETE CASCADE,
+
+    -- Polar subscription details
+    polar_customer_id TEXT,
+    polar_subscription_id TEXT,
+    polar_product_id TEXT,
+
+    -- Subscription status
+    status TEXT NOT NULL DEFAULT 'inactive', -- active, inactive, canceled, past_due
+    plan_type TEXT NOT NULL DEFAULT 'free', -- free, pro, enterprise
+
+    -- Billing details
+    current_period_start TIMESTAMP WITH TIME ZONE,
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Premium features
+    premium_features JSONB NOT NULL DEFAULT '{}',
+
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    -- Indexes
+    UNIQUE(user_id)
+);
+
+-- Payment events table for audit trail
+CREATE TABLE IF NOT EXISTS keybox_payment_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES keybox_users(id) ON DELETE CASCADE,
+    subscription_id UUID REFERENCES keybox_subscriptions(id) ON DELETE CASCADE,
+
+    -- Event details
+    event_type TEXT NOT NULL, -- order_created, order_paid, subscription_created, etc.
+    polar_event_id TEXT,
+
+    -- Event data
+    event_data JSONB NOT NULL DEFAULT '{}',
+    processed BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Subscription indexes
+CREATE INDEX IF NOT EXISTS idx_keybox_subscriptions_user_id ON keybox_subscriptions (user_id);
+CREATE INDEX IF NOT EXISTS idx_keybox_subscriptions_status ON keybox_subscriptions (status);
+CREATE INDEX IF NOT EXISTS idx_keybox_subscriptions_polar_customer_id ON keybox_subscriptions (polar_customer_id);
+CREATE INDEX IF NOT EXISTS idx_keybox_subscriptions_current_period_end ON keybox_subscriptions (current_period_end);
+
+-- Payment events indexes
+CREATE INDEX IF NOT EXISTS idx_keybox_payment_events_user_id ON keybox_payment_events (user_id);
+CREATE INDEX IF NOT EXISTS idx_keybox_payment_events_subscription_id ON keybox_payment_events (subscription_id);
+CREATE INDEX IF NOT EXISTS idx_keybox_payment_events_event_type ON keybox_payment_events (event_type);
+CREATE INDEX IF NOT EXISTS idx_keybox_payment_events_created_at ON keybox_payment_events (created_at);
+
+-- Subscription triggers
+CREATE TRIGGER update_keybox_subscriptions_updated_at
+    BEFORE UPDATE ON keybox_subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Enable Row Level Security (RLS) for data protection
 ALTER TABLE keybox_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keybox_ciphers ENABLE ROW LEVEL SECURITY;
@@ -263,3 +328,5 @@ ALTER TABLE keybox_organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keybox_devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keybox_security_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE keybox_backups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE keybox_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE keybox_payment_events ENABLE ROW LEVEL SECURITY;
