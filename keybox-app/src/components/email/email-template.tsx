@@ -24,10 +24,10 @@ export function EmailTemplate({ firstName }: EmailTemplateProps) {
             <Heading style={h1}>Welcome to PandaKeyBox, {firstName}!</Heading>
             <Text style={text}>
               Thank you for joining PandaKeyBox, your secure password manager.
-              We're excited to help you keep your digital life safe and
+              We&apos;re excited to help you keep your digital life safe and
               organized.
             </Text>
-            <Text style={text}>Here's what you can do next:</Text>
+            <Text style={text}>Here&apos;s what you can do next:</Text>
             <Text style={text}>
               • Set up your master password for encryption • Install our browser
               extension • Import your existing passwords • Start securing your
